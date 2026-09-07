@@ -1,0 +1,6 @@
+{
+  "name": "TellerBud Management Web Application",
+  "description": "TellerBud Management Web Application - Financial administration, operations, customer and agent liquidity management for Zambia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

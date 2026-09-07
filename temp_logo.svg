@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="tbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D93AA" />
+      <stop offset="100%" stop-color="#076C7D" />
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00D2E0" />
+      <stop offset="100%" stop-color="#0D93AA" />
+    </linearGradient>
+  </defs>
+  <!-- Main Rounded Hexagon / Shield Base -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#tbGrad)" />
+  
+  <!-- Dynamic Intersecting Liquidity Waves & Exchange Loop -->
+  <!-- Top Arc Flow -->
+  <path d="M148 256 C148 180 196 136 256 136 C316 136 364 180 364 256" 
+        fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" />
+        
+  <!-- Bottom Arc Flow -->
+  <path d="M364 256 C364 332 316 376 256 376 C196 376 148 332 148 256" 
+        fill="none" stroke="url(#cyanGrad)" stroke-width="40" stroke-linecap="round" />
+        
+  <!-- Exchange Central Nodes -->
+  <circle cx="256" cy="256" r="42" fill="#FFFFFF" />
+  <circle cx="364" cy="256" r="26" fill="#00D2E0" />
+  <circle cx="148" cy="256" r="26" fill="#FFFFFF" />
+  
+  <!-- Center Accent Pulse -->
+  <circle cx="256" cy="256" r="22" fill="#0D93AA" />
+</svg>

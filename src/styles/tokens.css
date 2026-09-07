@@ -1,0 +1,59 @@
+:root {
+  /* Brand Primary Colors */
+  --tb-white: #FFFFFF;
+  --tb-oceanic-blue: #0D93AA;
+  --tb-deep-oceanic: #0D788B;
+  --tb-bright-oceanic: #06B2CC;
+  --tb-oceanic-subtle: rgba(13, 147, 170, 0.1);
+  --tb-oceanic-border: #E0F2FE;
+
+  /* Typography & Neutrals */
+  --tb-dark-text: #102025;
+  --tb-text-muted: #475569;
+  --tb-text-subtle: #64748B;
+  --tb-bg-page: #F8FAFB;
+  --tb-bg-surface: #FFFFFF;
+  --tb-bg-subtle: #F9FAFB;
+  --tb-border-neutral: #F1F5F9;
+  --tb-border-subtle: #F8FAFC;
+
+  /* Semantic Status Colors (Minimalist) */
+  --tb-status-confirmed-bg: rgba(13, 147, 170, 0.1);
+  --tb-status-confirmed-text: #0D93AA;
+  --tb-status-matching-bg: #FEF3C7;
+  --tb-status-matching-text: #D97706;
+  --tb-status-active-bg: #E0F2FE;
+  --tb-status-active-text: #0369A1;
+  --tb-status-alert-bg: #FEE2E2;
+  --tb-status-alert-text: #DC2626;
+  --tb-status-success-bg: #ECFDF5;
+  --tb-status-success-text: #059669;
+
+  /* Layout dimensions */
+  --tb-sidebar-width: 260px;
+  --tb-header-height: 64px;
+}
+
+body {
+  background-color: var(--tb-bg-page);
+  color: var(--tb-dark-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}

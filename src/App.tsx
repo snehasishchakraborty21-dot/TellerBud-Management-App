@@ -1,0 +1,402 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { AdminLayout } from './layouts/AdminLayout';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { BusinessOwnerDashboardPage } from './pages/BusinessOwnerDashboardPage';
+import { CustomerWithdrawalsPage } from './pages/CustomerWithdrawalsPage';
+import { CustomerWithdrawalDetailPage } from './pages/CustomerWithdrawalDetailPage';
+import { CashFloatRequestsPage } from './pages/CashFloatRequestsPage';
+import { CashFloatRequestDetailPage } from './pages/CashFloatRequestDetailPage';
+import { AgentLiquidityPage } from './pages/AgentLiquidityPage';
+import { AgentLiquidityDetailPage } from './pages/AgentLiquidityDetailPage';
+import { WalkInTransactionsPage } from './pages/WalkInTransactionsPage';
+import { WalkInDetailPage } from './pages/WalkInDetailPage';
+import { AgentsPage } from './pages/AgentsPage';
+import { AgentDetailPage } from './pages/AgentDetailPage';
+import { AttendanceEndOfDayPage } from './pages/AttendanceEndOfDayPage';
+import { AttendanceDetailPage } from './pages/AttendanceDetailPage';
+import { EndOfDayDetailPage } from './pages/EndOfDayDetailPage';
+import { BusinessProfilePage } from './pages/BusinessProfilePage';
+import { GlobalWalletPage } from './pages/GlobalWalletPage';
+import { WalletLedgerPage } from './pages/WalletLedgerPage';
+import { AllTransactionsPage } from './pages/AllTransactionsPage';
+import { TransactionDetailPage } from './pages/TransactionDetailPage';
+import { ChargesCommissionsPage } from './pages/ChargesCommissionsPage';
+import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificationsPage';
+import { BusinessOwnerChatsPage } from './pages/BusinessOwnerChatsPage';
+import { LiveOperationsPage } from './pages/LiveOperationsPage';
+import { CustomerRequestsPage } from './pages/CustomerRequestsPage';
+import { GenericPageScaffold } from './pages/GenericPageScaffold';
+import {
+  SUPER_ADMIN_NAVIGATION_CONFIG,
+  BUSINESS_OWNER_NAVIGATION_CONFIG,
+} from './config/navigation';
+
+/**
+ * Root Redirect Handler: Routes authenticated users to their respective dashboard,
+ * or unauthenticated users to the /login screen.
+ */
+function RootRedirect() {
+  const { currentUser } = useAuth();
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  if (currentUser.role === 'business_owner') {
+    return <Navigate to="/business-owner/dashboard" replace />;
+  }
+  return <Navigate to="/super-admin/dashboard" replace />;
+}
+
+/**
+ * Public Login Route Guard: If already authenticated, redirect to appropriate dashboard.
+ */
+function PublicLoginRoute() {
+  const { currentUser } = useAuth();
+  if (currentUser) {
+    if (currentUser.role === 'business_owner') {
+      return <Navigate to="/business-owner/dashboard" replace />;
+    }
+    return <Navigate to="/super-admin/dashboard" replace />;
+  }
+  return <LoginPage />;
+}
+
+/**
+ * Legacy Path Resolver: Redirects older non-prefixed paths to role-scoped paths.
+ */
+function LegacyRedirect({ defaultSuperAdminPath, defaultBusinessOwnerPath }: { defaultSuperAdminPath: string; defaultBusinessOwnerPath: string }) {
+  const { currentUser } = useAuth();
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  if (currentUser.role === 'business_owner') {
+    return <Navigate to={defaultBusinessOwnerPath} replace />;
+  }
+  return <Navigate to={defaultSuperAdminPath} replace />;
+}
+
+function AppRoutes() {
+  // TellerBud Admin custom routes that have explicit page implementations
+  const superAdminCustomPaths = [
+    '/super-admin/dashboard',
+    '/super-admin/operations/live',
+    '/super-admin/operations/requests',
+    '/super-admin/wallets/customer-withdrawals',
+    '/super-admin/wallets/withdrawals',
+    '/super-admin/operations/cash-float-requests',
+    '/super-admin/operations/agent-to-agent-liquidity',
+    '/super-admin/operations/agent-liquidity',
+    '/super-admin/walk-in-transactions',
+    '/super-admin/operations/walk-in',
+  ];
+
+  const superAdminScaffolds = SUPER_ADMIN_NAVIGATION_CONFIG.flatMap((g) =>
+    g.items.filter((item) => !superAdminCustomPaths.includes(item.path))
+  );
+
+  // Business Owner custom routes that have explicit page implementations
+  const businessOwnerCustomPaths = [
+    '/business-owner/dashboard',
+    '/business-owner/operations/live',
+    '/business-owner/live',
+    '/business-owner/operations/cash-float-requests',
+    '/business-owner/operations/agent-to-agent-liquidity',
+    '/business-owner/walk-in-transactions',
+    '/business-owner/operations/walk-in',
+    '/business-owner/agents',
+    '/business-owner/people/agents',
+    '/business-owner/attendance-end-of-day',
+    '/business-owner/people/attendance',
+    '/business-owner/business-profile',
+    '/business-owner/people/business-profile',
+    '/business-owner/wallets/global-wallet',
+    '/business-owner/wallets/ledger',
+    '/business-owner/wallets/business-agent',
+    '/business-owner/transactions/all',
+    '/business-owner/transactions',
+    '/business-owner/transactions/commissions',
+    '/business-owner/transactions/charges-commissions',
+    '/business-owner/communication/notifications',
+    '/business-owner/notifications',
+    '/business-owner/communication/chats',
+    '/business-owner/chats',
+  ];
+
+  const businessOwnerScaffolds = BUSINESS_OWNER_NAVIGATION_CONFIG.flatMap((g) =>
+    g.items.filter((item) => !businessOwnerCustomPaths.includes(item.path))
+  );
+
+  return (
+    <Routes>
+      {/* Root Route */}
+      <Route path="/" element={<RootRedirect />} />
+
+      {/* Login Route */}
+      <Route path="/login" element={<PublicLoginRoute />} />
+
+      {/* TellerBud Admin Protected Portal */}
+      <Route
+        path="/super-admin"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="dashboard" element={<DashboardPage />} />
+
+        {/* Live Operations */}
+        <Route path="operations/live" element={<LiveOperationsPage />} />
+
+        {/* Customer Requests */}
+        <Route path="operations/requests" element={<CustomerRequestsPage />} />
+        <Route path="customer-requests" element={<Navigate to="/super-admin/operations/requests" replace />} />
+        <Route path="operations/customer-requests" element={<Navigate to="/super-admin/operations/requests" replace />} />
+
+        {/* Customer Withdrawals */}
+        <Route path="wallets/customer-withdrawals" element={<CustomerWithdrawalsPage />} />
+        <Route path="wallets/customer-withdrawals/:reference" element={<CustomerWithdrawalDetailPage />} />
+        <Route path="wallets/withdrawals" element={<Navigate to="/super-admin/wallets/customer-withdrawals" replace />} />
+
+        {/* Cash / Float Requests */}
+        <Route path="operations/cash-float-requests" element={<CashFloatRequestsPage />} />
+        <Route path="operations/cash-float-requests/:reference" element={<CashFloatRequestDetailPage />} />
+
+        {/* Agent to Agent Liquidity */}
+        <Route path="operations/agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
+        <Route path="operations/agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
+        <Route path="operations/agent-liquidity" element={<Navigate to="/super-admin/operations/agent-to-agent-liquidity" replace />} />
+
+        {/* Walk-In Transactions (TellerBud Admin view) */}
+        <Route path="walk-in-transactions" element={<WalkInTransactionsPage />} />
+        <Route path="walk-in-transactions/:reference" element={<WalkInDetailPage />} />
+        <Route path="operations/walk-in" element={<Navigate to="/super-admin/walk-in-transactions" replace />} />
+
+        {/* TellerBud Admin Scaffold Modules */}
+        {superAdminScaffolds.map((item) => {
+          const subPath = item.path.replace('/super-admin/', '');
+          return (
+            <React.Fragment key={item.id}>
+              <Route
+                path={subPath}
+                element={<GenericPageScaffold title={item.label} />}
+              />
+            </React.Fragment>
+          );
+        })}
+      </Route>
+
+      {/* Business Owner Protected Portal */}
+      <Route
+        path="/business-owner"
+        element={
+          <ProtectedRoute allowedRoles={['business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/business-owner/dashboard" replace />} />
+        <Route path="dashboard" element={<BusinessOwnerDashboardPage />} />
+
+        {/* Live Operations (Scoped to Business) */}
+        <Route path="operations/live" element={<LiveOperationsPage />} />
+        <Route path="live" element={<Navigate to="/business-owner/operations/live" replace />} />
+
+        {/* Cash / Float Requests (Scoped to Business) */}
+        <Route path="operations/cash-float-requests" element={<CashFloatRequestsPage />} />
+        <Route path="operations/cash-float-requests/:reference" element={<CashFloatRequestDetailPage />} />
+        <Route path="cash-float-requests" element={<CashFloatRequestsPage />} />
+        <Route path="cash-float-requests/:reference" element={<CashFloatRequestDetailPage />} />
+
+        {/* Agent to Agent Liquidity (Scoped to Business) */}
+        <Route path="operations/agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
+        <Route path="operations/agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
+        <Route path="agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
+        <Route path="agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
+
+        {/* Walk-In Transactions (Scoped to Business) */}
+        <Route path="walk-in-transactions" element={<WalkInTransactionsPage />} />
+        <Route path="walk-in-transactions/:reference" element={<WalkInDetailPage />} />
+        <Route path="operations/walk-in" element={<Navigate to="/business-owner/walk-in-transactions" replace />} />
+
+        {/* Agents Directory (Scoped to Business) */}
+        <Route path="agents" element={<AgentsPage />} />
+        <Route path="agents/:id" element={<AgentDetailPage />} />
+        <Route path="people/agents" element={<Navigate to="/business-owner/agents" replace />} />
+        <Route path="people/agents/:id" element={<AgentDetailPage />} />
+
+        {/* Attendance & End-of-Day (Scoped to Business) */}
+        <Route path="attendance-end-of-day" element={<AttendanceEndOfDayPage />} />
+        <Route path="attendance-end-of-day/attendance/:agentId/:date" element={<AttendanceDetailPage />} />
+        <Route path="attendance-end-of-day/end-of-day/:reference" element={<EndOfDayDetailPage />} />
+        <Route path="people/attendance" element={<AttendanceEndOfDayPage />} />
+        <Route path="people/attendance/attendance/:agentId/:date" element={<AttendanceDetailPage />} />
+        <Route path="people/attendance/end-of-day/:reference" element={<EndOfDayDetailPage />} />
+
+        {/* Business Profile (Scoped to Business) */}
+        <Route path="people/business-profile" element={<BusinessProfilePage />} />
+        <Route path="business-profile" element={<BusinessProfilePage />} />
+
+        {/* Global Wallet (Lusaka Central Express Agency Shared Wallet) */}
+        <Route path="wallets/global-wallet" element={<GlobalWalletPage />} />
+        <Route path="global-wallet" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
+        {/* Legacy redirects */}
+        <Route path="wallets/business-agent" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
+        <Route path="wallets/business-agent/:agentId" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
+        <Route path="business-agent-wallets" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
+
+        {/* Global Wallet Ledger */}
+        <Route path="wallets/ledger" element={<WalletLedgerPage />} />
+        <Route path="ledger" element={<Navigate to="/business-owner/wallets/ledger" replace />} />
+
+        {/* All Transactions (Scoped to Business) */}
+        <Route path="transactions/all" element={<AllTransactionsPage />} />
+        <Route path="transactions/all/:reference" element={<TransactionDetailPage />} />
+        <Route path="transactions" element={<Navigate to="/business-owner/transactions/all" replace />} />
+        <Route path="transactions/:reference" element={<TransactionDetailPage />} />
+
+        {/* Charges & Commissions (Scoped to Business) */}
+        <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="commissions" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
+        <Route path="charges" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
+
+        {/* Notifications (Scoped to Business) */}
+        <Route path="communication/notifications" element={<BusinessOwnerNotificationsPage />} />
+        <Route path="notifications" element={<Navigate to="/business-owner/communication/notifications" replace />} />
+
+        {/* Chats (Scoped to Business Owner & Authorised Agents) */}
+        <Route path="communication/chats" element={<BusinessOwnerChatsPage />} />
+        <Route path="chats" element={<Navigate to="/business-owner/communication/chats" replace />} />
+
+        {/* Business Owner Scaffold Modules */}
+        {businessOwnerScaffolds.map((item) => {
+          const subPath = item.path.replace('/business-owner/', '');
+          return (
+            <React.Fragment key={item.id}>
+              <Route
+                path={subPath}
+                element={<GenericPageScaffold title={item.label} />}
+              />
+            </React.Fragment>
+          );
+        })}
+      </Route>
+
+      {/* Backward Compatibility Legacy Redirects */}
+      <Route
+        path="/operations/live"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/operations/live"
+            defaultBusinessOwnerPath="/business-owner/operations/live"
+          />
+        }
+      />
+      <Route
+        path="/live"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/operations/live"
+            defaultBusinessOwnerPath="/business-owner/operations/live"
+          />
+        }
+      />
+      <Route
+        path="/operations/requests"
+        element={<Navigate to="/super-admin/operations/requests" replace />}
+      />
+      <Route
+        path="/customer-requests"
+        element={<Navigate to="/super-admin/operations/requests" replace />}
+      />
+      <Route
+        path="/wallets/customer-withdrawals"
+        element={<Navigate to="/super-admin/wallets/customer-withdrawals" replace />}
+      />
+      <Route
+        path="/wallets/customer-withdrawals/:reference"
+        element={<Navigate to="/super-admin/wallets/customer-withdrawals" replace />}
+      />
+      <Route
+        path="/operations/cash-float-requests"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/operations/cash-float-requests"
+            defaultBusinessOwnerPath="/business-owner/operations/cash-float-requests"
+          />
+        }
+      />
+      <Route
+        path="/operations/agent-to-agent-liquidity"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/operations/agent-to-agent-liquidity"
+            defaultBusinessOwnerPath="/business-owner/operations/agent-to-agent-liquidity"
+          />
+        }
+      />
+      <Route
+        path="/walk-in-transactions"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/walk-in-transactions"
+            defaultBusinessOwnerPath="/business-owner/walk-in-transactions"
+          />
+        }
+      />
+      <Route
+        path="/operations/walk-in"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/walk-in-transactions"
+            defaultBusinessOwnerPath="/business-owner/walk-in-transactions"
+          />
+        }
+      />
+      <Route
+        path="/agents"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/people/agents"
+            defaultBusinessOwnerPath="/business-owner/agents"
+          />
+        }
+      />
+      <Route
+        path="/people/agents"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/people/agents"
+            defaultBusinessOwnerPath="/business-owner/agents"
+          />
+        }
+      />
+      <Route
+        path="/transactions/all"
+        element={<Navigate to="/business-owner/transactions/all" replace />}
+      />
+      <Route
+        path="/transactions"
+        element={<Navigate to="/business-owner/transactions/all" replace />}
+      />
+
+      {/* Catch-all Fallback */}
+      <Route path="*" element={<RootRedirect />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
