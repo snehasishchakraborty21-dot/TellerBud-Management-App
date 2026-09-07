@@ -900,19 +900,6 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500 font-medium">Completion Method:</span>
-                  <span className="font-medium text-gray-900">Customer and Agent Confirmation</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 font-medium">Final Status:</span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <Check size={11} />
-                    Completed
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
                   <span className="text-gray-500 font-medium">Last Updated:</span>
                   <span className="font-mono font-medium text-gray-700">31 Aug 2026, 11:50 AM</span>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Radio,
   X,
@@ -18,16 +18,28 @@ import { formatZMW } from '../../utils/formatters';
 interface LiveRequestDetailsDrawerProps {
   request: PickupRequest | null;
   onClose: () => void;
+  title?: string;
+  sourcePage?: 'customer-requests' | 'live-operations';
 }
 
 export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> = ({
   request,
   onClose,
+  title,
+  sourcePage,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+
+  // Context-aware drawer title based on originating page
+  const isCustomerPage =
+    sourcePage === 'customer-requests' ||
+    location.pathname.includes('/customer-requests');
+  const drawerTitle =
+    title || (isCustomerPage ? 'Customer Request Details' : 'Live Request Details');
 
   // Focus trap, Escape listener, and body scroll prevention
   useEffect(() => {
@@ -92,10 +104,14 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
   if (!request) return null;
 
   // Identify specific states
-  const isTB1045 = request.id === 'TB-REQ-1045' || request.status === 'Pending Confirmation';
-  const isTB1050 = !isTB1045 && (request.id === 'TB-REQ-1050' || request.status === 'Active Service');
-  const isTB1048 = !isTB1045 && !isTB1050 && (request.id === 'TB-REQ-1048' || request.status === 'Agent Confirmed');
-  const isTB1052 = !isTB1045 && !isTB1050 && !isTB1048;
+  const isCompleted = request.status === 'Completed' || request.id === 'TB-REQ-1028';
+  const isCancelled = request.status === 'Cancelled';
+  const isNoAgent = request.status === 'No Agent Available';
+  const isTB1045 = !isCompleted && !isCancelled && !isNoAgent && (request.id === 'TB-REQ-1045' || request.status === 'Pending Confirmation');
+  const isTB1050 = !isCompleted && !isCancelled && !isNoAgent && !isTB1045 && (request.id === 'TB-REQ-1050' || request.status === 'Active Service');
+  const isTB1048 = !isCompleted && !isCancelled && !isNoAgent && !isTB1045 && !isTB1050 && (request.id === 'TB-REQ-1048' || request.status === 'Agent Confirmed');
+  const isFindingAgent = !isCompleted && !isCancelled && !isNoAgent && !isTB1045 && !isTB1050 && !isTB1048;
+  const isTB1052 = isFindingAgent && request.id === 'TB-REQ-1052';
 
   // Request Reference
   const reference = isTB1045
@@ -109,7 +125,13 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     : request.id;
 
   // Status
-  const status = isTB1045
+  const status = isCompleted
+    ? 'Completed'
+    : isCancelled
+    ? 'Cancelled'
+    : isNoAgent
+    ? 'No Agent Available'
+    : isTB1045
     ? 'Pending Confirmation'
     : isTB1050
     ? 'Active Service'
@@ -126,6 +148,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'TB-CUS-1048'
     : isTB1052
     ? 'TB-CUS-1052'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 'TB-CUS-1028'
     : request.customerId || 'TB-CUS-1045';
 
   const customerName = isTB1045
@@ -136,6 +160,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'Ruth Banda'
     : isTB1052
     ? 'Mwamba Mulenga'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 'Thomas Banda'
     : request.customerName;
 
   const customerMobile = isTB1045
@@ -146,6 +172,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? '+260 97 654 3210'
     : isTB1052
     ? '+260 97 245 6789'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? '+260 97 328 1028'
     : request.customerPhone || '+260 97 245 1045';
 
   // Financial Data
@@ -157,9 +185,22 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 2500.0
     : isTB1052
     ? 5000.0
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 8000.0
     : request.amount;
 
-  const reservationCharge = isTB1045 ? 25.0 : isTB1050 ? 15.0 : isTB1048 ? 12.0 : 25.0;
+  const reservationCharge = (isCancelled || isNoAgent)
+    ? 0.0
+    : isTB1045
+    ? 25.0
+    : isTB1050
+    ? 15.0
+    : isTB1048
+    ? 12.0
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 25.0
+    : 25.0;
+
   const customerTotal = transactionAmount + reservationCharge;
 
   const transactionType = isTB1045
@@ -170,6 +211,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'Withdrawal'
     : isTB1052
     ? 'Deposit'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 'Withdrawal'
     : request.type;
 
   const vendor = isTB1045
@@ -180,6 +223,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'MTN'
     : isTB1052
     ? 'FNB'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 'Zanaco'
     : request.vendor;
 
   const serviceMode = 'Cash Pickup';
@@ -192,6 +237,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'Now'
     : isTB1052
     ? 'Today, 02:30 PM'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? '31 Aug 2026, 11:30 AM'
     : request.serviceTime || 'Now';
 
   const createdTime = isTB1045
@@ -202,6 +249,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'Today, 11:42 AM'
     : isTB1052
     ? 'Today, 11:52 AM'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? '31 Aug 2026, 09:05 AM'
     : request.createdAt || 'Today, 11:20 AM';
 
   const pickupLocation = isTB1045
@@ -212,32 +261,55 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 'Woodlands Shopping Mall, Lusaka'
     : isTB1052
     ? 'Arcades Shopping Centre, Great East Road, Lusaka'
+    : isCompleted && request.id === 'TB-REQ-1028'
+    ? 'Cairo Road Shopping Centre, Lusaka'
     : request.pickupLocation || 'Crossroads Shopping Mall, Leopard Hill Road, Lusaka';
 
   // Agent Info
+  const hasAgent = isTB1045 || isTB1050 || isTB1048 || isCompleted || !!request.agentName;
+
   const agentName = isTB1045
     ? 'Faith Mwewa'
     : isTB1050
     ? 'Natasha Zulu'
-    : 'Kelvin Phiri';
+    : isTB1048
+    ? 'Kelvin Phiri'
+    : isCompleted
+    ? (request.agentName || 'Joseph Kaunda')
+    : (request.agentName || 'Kelvin Phiri');
 
   const agentId = isTB1045
     ? 'TB-AGT-1050'
     : isTB1050
     ? 'TB-AGT-1062'
-    : 'TB-AGT-1024';
+    : isTB1048
+    ? 'TB-AGT-1024'
+    : isCompleted
+    ? (request.agentId || 'TB-AGT-1064')
+    : (request.agentId || 'TB-AGT-1024');
 
-  const agentInitials = isTB1045
-    ? 'FM'
-    : isTB1050
-    ? 'NZ'
-    : 'KP';
+  const agentInitials = agentName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 
   const agentMobile = isTB1045
     ? '+260 97 456 7890'
     : isTB1050
     ? '+260 97 556 7890'
-    : '+260 97 234 5678';
+    : isTB1048
+    ? '+260 97 234 5678'
+    : isCompleted
+    ? (request.agentPhone || '+260 97 123 4567')
+    : (request.agentPhone || '+260 97 234 5678');
+
+  const businessName = isCompleted
+    ? (request.businessName || 'Lusaka Central Express Agency')
+    : (request.businessName || 'Lusaka Central Express Agency');
+
+  const businessId = request.businessId || 'BIZ-LUS-001';
 
   // Navigation handlers
   const handleViewCustomer = () => {
@@ -292,7 +364,7 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
               </div>
               <div>
                 <h2 id="drawer-live-request-title" className="text-base font-bold text-gray-900">
-                  Live Request Details
+                  {drawerTitle}
                 </h2>
                 <div className="font-mono text-xs font-semibold text-gray-500 mt-0.5">
                   {reference}
@@ -302,7 +374,22 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
 
             <div className="flex items-center gap-3">
               {/* Status Badge */}
-              {isTB1045 ? (
+              {isCompleted ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <Check size={12} className="text-emerald-700" />
+                  Completed
+                </span>
+              ) : isCancelled ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                  Cancelled
+                </span>
+              ) : isNoAgent ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-800 border border-orange-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  No Agent Available
+                </span>
+              ) : isTB1045 ? (
                 /* Purple Pending Confirmation Badge */
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" />
@@ -1559,31 +1646,12 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
                   <span className="font-medium text-gray-900">Automated</span>
                 </div>
 
-                {(isTB1045 || isTB1050) && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 font-medium">Completion Method:</span>
-                    <span className="font-medium text-gray-900">
-                      Customer and Agent Confirmation
-                    </span>
-                  </div>
-                )}
-
-                {isTB1045 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500 font-medium">Outstanding Confirmation:</span>
-                    <span className="font-semibold text-purple-900">Customer</span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-500 font-medium">Cash Delivery:</span>
-                  <span className="font-medium text-gray-600">Unavailable in Phase 1</span>
-                </div>
-
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500 font-medium">Last Updated:</span>
                   <span className="font-mono font-medium text-gray-700">
-                    {isTB1045
+                    {isCompleted
+                      ? '31 Aug 2026, 11:50 AM'
+                      : isTB1045
                       ? 'Today, 03:16 PM'
                       : isTB1050
                       ? 'Today, 11:49 AM'
