@@ -72,9 +72,11 @@ export const CustomerRequestsPage: React.FC = () => {
 
   // Handle URL param ?id=... to auto-open details
   useEffect(() => {
-    const idParam = searchParams.get('id');
+    const idParam = searchParams.get('ref') || searchParams.get('id');
     if (idParam && requests.length > 0) {
-      const found = requests.find((r) => r.id === idParam);
+      const found = requests.find(
+        (r) => r.id.toLowerCase() === idParam.toLowerCase()
+      );
       if (found) {
         setSelectedRequest(found);
       }
@@ -569,18 +571,18 @@ export const CustomerRequestsPage: React.FC = () => {
 
       {/* CUSTOMER REQUESTS TABLE CONTAINER */}
       <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden">
-        <div className="w-full">
-          <table className="w-full text-left text-xs border-collapse table-fixed">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[1200px] text-left text-xs border-collapse table-fixed">
             <colgroup>
               <col style={{ width: '11%' }} />
               <col style={{ width: '10%' }} />
-              <col style={{ width: '10%' }} />
+              <col style={{ width: '9%' }} />
               <col style={{ width: '8%' }} />
-              <col style={{ width: '12%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '13%' }} />
               <col style={{ width: '15%' }} />
-              <col style={{ width: '18%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '6%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '8%' }} />
             </colgroup>
             <thead className="sticky top-0 z-20 bg-white text-gray-600 font-semibold uppercase text-[10px] xl:text-[11px] border-b border-gray-200 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
               <tr>
@@ -591,8 +593,8 @@ export const CustomerRequestsPage: React.FC = () => {
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">REQUESTED SERVICE TIME</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">PICKUP LOCATION</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">MATCHED AGENT / BUSINESS</th>
-                <th className="py-2.5 px-1.5 font-bold bg-white leading-tight">STATUS</th>
-                <th className="py-2.5 px-1 font-bold text-center bg-white leading-tight">ACTION</th>
+                <th className="py-2.5 px-2 font-bold bg-white leading-tight">STATUS</th>
+                <th className="py-2.5 px-2 font-bold text-center bg-white leading-tight">ACTION</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -744,55 +746,55 @@ export const CustomerRequestsPage: React.FC = () => {
                     </td>
 
                     {/* 8. STATUS: Visible text badges matching exact color specifications */}
-                    <td className="py-2.5 px-1.5 align-middle overflow-hidden">
+                    <td className="py-2.5 px-2 align-middle">
                       {req.status === 'Finding an Agent' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                           Finding an Agent
                         </span>
                       ) : req.status === 'Agent Confirmed' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
                           Agent Confirmed
                         </span>
                       ) : req.status === 'Active Service' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
                           Active Service
                         </span>
                       ) : req.status === 'Pending Confirmation' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
                           Pending Confirmation
                         </span>
                       ) : req.status === 'Completed' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
                           Completed
                         </span>
                       ) : req.status === 'Cancelled' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-300 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-300 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
                           Cancelled
                         </span>
                       ) : req.status === 'No Agent Available' ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-800 border border-orange-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
                           No Agent Available
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap">
                           {req.status}
                         </span>
                       )}
                     </td>
 
                     {/* 9. ACTION: View button only */}
-                    <td className="py-2.5 px-1 text-center align-middle overflow-hidden">
+                    <td className="py-2.5 px-2 text-center align-middle">
                       <button
                         type="button"
                         onClick={() => setSelectedRequest(req)}
-                        className="inline-flex items-center justify-center gap-1 px-2 py-1 text-xs font-semibold text-[#0D93AA] bg-cyan-50/80 hover:bg-cyan-100 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                        className="inline-flex items-center justify-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-cyan-50/80 hover:bg-cyan-100 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                         title={`View request details for ${req.id}`}
                       >
                         <Eye size={12} className="shrink-0" />
@@ -880,6 +882,8 @@ export const CustomerRequestsPage: React.FC = () => {
         ) : (
           <LiveRequestDetailsDrawer
             request={selectedRequest}
+            sourcePage="customer-requests"
+            title="Customer Request Details"
             onClose={() => setSelectedRequest(null)}
           />
         )

@@ -14,6 +14,7 @@ import { AgentLiquidityPage } from './pages/AgentLiquidityPage';
 import { AgentLiquidityDetailPage } from './pages/AgentLiquidityDetailPage';
 import { WalkInTransactionsPage } from './pages/WalkInTransactionsPage';
 import { WalkInDetailPage } from './pages/WalkInDetailPage';
+import { MobileMoneyTransactionsPage } from './pages/MobileMoneyTransactionsPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { AgentDetailPage } from './pages/AgentDetailPage';
 import { AttendanceEndOfDayPage } from './pages/AttendanceEndOfDayPage';
@@ -86,9 +87,9 @@ function AppRoutes() {
     '/super-admin/operations/requests',
     '/super-admin/wallets/customer-withdrawals',
     '/super-admin/wallets/withdrawals',
-    '/super-admin/operations/cash-float-requests',
     '/super-admin/operations/agent-to-agent-liquidity',
     '/super-admin/operations/agent-liquidity',
+    '/super-admin/mobile-money-transactions',
     '/super-admin/walk-in-transactions',
     '/super-admin/operations/walk-in',
   ];
@@ -104,6 +105,7 @@ function AppRoutes() {
     '/business-owner/live',
     '/business-owner/operations/cash-float-requests',
     '/business-owner/operations/agent-to-agent-liquidity',
+    '/business-owner/mobile-money-transactions',
     '/business-owner/walk-in-transactions',
     '/business-owner/operations/walk-in',
     '/business-owner/agents',
@@ -157,24 +159,41 @@ function AppRoutes() {
         <Route path="customer-requests" element={<Navigate to="/super-admin/operations/requests" replace />} />
         <Route path="operations/customer-requests" element={<Navigate to="/super-admin/operations/requests" replace />} />
 
+        {/* Removed Sections -> Safe Redirects to Dashboard */}
+        <Route path="operations/matching" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="operations/matching/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="matching" element={<Navigate to="/super-admin/dashboard" replace />} />
+
+        <Route path="operations/cash-float-requests" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="operations/cash-float-requests/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="cash-float-requests" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="cash-float-requests/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+
+        <Route path="people/attendance" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="people/attendance/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="attendance" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="attendance/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="attendance-end-of-day" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="attendance-end-of-day/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="people/attendance-end-of-day" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="people/attendance-end-of-day/*" element={<Navigate to="/super-admin/dashboard" replace />} />
+
         {/* Customer Withdrawals */}
         <Route path="wallets/customer-withdrawals" element={<CustomerWithdrawalsPage />} />
         <Route path="wallets/customer-withdrawals/:reference" element={<CustomerWithdrawalDetailPage />} />
         <Route path="wallets/withdrawals" element={<Navigate to="/super-admin/wallets/customer-withdrawals" replace />} />
-
-        {/* Cash / Float Requests */}
-        <Route path="operations/cash-float-requests" element={<CashFloatRequestsPage />} />
-        <Route path="operations/cash-float-requests/:reference" element={<CashFloatRequestDetailPage />} />
 
         {/* Agent to Agent Liquidity */}
         <Route path="operations/agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
         <Route path="operations/agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
         <Route path="operations/agent-liquidity" element={<Navigate to="/super-admin/operations/agent-to-agent-liquidity" replace />} />
 
-        {/* Walk-In Transactions (TellerBud Admin view) */}
-        <Route path="walk-in-transactions" element={<WalkInTransactionsPage />} />
-        <Route path="walk-in-transactions/:reference" element={<WalkInDetailPage />} />
-        <Route path="operations/walk-in" element={<Navigate to="/super-admin/walk-in-transactions" replace />} />
+        {/* Mobile Money Transactions (formerly Walk-In Transactions) */}
+        <Route path="mobile-money-transactions" element={<MobileMoneyTransactionsPage />} />
+        <Route path="mobile-money-transactions/:reference" element={<MobileMoneyTransactionsPage />} />
+        <Route path="walk-in-transactions" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
+        <Route path="walk-in-transactions/:reference" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
+        <Route path="operations/walk-in" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
 
         {/* TellerBud Admin Scaffold Modules */}
         {superAdminScaffolds.map((item) => {
@@ -218,10 +237,12 @@ function AppRoutes() {
         <Route path="agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
         <Route path="agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
 
-        {/* Walk-In Transactions (Scoped to Business) */}
-        <Route path="walk-in-transactions" element={<WalkInTransactionsPage />} />
-        <Route path="walk-in-transactions/:reference" element={<WalkInDetailPage />} />
-        <Route path="operations/walk-in" element={<Navigate to="/business-owner/walk-in-transactions" replace />} />
+        {/* Mobile Money Transactions (formerly Walk-In Transactions) */}
+        <Route path="mobile-money-transactions" element={<MobileMoneyTransactionsPage />} />
+        <Route path="mobile-money-transactions/:reference" element={<MobileMoneyTransactionsPage />} />
+        <Route path="walk-in-transactions" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
+        <Route path="walk-in-transactions/:reference" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
+        <Route path="operations/walk-in" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
 
         {/* Agents Directory (Scoped to Business) */}
         <Route path="agents" element={<AgentsPage />} />
@@ -326,8 +347,52 @@ function AppRoutes() {
         path="/operations/cash-float-requests"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/operations/cash-float-requests"
+            defaultSuperAdminPath="/super-admin/dashboard"
             defaultBusinessOwnerPath="/business-owner/operations/cash-float-requests"
+          />
+        }
+      />
+      <Route
+        path="/cash-float-requests"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/dashboard"
+            defaultBusinessOwnerPath="/business-owner/operations/cash-float-requests"
+          />
+        }
+      />
+      <Route
+        path="/operations/matching"
+        element={<Navigate to="/super-admin/dashboard" replace />}
+      />
+      <Route
+        path="/matching"
+        element={<Navigate to="/super-admin/dashboard" replace />}
+      />
+      <Route
+        path="/attendance-end-of-day"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/dashboard"
+            defaultBusinessOwnerPath="/business-owner/attendance-end-of-day"
+          />
+        }
+      />
+      <Route
+        path="/attendance"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/dashboard"
+            defaultBusinessOwnerPath="/business-owner/attendance-end-of-day"
+          />
+        }
+      />
+      <Route
+        path="/people/attendance"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/dashboard"
+            defaultBusinessOwnerPath="/business-owner/attendance-end-of-day"
           />
         }
       />
@@ -341,11 +406,38 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/mobile-money-transactions"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/mobile-money-transactions"
+            defaultBusinessOwnerPath="/business-owner/mobile-money-transactions"
+          />
+        }
+      />
+      <Route
+        path="/mobile-money-transactions/:reference"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/mobile-money-transactions"
+            defaultBusinessOwnerPath="/business-owner/mobile-money-transactions"
+          />
+        }
+      />
+      <Route
         path="/walk-in-transactions"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/walk-in-transactions"
-            defaultBusinessOwnerPath="/business-owner/walk-in-transactions"
+            defaultSuperAdminPath="/super-admin/mobile-money-transactions"
+            defaultBusinessOwnerPath="/business-owner/mobile-money-transactions"
+          />
+        }
+      />
+      <Route
+        path="/walk-in-transactions/:reference"
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/mobile-money-transactions"
+            defaultBusinessOwnerPath="/business-owner/mobile-money-transactions"
           />
         }
       />
@@ -353,8 +445,8 @@ function AppRoutes() {
         path="/operations/walk-in"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/walk-in-transactions"
-            defaultBusinessOwnerPath="/business-owner/walk-in-transactions"
+            defaultSuperAdminPath="/super-admin/mobile-money-transactions"
+            defaultBusinessOwnerPath="/business-owner/mobile-money-transactions"
           />
         }
       />

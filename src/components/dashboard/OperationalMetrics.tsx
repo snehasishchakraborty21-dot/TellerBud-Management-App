@@ -22,25 +22,11 @@ export const OperationalMetricsGrid: React.FC<OperationalMetricsProps> = ({
       targetRoute: '/super-admin/operations/live',
     },
     {
-      id: 'matching',
-      label: 'FINDING AN AGENT',
-      value: metrics.matchingCount,
-      colorClass: 'text-[#0D93AA]',
-      targetRoute: '/super-admin/operations/matching?status=matching',
-    },
-    {
       id: 'pending-withdrawals',
       label: 'PENDING WITHDRAWALS',
       value: metrics.pendingWithdrawals,
       colorClass: 'text-[#0D93AA]',
       targetRoute: '/super-admin/wallets/customer-withdrawals?status=Pending Review',
-    },
-    {
-      id: 'business-owner-requests',
-      label: 'PENDING CASH / FLOAT REQUESTS',
-      value: metrics.businessOwnerCashFloat,
-      colorClass: 'text-[#0D93AA]',
-      targetRoute: '/super-admin/operations/cash-float-requests',
     },
     {
       id: 'agents-online',
@@ -67,7 +53,7 @@ export const OperationalMetricsGrid: React.FC<OperationalMetricsProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((card) => (
         <div
           key={card.id}

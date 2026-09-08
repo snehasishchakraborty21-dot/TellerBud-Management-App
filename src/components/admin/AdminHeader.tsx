@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Menu,
   Bell,
@@ -11,6 +12,10 @@ import { NotificationPanel } from './NotificationPanel';
 import { ProfileDropdown } from './ProfileDropdown';
 import { AdminNotification, AdminUserProfile } from '../../types/admin';
 import { useAuth } from '../../context/AuthContext';
+import {
+  SUPER_ADMIN_NAVIGATION_CONFIG,
+  BUSINESS_OWNER_NAVIGATION_CONFIG,
+} from '../../config/navigation';
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -32,18 +37,48 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onMarkAllNotificationsRead,
   onGlobalSearch,
 }) => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState<string | null>(null);
   const accountTriggerRef = React.useRef<HTMLButtonElement>(null);
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    const config =
+      currentUser?.role === 'business_owner'
+        ? BUSINESS_OWNER_NAVIGATION_CONFIG
+        : SUPER_ADMIN_NAVIGATION_CONFIG;
+
+    const results: { id: string; label: string; path: string; groupTitle: string }[] = [];
+    config.forEach((group) => {
+      group.items.forEach((item) => {
+        if (
+          item.label.toLowerCase().includes(q) ||
+          group.title.toLowerCase().includes(q)
+        ) {
+          results.push({
+            id: item.id,
+            label: item.label,
+            path: item.path,
+            groupTitle: group.title,
+          });
+        }
+      });
+    });
+    return results;
+  }, [searchQuery, currentUser?.role]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchQuery(val);
+    setIsSearchDropdownOpen(true);
     if (onGlobalSearch) {
       onGlobalSearch(val);
     }
@@ -94,6 +129,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
+              onFocus={() => setIsSearchDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
               placeholder="Search operations..."
               className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
             />
@@ -101,12 +138,40 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <button
                 onClick={() => {
                   setSearchQuery('');
+                  setIsSearchDropdownOpen(false);
                   if (onGlobalSearch) onGlobalSearch('');
                 }}
                 className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
               >
                 <X size={14} />
               </button>
+            )}
+
+            {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((res) => (
+                    <button
+                      key={res.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        navigate(res.path);
+                        setIsSearchDropdownOpen(false);
+                        setSearchQuery('');
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                    >
+                      <span className="font-semibold text-gray-900">{res.label}</span>
+                      <span className="text-[10px] text-gray-400 font-medium">{res.groupTitle}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3.5 py-2.5 text-xs text-gray-500 text-center">
+                    No matching sections found
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

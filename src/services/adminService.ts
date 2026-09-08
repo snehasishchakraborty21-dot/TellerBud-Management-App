@@ -70,6 +70,12 @@ export interface IAdminService {
   ): Promise<{ items: import('../types/admin').WalkInTransaction[]; total: number; summary: import('../types/admin').WalkInStatusSummary }>;
   getWalkInTransactionByReference(reference: string): Promise<import('../types/admin').WalkInTransaction | null>;
   getWalkInStatusSummary(businessIdOrName?: string): Promise<import('../types/admin').WalkInStatusSummary>;
+  getMobileMoneyTransactions(
+    filters?: Partial<import('../types/mobileMoney').MobileMoneyFilters>,
+    sort?: { field: import('../types/mobileMoney').MobileMoneySortField; direction: import('../types/mobileMoney').MobileMoneySortDirection },
+    businessScope?: string
+  ): Promise<{ items: import('../types/mobileMoney').MobileMoneyTransaction[]; total: number; summary: import('../types/mobileMoney').MobileMoneySummary }>;
+  getMobileMoneyTransactionByReference(reference: string): Promise<import('../types/mobileMoney').MobileMoneyTransaction | null>;
   getAgents(
     filters?: Partial<import('../types/admin').AgentFilters>,
     sort?: { field: import('../types/admin').AgentSortField; direction: import('../types/admin').AgentSortDirection },

@@ -11,11 +11,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 97 112 3456',
     transactionType: 'Deposit',
-    vendor: 'Zanaco',
+    vendor: 'MTN',
     amount: 3200.0,
     transactionTime: '2026-08-31T11:15:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-ZN-771902',
+    receiptNumber: 'REC-MTN-771902',
     terminalId: 'POS-LUS-04',
     timeline: [
       {
@@ -128,11 +128,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 95 334 5678',
     transactionType: 'Deposit',
-    vendor: 'FNB',
+    vendor: 'Airtel',
     amount: 5000.0,
     transactionTime: '2026-08-31T10:30:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-FNB-99031',
+    receiptNumber: 'REC-AIR-99031',
     terminalId: 'POS-LUS-02',
     timeline: [
       {
@@ -206,11 +206,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 96 990 1234',
     transactionType: 'Purchase',
-    vendor: 'Stanbic',
+    vendor: 'MTN',
     amount: 2200.0,
     transactionTime: '2026-08-31T09:55:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-STB-33104',
+    receiptNumber: 'REC-MTN-33104',
     terminalId: 'POS-LUS-04',
     timeline: [
       {
@@ -245,11 +245,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 95 112 2334',
     transactionType: 'Deposit',
-    vendor: 'INDO',
+    vendor: 'Zamtel',
     amount: 4100.0,
     transactionTime: '2026-08-31T09:35:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-INDO-88912',
+    receiptNumber: 'REC-ZAM-88912',
     terminalId: 'POS-LUS-01',
     timeline: [
       {
@@ -284,11 +284,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 97 334 4556',
     transactionType: 'Withdrawal',
-    vendor: 'Access',
+    vendor: 'Airtel',
     amount: 1250.0,
     transactionTime: '2026-08-31T09:10:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-ACC-55210',
+    receiptNumber: 'REC-AIR-55210',
     terminalId: 'POS-LUS-03',
     timeline: [
       {
@@ -384,7 +384,7 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 95 556 7890',
     transactionType: 'Purchase',
-    vendor: 'Zanaco',
+    vendor: 'Zamtel',
     amount: 800.0,
     transactionTime: '2026-08-31T08:15:00+02:00',
     status: 'Failed',
@@ -417,7 +417,7 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Lusaka Central Express Agency',
     customerPhone: '+260 97 667 8901',
     transactionType: 'Deposit',
-    vendor: 'FNB',
+    vendor: 'Airtel',
     amount: 2500.0,
     transactionTime: '2026-08-31T08:00:00+02:00',
     status: 'Cancelled',
@@ -505,11 +505,11 @@ export const MOCK_WALK_IN_TRANSACTIONS: WalkInTransaction[] = [
     businessName: 'Livingstone Victoria Agency',
     customerPhone: '+260 95 666 7788',
     transactionType: 'Purchase',
-    vendor: 'Zanaco',
+    vendor: 'MTN',
     amount: 2100.0,
     transactionTime: '2026-08-31T09:40:00+02:00',
     status: 'Completed',
-    receiptNumber: 'REC-ZN-55109',
+    receiptNumber: 'REC-MTN-55109',
     terminalId: 'POS-LIV-01',
     timeline: [
       {

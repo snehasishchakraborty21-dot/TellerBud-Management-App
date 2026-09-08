@@ -280,12 +280,12 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
           onClick={() => navigate('/business-owner/people/attendance?tab=eod')}
         />
         <BusinessMetricCard
-          label="Today’s Walk-In Value"
+          label="Today’s Mobile Money Value"
           value="ZMW 18,450.00"
           icon={Store}
           iconBgColor="bg-cyan-50 text-[#0D93AA]"
           accentColor="text-[#0D93AA]"
-          onClick={() => navigate('/business-owner/walk-in-transactions')}
+          onClick={() => navigate('/business-owner/mobile-money-transactions')}
         />
       </div>
 

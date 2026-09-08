@@ -65,6 +65,17 @@ import {
   deriveWalkInStatusSummary,
 } from '../data/mockWalkInData';
 import {
+  MobileMoneyTransaction,
+  MobileMoneyFilters,
+  MobileMoneySummary,
+  MobileMoneySortField,
+  MobileMoneySortDirection,
+} from '../types/mobileMoney';
+import {
+  MOCK_MOBILE_MONEY_TRANSACTIONS,
+  queryMobileMoneyTransactions,
+} from '../data/mockMobileMoneyData';
+import {
   MOCK_AGENTS,
   deriveAgentStatusSummary,
   sortAgentsByOperationalPriority,
@@ -198,6 +209,7 @@ class MockAdminService implements IAdminService {
   private cashFloatRequests: CashFloatRequest[] = [...MOCK_CASH_FLOAT_REQUESTS];
   private agentLiquidityRequests: AgentToAgentRequest[] = [...MOCK_AGENT_LIQUIDITY_REQUESTS];
   private walkInTransactions: WalkInTransaction[] = [...MOCK_WALK_IN_TRANSACTIONS];
+  private mobileMoneyTransactions: MobileMoneyTransaction[] = [...MOCK_MOBILE_MONEY_TRANSACTIONS];
   private businessProfiles: Record<string, BusinessProfile> = getInitialBusinessProfiles();
   private listeners: Set<() => void> = new Set();
 
@@ -239,8 +251,8 @@ class MockAdminService implements IAdminService {
       (w) => w.status === 'Pending Review'
     ).length;
 
-    const pendingCashFloatCount = this.cashFloatRequests.filter(
-      (r) => r.status === 'Pending Review'
+    const pendingLiquidityCount = this.agentLiquidityRequests.filter(
+      (r) => r.status === 'Matching' || r.status === 'Agent Matched'
     ).length;
 
     return MOCK_REQUIRES_ATTENTION.map((item) => {
@@ -253,11 +265,13 @@ class MockAdminService implements IAdminService {
           } awaiting review`,
         };
       }
-      if (item.id === 'att-2' || item.type === 'bo_cash_float') {
+      if (item.id === 'att-2' || item.type === 'agent_liquidity') {
         return {
           ...item,
-          count: pendingCashFloatCount,
-          label: `${pendingCashFloatCount} Business Owner Cash / Float requests`,
+          count: pendingLiquidityCount,
+          label: `${pendingLiquidityCount} Agent-to-Agent liquidity request${
+            pendingLiquidityCount === 1 ? '' : 's'
+          } pending`,
         };
       }
       return item;
@@ -1014,6 +1028,43 @@ class MockAdminService implements IAdminService {
         )
       : this.walkInTransactions;
     return deriveWalkInStatusSummary(scoped);
+  }
+
+  // ==========================================
+  // Mobile Money Transactions Methods
+  // ==========================================
+
+  async getMobileMoneyTransactions(
+    filters?: Partial<MobileMoneyFilters>,
+    sort: { field: MobileMoneySortField; direction: MobileMoneySortDirection } = {
+      field: 'postedAt',
+      direction: 'desc',
+    },
+    businessScope?: string
+  ): Promise<{
+    items: MobileMoneyTransaction[];
+    total: number;
+    summary: MobileMoneySummary;
+  }> {
+    return queryMobileMoneyTransactions(
+      this.mobileMoneyTransactions,
+      filters,
+      sort,
+      businessScope
+    );
+  }
+
+  async getMobileMoneyTransactionByReference(
+    reference: string
+  ): Promise<MobileMoneyTransaction | null> {
+    const cleanRef = reference.trim().toLowerCase();
+    const found = this.mobileMoneyTransactions.find(
+      (t) =>
+        t.reference.toLowerCase() === cleanRef ||
+        (t.sourceReference && t.sourceReference.toLowerCase() === cleanRef) ||
+        t.id.toLowerCase() === cleanRef
+    );
+    return found ? { ...found } : null;
   }
 
   // ==========================================

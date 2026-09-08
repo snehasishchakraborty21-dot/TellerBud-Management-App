@@ -76,6 +76,20 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
+      pathname.includes('/mobile-money-transactions/') ||
+      pathname.includes('/walk-in-transactions/')
+    ) {
+      return 'Mobile Money Transaction Details';
+    }
+
+    if (
+      pathname.endsWith('/mobile-money-transactions') ||
+      pathname.endsWith('/walk-in-transactions')
+    ) {
+      return 'Mobile Money Transactions';
+    }
+
+    if (
       pathname.includes('/operations/cash-float-requests/') &&
       !pathname.endsWith('/cash-float-requests')
     ) {
@@ -105,8 +119,7 @@ export const AdminLayout: React.FC = () => {
 
     if (
       pathname === '/business-owner/attendance-end-of-day' ||
-      pathname === '/business-owner/people/attendance' ||
-      pathname === '/super-admin/people/attendance'
+      pathname === '/business-owner/people/attendance'
     ) {
       return 'Attendance & End-of-Day';
     }

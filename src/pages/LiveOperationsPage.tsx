@@ -826,6 +826,8 @@ export const LiveOperationsPage: React.FC = () => {
       {/* LIVE REQUEST DETAILS DRAWER */}
       <LiveRequestDetailsDrawer
         request={selectedRequest}
+        sourcePage="live-operations"
+        title="Live Request Details"
         onClose={() => {
           setSelectedRequest(null);
           if (searchParams.get('id')) {

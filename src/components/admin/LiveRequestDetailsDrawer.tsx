@@ -327,11 +327,6 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     navigate('/super-admin/people/businesses?id=BIZ-LUS-001');
   };
 
-  const handleViewMatchingActivity = () => {
-    onClose();
-    navigate(`/super-admin/operations/matching?request=${reference}`);
-  };
-
   return (
     <div
       id="live-request-details-drawer-overlay"
@@ -779,19 +774,6 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
                     </div>
                   </>
                 )}
-
-                {/* Secondary navigation button: View Matching Activity */}
-                <div className="pt-2 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={handleViewMatchingActivity}
-                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#0D93AA] bg-cyan-50/70 hover:bg-cyan-100/80 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer"
-                  >
-                    <Compass size={13} />
-                    <span>View Matching Activity</span>
-                    <ExternalLink size={11} />
-                  </button>
-                </div>
               </div>
             </div>
 

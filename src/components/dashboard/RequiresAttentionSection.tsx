@@ -18,12 +18,12 @@ export const RequiresAttentionSection: React.FC<RequiresAttentionProps> = ({
     switch (type) {
       case 'withdrawal_review':
         return 'bg-red-500';
-      case 'bo_cash_float':
-        return 'bg-amber-400';
+      case 'agent_liquidity':
+        return 'bg-[#0D93AA]';
       case 'api_funding_exception':
         return 'bg-red-500';
-      case 'finding_agent':
-        return 'bg-blue-500';
+      case 'unassigned_pickup':
+        return 'bg-amber-500';
       default:
         return 'bg-gray-400';
     }
