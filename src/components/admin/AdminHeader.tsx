@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Menu,
   Bell,
   Search,
-  ChevronDown,
   X,
-  Building2,
 } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -16,6 +14,8 @@ import {
   SUPER_ADMIN_NAVIGATION_CONFIG,
   BUSINESS_OWNER_NAVIGATION_CONFIG,
 } from '../../config/navigation';
+import { MobileMoneyDatePicker } from '../mobile-money/MobileMoneyDatePicker';
+import { sanitizeDateParam } from '../../utils/dateUtils';
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -38,7 +38,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onGlobalSearch,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useAuth();
+
+  const isMobileMoneyPage =
+    location.pathname.includes('/mobile-money-transactions') ||
+    location.pathname.includes('/walk-in-transactions');
+
+  const currentDateParam = searchParams.get('date');
+  const validDate = sanitizeDateParam(currentDateParam);
+
+  const handleDateChange = (newDate: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('date', newDate);
+    setSearchParams(nextParams, { replace: true });
+  };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,7 +111,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     <>
       <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 flex-shrink-0">
         {/* Left Side: Menu Trigger & Page Heading */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
           <button
             onClick={onToggleMobileSidebar}
             className="lg:hidden p-1.5 text-gray-500 hover:text-[#102025] hover:bg-gray-100 rounded-lg transition-colors focus-visible:ring-1 focus-visible:ring-[#0D93AA]"
@@ -110,17 +125,24 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </h1>
         </div>
 
-        {/* Global Top-Centre Application Label */}
-        <div className="hidden lg:flex items-center justify-center flex-1 px-4 text-center">
-          <span className="text-xs xl:text-sm font-semibold text-gray-700 tracking-wide select-none">
-            {currentUser?.role === 'super_admin' ? 'TellerBud Admin Web Application' : 'TellerBud Management Web Application'}
-          </span>
-        </div>
+        {/* Top-Centre: Compact Date Selector strictly on Mobile Money Transactions & Walk-In pages */}
+        {isMobileMoneyPage && (
+          <div className="flex items-center justify-center flex-1 px-2 sm:px-4 text-center">
+            <MobileMoneyDatePicker
+              selectedDate={validDate}
+              onDateChange={handleDateChange}
+            />
+          </div>
+        )}
 
         {/* Right Side: Global Search, Notifications, Profile */}
-        <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+        <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${!isMobileMoneyPage ? 'ml-auto' : ''}`}>
           {/* Global Search Pill Input */}
-          <div className="relative hidden md:block w-56 lg:w-64">
+          <div
+            className={`relative hidden md:block transition-all duration-150 ${
+              isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
+            }`}
+          >
             <Search
               size={15}
               className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none"

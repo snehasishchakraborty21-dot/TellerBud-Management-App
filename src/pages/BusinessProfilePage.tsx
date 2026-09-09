@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Building2,
   Phone,
@@ -16,6 +17,7 @@ import {
   Calendar,
   Layers,
   Lock,
+  ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/mockAdminService';
@@ -67,13 +69,15 @@ export const BusinessProfilePage: React.FC = () => {
     province: '',
   });
 
-  const businessId = currentUser?.businessId || 'BIZ-LUS-001';
+  const navigate = useNavigate();
+  const { id: paramId } = useParams<{ id?: string }>();
+  const businessId = paramId || currentUser?.businessId || 'BIZ-LUS-001';
 
   // Role behaviour check
-  // Business Owner: Can view and edit permitted fields
-  // Business Admin: Can view only; can edit only if edit permission granted
+  // Business Owner: Can view and edit permitted fields for their own business
+  // Admin / Super Admin: Can view only
   const isBusinessOwner = currentUser?.role === 'business_owner';
-  const canEditProfile = isBusinessOwner; // Currently TellerBud has business_owner role
+  const canEditProfile = isBusinessOwner && (!paramId || paramId === currentUser?.businessId);
 
   useEffect(() => {
     let isMounted = true;
@@ -320,6 +324,20 @@ export const BusinessProfilePage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Back to Businesses for admin portal */}
+      {currentUser?.role === 'super_admin' && (
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 -mb-2">
+          <button
+            type="button"
+            onClick={() => navigate('/super-admin/people/businesses')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0b7e92] transition-colors cursor-pointer"
+          >
+            <ChevronLeft size={16} />
+            Back to Businesses
+          </button>
+        </div>
+      )}
+
       {/* Toast Notification positioned below header, centered to prevent any overlap with action buttons */}
       {successMessage && (
         <div

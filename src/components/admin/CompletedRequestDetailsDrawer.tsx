@@ -1087,18 +1087,9 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
             </div>
 
             <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveModal(null);
-                  onClose();
-                  navigate(`/super-admin/people/agents?id=${agentId}`);
-                }}
-                className="text-xs font-semibold text-[#0D93AA] hover:text-[#0D788B] transition-colors inline-flex items-center gap-1"
-              >
-                <span>Go to Agents Module</span>
-                <ExternalLink size={12} />
-              </button>
+              <span className="text-[11px] font-medium text-gray-500">
+                Assigned Operational Agent
+              </span>
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}

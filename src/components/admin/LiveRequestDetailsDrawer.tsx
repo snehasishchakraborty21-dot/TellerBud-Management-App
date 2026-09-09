@@ -317,11 +317,6 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     navigate(`/super-admin/people/customers?id=${customerId}`);
   };
 
-  const handleViewAgent = () => {
-    onClose();
-    navigate(`/super-admin/people/agents?id=${agentId}`);
-  };
-
   const handleViewBusiness = () => {
     onClose();
     navigate('/super-admin/people/businesses?id=BIZ-LUS-001');
@@ -788,17 +783,11 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
                     <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
                       Confirmed Agent
                     </h3>
-                    {/* Compact View Agent Button */}
-                    <button
-                      type="button"
-                      onClick={handleViewAgent}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-cyan-50/70 hover:bg-cyan-100/80 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer"
-                      title="View Agent Profile"
-                    >
-                      <UserCheck size={12} />
-                      <span>View Agent</span>
-                      <ExternalLink size={11} />
-                    </button>
+                    {/* Non-clickable Agent Information Badge */}
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <UserCheck size={11} />
+                      <span>Assigned Agent</span>
+                    </span>
                   </div>
 
                   <div className="p-3.5 bg-white border border-gray-200 rounded-xl space-y-3 text-xs">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -30,6 +30,15 @@ import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificatio
 import { BusinessOwnerChatsPage } from './pages/BusinessOwnerChatsPage';
 import { LiveOperationsPage } from './pages/LiveOperationsPage';
 import { CustomerRequestsPage } from './pages/CustomerRequestsPage';
+import { CustomersPage } from './pages/CustomersPage';
+import { CustomerProfilePage } from './pages/CustomerProfilePage';
+import { BusinessesPage } from './pages/BusinessesPage';
+import { BusinessDetailsPage } from './pages/BusinessDetailsPage';
+import { AddBusinessPage } from './pages/AddBusinessPage';
+import { CustomerWalletsPage } from './pages/CustomerWalletsPage';
+import { CustomerWalletDetailPage } from './pages/CustomerWalletDetailPage';
+import { WalletFundingPage } from './pages/WalletFundingPage';
+import { WalletFundingDetailPage } from './pages/WalletFundingDetailPage';
 import { GenericPageScaffold } from './pages/GenericPageScaffold';
 import {
   SUPER_ADMIN_NAVIGATION_CONFIG,
@@ -79,12 +88,21 @@ function LegacyRedirect({ defaultSuperAdminPath, defaultBusinessOwnerPath }: { d
   return <Navigate to={defaultSuperAdminPath} replace />;
 }
 
+function TellerbudAdminBusinessIdRedirect() {
+  const { businessId, id } = useParams<{ businessId?: string; id?: string }>();
+  return <Navigate to={`/super-admin/people/businesses/${businessId || id}`} replace />;
+}
+
 function AppRoutes() {
   // TellerBud Admin custom routes that have explicit page implementations
   const superAdminCustomPaths = [
     '/super-admin/dashboard',
     '/super-admin/operations/live',
     '/super-admin/operations/requests',
+    '/super-admin/wallets/customers',
+    '/super-admin/customer-wallets',
+    '/super-admin/wallets/add-funds',
+    '/super-admin/wallets/funding',
     '/super-admin/wallets/customer-withdrawals',
     '/super-admin/wallets/withdrawals',
     '/super-admin/operations/agent-to-agent-liquidity',
@@ -92,6 +110,12 @@ function AppRoutes() {
     '/super-admin/mobile-money-transactions',
     '/super-admin/walk-in-transactions',
     '/super-admin/operations/walk-in',
+    '/super-admin/people/customers',
+    '/super-admin/customers',
+    '/super-admin/people/businesses',
+    '/super-admin/people/businesses/add',
+    '/super-admin/businesses',
+    '/super-admin/businesses/add',
   ];
 
   const superAdminScaffolds = SUPER_ADMIN_NAVIGATION_CONFIG.flatMap((g) =>
@@ -178,6 +202,18 @@ function AppRoutes() {
         <Route path="people/attendance-end-of-day" element={<Navigate to="/super-admin/dashboard" replace />} />
         <Route path="people/attendance-end-of-day/*" element={<Navigate to="/super-admin/dashboard" replace />} />
 
+        {/* Customer Wallets */}
+        <Route path="wallets/customers" element={<CustomerWalletsPage />} />
+        <Route path="wallets/customers/:walletId" element={<CustomerWalletDetailPage />} />
+        <Route path="customer-wallets" element={<Navigate to="/super-admin/wallets/customers" replace />} />
+        <Route path="customer-wallets/:walletId" element={<CustomerWalletDetailPage />} />
+
+        {/* Wallet Funding */}
+        <Route path="wallets/add-funds" element={<WalletFundingPage />} />
+        <Route path="wallets/add-funds/:fundingId" element={<WalletFundingDetailPage />} />
+        <Route path="wallets/funding" element={<Navigate to="/super-admin/wallets/add-funds" replace />} />
+        <Route path="wallets/funding/:fundingId" element={<WalletFundingDetailPage />} />
+
         {/* Customer Withdrawals */}
         <Route path="wallets/customer-withdrawals" element={<CustomerWithdrawalsPage />} />
         <Route path="wallets/customer-withdrawals/:reference" element={<CustomerWithdrawalDetailPage />} />
@@ -194,6 +230,26 @@ function AppRoutes() {
         <Route path="walk-in-transactions" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
         <Route path="walk-in-transactions/:reference" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
         <Route path="operations/walk-in" element={<Navigate to="/super-admin/mobile-money-transactions" replace />} />
+
+        {/* Customers */}
+        <Route path="people/customers" element={<CustomersPage />} />
+        <Route path="people/customers/:id" element={<CustomerProfilePage />} />
+        <Route path="customers" element={<Navigate to="/super-admin/people/customers" replace />} />
+        <Route path="customers/:id" element={<CustomerProfilePage />} />
+
+        {/* Businesses */}
+        <Route path="people/businesses" element={<BusinessesPage />} />
+        <Route path="people/businesses/add" element={<AddBusinessPage />} />
+        <Route path="people/businesses/:id" element={<BusinessDetailsPage />} />
+        <Route path="businesses" element={<Navigate to="/super-admin/people/businesses" replace />} />
+        <Route path="businesses/add" element={<AddBusinessPage />} />
+        <Route path="businesses/:id" element={<BusinessDetailsPage />} />
+
+        {/* Removed TellerBud Admin Agents routes - redirect safely to Businesses */}
+        <Route path="people/agents" element={<Navigate to="/super-admin/people/businesses" replace />} />
+        <Route path="people/agents/*" element={<Navigate to="/super-admin/people/businesses" replace />} />
+        <Route path="agents" element={<Navigate to="/super-admin/people/businesses" replace />} />
+        <Route path="agents/*" element={<Navigate to="/super-admin/people/businesses" replace />} />
 
         {/* TellerBud Admin Scaffold Modules */}
         {superAdminScaffolds.map((item) => {
@@ -454,7 +510,7 @@ function AppRoutes() {
         path="/agents"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/people/agents"
+            defaultSuperAdminPath="/super-admin/people/businesses"
             defaultBusinessOwnerPath="/business-owner/agents"
           />
         }
@@ -463,7 +519,7 @@ function AppRoutes() {
         path="/people/agents"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/people/agents"
+            defaultSuperAdminPath="/super-admin/people/businesses"
             defaultBusinessOwnerPath="/business-owner/agents"
           />
         }
@@ -475,6 +531,20 @@ function AppRoutes() {
       <Route
         path="/transactions"
         element={<Navigate to="/business-owner/transactions/all" replace />}
+      />
+
+      {/* TellerBud Admin Businesses Direct & Legacy Routes */}
+      <Route
+        path="/tellerbud-admin/businesses"
+        element={<Navigate to="/super-admin/people/businesses" replace />}
+      />
+      <Route
+        path="/tellerbud-admin/businesses/add"
+        element={<Navigate to="/super-admin/people/businesses/add" replace />}
+      />
+      <Route
+        path="/tellerbud-admin/businesses/:businessId"
+        element={<TellerbudAdminBusinessIdRedirect />}
       />
 
       {/* Catch-all Fallback */}

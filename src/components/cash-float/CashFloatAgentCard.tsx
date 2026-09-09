@@ -1,19 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CashFloatRequest } from '../../types/admin';
-import { User, Phone, ArrowUpRight, CheckCircle2 } from 'lucide-react';
+import { User, Phone, CheckCircle2 } from 'lucide-react';
 
 interface CashFloatAgentCardProps {
   request: CashFloatRequest;
 }
 
 export const CashFloatAgentCard: React.FC<CashFloatAgentCardProps> = ({ request }) => {
-  const navigate = useNavigate();
   const agentStatus = request.agentAccountStatus || 'Active';
-
-  const handleViewAgent = () => {
-    navigate(`/agents`);
-  };
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm space-y-4">
@@ -22,14 +16,9 @@ export const CashFloatAgentCard: React.FC<CashFloatAgentCardProps> = ({ request 
           <User className="w-4 h-4 text-[#0D93AA]" />
           <h2 className="text-sm font-bold text-[#102025]">Agent</h2>
         </div>
-        <button
-          type="button"
-          onClick={handleViewAgent}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-[#0D93AA] hover:text-[#0b7e93] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded px-1.5 py-0.5 cursor-pointer"
-        >
-          <span>View Agent</span>
-          <ArrowUpRight className="w-3.5 h-3.5" />
-        </button>
+        <span className="text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-200/80 rounded px-2 py-0.5">
+          Assigned Agent
+        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">

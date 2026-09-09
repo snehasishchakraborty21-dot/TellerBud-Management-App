@@ -2,8 +2,9 @@
  * Formatting utilities for Zambia currency, dates, and phone numbers.
  */
 
-export const formatZMW = (amount: number): string => {
-  return `ZMW ${amount.toLocaleString('en-US', {
+export const formatZMW = (amount?: number | null): string => {
+  const safeVal = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `ZMW ${safeVal.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

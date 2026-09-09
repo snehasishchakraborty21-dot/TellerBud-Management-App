@@ -34,12 +34,20 @@ import {
 import React from 'react';
 import { UserRole } from '../types/auth';
 
+export interface NavSubItem {
+  id: string;
+  label: string;
+  path: string;
+  badge?: string | number;
+}
+
 export interface NavItem {
   id: string;
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   badge?: string | number;
+  children?: NavSubItem[];
 }
 
 export interface NavGroup {
@@ -106,16 +114,22 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
         icon: Users,
       },
       {
-        id: 'agents',
-        label: 'Agents',
-        path: '/super-admin/people/agents',
-        icon: UserCheck,
-      },
-      {
         id: 'businesses',
         label: 'Businesses',
         path: '/super-admin/people/businesses',
         icon: Building2,
+        children: [
+          {
+            id: 'all-businesses',
+            label: 'All Businesses',
+            path: '/super-admin/people/businesses',
+          },
+          {
+            id: 'add-business',
+            label: 'Add Business',
+            path: '/super-admin/people/businesses/add',
+          },
+        ],
       },
     ],
   },

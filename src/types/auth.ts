@@ -9,7 +9,7 @@ export interface AuthenticatedUser {
   businessId?: string;
   businessName?: string;
   initials: string;
-  accountStatus: 'Active' | 'Suspended';
+  accountStatus: 'Active' | 'Suspended' | 'Pending';
 }
 
 export interface AuthContextType {

@@ -16,6 +16,7 @@ import { MobileMoneyFilterBar } from '../components/mobile-money/MobileMoneyFilt
 import { MobileMoneyTable } from '../components/mobile-money/MobileMoneyTable';
 import { MobileMoneyPagination } from '../components/mobile-money/MobileMoneyPagination';
 import { MobileMoneyDetailsDrawer } from '../components/mobile-money/MobileMoneyDetailsDrawer';
+import { sanitizeDateParam, getZambiaTodayString } from '../utils/dateUtils';
 
 const DEFAULT_FILTERS: MobileMoneyFilters = {
   search: '',
@@ -23,8 +24,6 @@ const DEFAULT_FILTERS: MobileMoneyFilters = {
   transactionType: 'ALL',
   status: 'ALL',
   business: 'ALL',
-  dateFrom: '',
-  dateTo: '',
 };
 
 export const MobileMoneyTransactionsPage: React.FC = () => {
@@ -38,13 +37,29 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     ? undefined
     : currentUser?.businessName || currentUser?.businessId || 'Lusaka Central Express Agency';
 
-  // Query parameter synchronization
+  // Date synchronization with URL (?date=YYYY-MM-DD)
+  const rawDateParam = searchParams.get('date');
+  const selectedDate = sanitizeDateParam(rawDateParam);
+
+  // Normalize URL on load if date param is missing or invalid/future
+  useEffect(() => {
+    if (rawDateParam !== selectedDate) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set('date', selectedDate);
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [rawDateParam, selectedDate, searchParams, setSearchParams]);
+
+  // Query parameter synchronization for filters
   const paramStatus = (searchParams.get('status') as MobileMoneyStatus | 'Cancelled_Failed') || 'ALL';
   const paramChannel = (searchParams.get('channel') as ServiceChannel) || 'ALL';
   const highlightedRef = routeRef || searchParams.get('ref') || undefined;
 
   const [transactions, setTransactions] = useState<MobileMoneyTransaction[]>([]);
   const [summary, setSummary] = useState<MobileMoneySummary>({
+    totalTransactions: 0,
+    totalAmount: 0,
+    serviceEarnings: 0,
     total: 0,
     pickup: 0,
     walkIn: 0,
@@ -71,12 +86,15 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     useState<MobileMoneyTransaction | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
-  // Load Data
+  // Load Data for the selected date and filters
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await adminService.getMobileMoneyTransactions(
-        filters,
+        {
+          ...filters,
+          selectedDate,
+        },
         { field: sortField, direction: sortDirection },
         businessScope
       );
@@ -89,7 +107,12 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [filters, sortField, sortDirection, businessScope]);
+  }, [filters, selectedDate, sortField, sortDirection, businessScope]);
+
+  // Whenever selectedDate changes, reset pagination to Page 1 and reload data
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate]);
 
   useEffect(() => {
     loadData();
@@ -124,16 +147,20 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   const handleFilterChange = (updates: Partial<MobileMoneyFilters>) => {
     setFilters((prev) => {
       const next = { ...prev, ...updates };
+      const nextParams = new URLSearchParams(searchParams);
+      // Ensure date is retained
+      nextParams.set('date', selectedDate);
+
       // Sync search params
       if (updates.status !== undefined) {
-        if (updates.status === 'ALL') searchParams.delete('status');
-        else searchParams.set('status', updates.status);
+        if (updates.status === 'ALL') nextParams.delete('status');
+        else nextParams.set('status', updates.status);
       }
       if (updates.serviceChannel !== undefined) {
-        if (updates.serviceChannel === 'ALL') searchParams.delete('channel');
-        else searchParams.set('channel', updates.serviceChannel);
+        if (updates.serviceChannel === 'ALL') nextParams.delete('channel');
+        else nextParams.set('channel', updates.serviceChannel);
       }
-      setSearchParams(searchParams, { replace: true });
+      setSearchParams(nextParams, { replace: true });
       return next;
     });
     setCurrentPage(1);
@@ -148,22 +175,31 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
       serviceChannel: channel,
       status: status,
     }));
-    if (status === 'ALL') searchParams.delete('status');
-    else searchParams.set('status', status);
 
-    if (channel === 'ALL') searchParams.delete('channel');
-    else searchParams.set('channel', channel);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('date', selectedDate);
 
-    setSearchParams(searchParams, { replace: true });
+    if (status === 'ALL') nextParams.delete('status');
+    else nextParams.set('status', status);
+
+    if (channel === 'ALL') nextParams.delete('channel');
+    else nextParams.set('channel', channel);
+
+    setSearchParams(nextParams, { replace: true });
     setCurrentPage(1);
   };
 
+  // Clear search and dropdown selections, but retain selected date
   const handleClearFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setCurrentPage(1);
-    setSearchParams({}, { replace: true });
+    const nextParams = new URLSearchParams();
+    nextParams.set('date', selectedDate);
+    if (highlightedRef) nextParams.set('ref', highlightedRef);
+    setSearchParams(nextParams, { replace: true });
   };
 
+  // Reload data for the currently selected date without resetting to today
   const handleRefresh = () => {
     setIsRefreshing(true);
     loadData();
@@ -182,16 +218,18 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   const handleViewDetails = (tx: MobileMoneyTransaction) => {
     setSelectedTransaction(tx);
     setIsDrawerOpen(true);
-    searchParams.set('ref', tx.reference);
-    setSearchParams(searchParams, { replace: true });
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('ref', tx.reference);
+    setSearchParams(nextParams, { replace: true });
   };
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
     setSelectedTransaction(null);
     if (searchParams.has('ref')) {
-      searchParams.delete('ref');
-      setSearchParams(searchParams, { replace: true });
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('ref');
+      setSearchParams(nextParams, { replace: true });
     }
   };
 
@@ -200,9 +238,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     filters.serviceChannel !== 'ALL' ||
     filters.transactionType !== 'ALL' ||
     filters.status !== 'ALL' ||
-    filters.business !== 'ALL' ||
-    filters.dateFrom !== '' ||
-    filters.dateTo !== '';
+    filters.business !== 'ALL';
 
   // Pagination
   const totalItems = transactions.length;

@@ -22,7 +22,7 @@ import {
   ServiceChannel,
   MobileMoneyStatus,
 } from '../../types/mobileMoney';
-import { formatZMW } from '../../utils/formatters';
+import { formatZMW, calculateServiceFeeSplit } from '../../utils/financialUtils';
 import { useAuth } from '../../context/AuthContext';
 
 interface MobileMoneyDetailsDrawerProps {
@@ -280,58 +280,109 @@ export const MobileMoneyDetailsDrawer: React.FC<MobileMoneyDetailsDrawerProps> =
           </div>
 
           {/* A2. FINANCIAL SUMMARY CARD */}
-          <div className="bg-gray-50/80 rounded-xl border border-gray-200 p-4 space-y-3">
-            <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              Financial Summary
-            </div>
-            <div className="grid grid-cols-3 gap-3 pt-1 pb-2 border-b border-gray-200">
-              <div>
-                <span className="text-[11px] text-gray-500 block">Transaction Amount</span>
-                <span className="font-mono text-sm font-bold text-gray-900">
-                  {formatZMW(transaction.amount)}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-gray-500 block">Customer Charges</span>
-                <span className="font-mono text-sm font-semibold text-gray-700">
-                  {transaction.reservationCharge > 0
-                    ? formatZMW(transaction.reservationCharge)
-                    : 'ZMW 0.00'}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-gray-500 block">Customer Total</span>
-                <span className="font-mono text-sm font-bold text-[#0D93AA]">
-                  {formatZMW(transaction.customerTotal)}
-                </span>
-              </div>
-            </div>
+          {(() => {
+            const isCompleted = transaction.status === 'Completed';
+            const feeSplit = calculateServiceFeeSplit(isCompleted ? transaction.reservationCharge : 0);
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-              <div>
-                <span className="text-gray-500 block text-[11px]">Channel</span>
-                <span className="font-semibold text-gray-900">
-                  {transaction.serviceChannel}
-                </span>
+            return (
+              <div className="bg-gray-50/80 rounded-xl border border-gray-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    Financial Summary
+                  </div>
+                  {isCompleted && transaction.reservationCharge > 0 && (
+                    <span className="text-[11px] font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
+                      80 / 20 Fee Distribution
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 pt-1 pb-2 border-b border-gray-200">
+                  <div>
+                    <span className="text-[11px] text-gray-500 block">Transaction Amount</span>
+                    <span className="font-mono text-sm font-bold text-gray-900">
+                      {formatZMW(transaction.amount)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-gray-500 block">Service Fee</span>
+                    <span className="font-mono text-sm font-semibold text-gray-700">
+                      {transaction.reservationCharge > 0
+                        ? formatZMW(transaction.reservationCharge)
+                        : 'ZMW 0.00'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-gray-500 block">Customer Total</span>
+                    <span className="font-mono text-sm font-bold text-[#0D93AA]">
+                      {formatZMW(transaction.customerTotal)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Service Fee Split Breakdown: Service Earnings (80%) and TellerBud Share (20%) */}
+                {transaction.reservationCharge > 0 && (
+                  <div className="bg-white rounded-lg border border-gray-200/80 p-3 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-gray-600">
+                      <span>Service Fee Breakdown</span>
+                      <span className="text-gray-400 font-mono text-[10px]">
+                        Total: {formatZMW(transaction.reservationCharge)}
+                      </span>
+                    </div>
+                    {isCompleted ? (
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="p-2 rounded-md bg-teal-50/60 border border-teal-100">
+                          <span className="text-[11px] text-teal-800 block font-medium">
+                            Service Earnings (80%)
+                          </span>
+                          <span className="font-mono text-sm font-bold text-teal-900">
+                            {formatZMW(feeSplit.serviceEarnings)}
+                          </span>
+                        </div>
+                        <div className="p-2 rounded-md bg-gray-50 border border-gray-200/80">
+                          <span className="text-[11px] text-gray-600 block font-medium">
+                            TellerBud Share (20%)
+                          </span>
+                          <span className="font-mono text-sm font-bold text-gray-800">
+                            {formatZMW(feeSplit.tellerBudShare)}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-amber-700 bg-amber-50/70 p-2 rounded-md border border-amber-200/60">
+                        Fee distribution applies upon completion (Transaction status: {transaction.status}).
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Channel</span>
+                    <span className="font-semibold text-gray-900">
+                      {transaction.serviceChannel}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Type</span>
+                    <span className="font-semibold text-gray-900">
+                      {transaction.transactionType}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Vendor</span>
+                    <span className="font-semibold text-gray-900">
+                      {transaction.vendor}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-[11px]">Posted</span>
+                    <span className="text-gray-900">{transaction.formattedDate}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-500 block text-[11px]">Type</span>
-                <span className="font-semibold text-gray-900">
-                  {transaction.transactionType}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500 block text-[11px]">Vendor</span>
-                <span className="font-semibold text-gray-900">
-                  {transaction.vendor}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500 block text-[11px]">Posted</span>
-                <span className="text-gray-900">{transaction.formattedDate}</span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* B. CUSTOMER INFORMATION */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
@@ -399,20 +450,18 @@ export const MobileMoneyDetailsDrawer: React.FC<MobileMoneyDetailsDrawerProps> =
                 Agent & Business
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isSuperAdmin) {
-                      navigate(`/super-admin/people/agents/${transaction.agentId}`);
-                    } else {
+                {!isSuperAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
                       navigate(`/business-owner/agents/${transaction.agentId}`);
-                    }
-                  }}
-                  className="text-[11px] font-semibold text-[#0D93AA] hover:underline inline-flex items-center gap-1"
-                >
-                  <span>View Agent</span>
-                  <ExternalLink size={10} />
-                </button>
+                    }}
+                    className="text-[11px] font-semibold text-[#0D93AA] hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>View Agent</span>
+                    <ExternalLink size={10} />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

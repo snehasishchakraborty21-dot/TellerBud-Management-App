@@ -78,9 +78,11 @@ export const MobileMoneyTable: React.FC<MobileMoneyTableProps> = ({
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
           <Store size={22} />
         </div>
-        <h4 className="text-sm font-bold text-gray-900">No Mobile Money Transactions Found</h4>
+        <h4 className="text-sm font-bold text-gray-900">
+          No Mobile Money Transactions were recorded on this date.
+        </h4>
         <p className="text-xs text-gray-500 max-w-md mx-auto">
-          No transactions match your current filter selections. Try adjusting or clearing your filters.
+          Try selecting a different date from the header calendar or clearing your active filters.
         </p>
       </div>
     );

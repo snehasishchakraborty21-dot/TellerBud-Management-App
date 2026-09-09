@@ -35,6 +35,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     return initial;
   });
 
+  // State to track which submenus are expanded (Businesses expanded by default)
+  const [expandedSubmenus, setExpandedSubmenus] = useState<Record<string, boolean>>({
+    businesses: true,
+  });
+
+  // Keep businesses submenu expanded when viewing Businesses list, Business Details, or Add Business
+  const isBusinessesPath =
+    location.pathname.includes('/businesses') ||
+    location.pathname.includes('/people/businesses');
+
+  useEffect(() => {
+    if (isBusinessesPath) {
+      setExpandedSubmenus((prev) => ({ ...prev, businesses: true }));
+    }
+  }, [isBusinessesPath]);
+
   // Re-initialize expanded groups if role changes
   useEffect(() => {
     const initial: Record<string, boolean> = {};
@@ -131,9 +147,101 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             {group.items.map((item: NavItem) => {
               const Icon = item.icon;
               const isDashboard = item.id === 'dashboard-home';
+
+              // If item has children (e.g. Businesses -> All Businesses, Add Business)
+              if (item.children && item.children.length > 0) {
+                const isSubmenuOpen = !isDesktopCollapsed && (expandedSubmenus[item.id] ?? false);
+                const isParentActive =
+                  location.pathname.includes('/businesses') ||
+                  location.pathname.includes('/people/businesses');
+
+                return (
+                  <div key={item.id} className="space-y-[2px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isDesktopCollapsed) return;
+                        setExpandedSubmenus((prev) => ({
+                          ...prev,
+                          [item.id]: !prev[item.id],
+                        }));
+                      }}
+                      className={`w-full group flex items-center justify-between px-3 h-[35px] rounded-lg text-[13px] transition-colors cursor-pointer ${
+                        isParentActive
+                          ? 'bg-[#0D93AA]/10 text-[#0D93AA] font-semibold'
+                          : 'text-[#334155] hover:bg-gray-50/80 hover:text-[#111827] font-medium'
+                      } ${isDesktopCollapsed ? 'justify-center px-2 h-9' : ''}`}
+                      title={item.label}
+                      aria-expanded={isSubmenuOpen}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon
+                          size={16}
+                          className={`flex-shrink-0 transition-colors ${
+                            isParentActive ? 'text-[#0D93AA]' : 'text-slate-500 group-hover:text-slate-700'
+                          }`}
+                        />
+                        {!isDesktopCollapsed && (
+                          <span className="leading-tight text-left truncate">{item.label}</span>
+                        )}
+                      </div>
+
+                      {!isDesktopCollapsed && (
+                        <div className="flex items-center ml-auto pl-1">
+                          {isSubmenuOpen ? (
+                            <ChevronDown size={14} className={isParentActive ? 'text-[#0D93AA]' : 'text-slate-400'} />
+                          ) : (
+                            <ChevronRight size={14} className={isParentActive ? 'text-[#0D93AA]' : 'text-slate-400'} />
+                          )}
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Submenu Dropdown Items */}
+                    {isSubmenuOpen && !isDesktopCollapsed && (
+                      <div className="pl-6 pr-1 space-y-[2px] pt-0.5 pb-1">
+                        {item.children.map((sub) => {
+                          const isAdd = sub.id === 'add-business';
+                          const isSubActive = isAdd
+                            ? location.pathname.endsWith('/add')
+                            : !location.pathname.endsWith('/add') &&
+                              (location.pathname.includes('/businesses') ||
+                               location.pathname.includes('/people/businesses'));
+
+                          return (
+                            <NavLink
+                              key={sub.id}
+                              to={sub.path}
+                              onClick={() => {
+                                if (isMobileOpen) {
+                                  onCloseMobile();
+                                }
+                              }}
+                              className={`flex items-center justify-between px-3 h-[32px] rounded-md text-[12.5px] transition-colors ${
+                                isSubActive
+                                  ? 'bg-[#0D93AA]/10 text-[#0D93AA] font-semibold'
+                                  : 'text-slate-600 hover:bg-gray-50 hover:text-slate-900 font-medium'
+                              }`}
+                            >
+                              <span className="truncate">{sub.label}</span>
+                              {isSubActive && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] shrink-0 ml-1.5" />
+                              )}
+                            </NavLink>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               const isActive =
                 location.pathname === item.path ||
                 (!isDashboard && location.pathname.startsWith(item.path + '/')) ||
+                (item.id === 'add-funds' &&
+                  (location.pathname.includes('/wallets/add-funds') ||
+                   location.pathname.includes('/wallets/funding'))) ||
                 (item.id === 'business-profile' &&
                   (location.pathname === '/business-owner/business-profile' ||
                    location.pathname === '/business-owner/people/business-profile')) ||

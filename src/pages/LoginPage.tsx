@@ -33,14 +33,17 @@ export const LoginPage: React.FC = () => {
     setErrorMessage(null);
   }, [setSelectedLoginRole]);
 
-  // Email regex validation
-  const isValidEmail = (val: string): boolean => {
+  // Validation for email or business owner username
+  const isInputValid = (val: string): boolean => {
+    if (selectedLoginRole === 'business_owner') {
+      return val.trim().length >= 3;
+    }
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
   };
 
   const isFormValid =
     selectedLoginRole !== null &&
-    isValidEmail(email) &&
+    isInputValid(email) &&
     password.trim().length > 0;
 
   const handleRoleSelect = (role: UserRole) => {
@@ -237,24 +240,24 @@ export const LoginPage: React.FC = () => {
             {/* Login Form (Revealed when a role is selected) */}
             {selectedLoginRole && (
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email Address Field */}
+                {/* Username or Email Address Field */}
                 <div>
                   <label
                     htmlFor="login-email"
                     className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-1.5"
                   >
-                    Email Address
+                    {selectedLoginRole === 'business_owner' ? 'Username or Email Address' : 'Email Address'}
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
                     <input
                       id="login-email"
-                      type="email"
+                      type={selectedLoginRole === 'business_owner' ? 'text' : 'email'}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@domain.com"
+                      placeholder={selectedLoginRole === 'business_owner' ? 'Username or email' : 'name@domain.com'}
                       required
-                      autoComplete="email"
+                      autoComplete={selectedLoginRole === 'business_owner' ? 'username' : 'email'}
                       className="w-full pl-10 pr-3.5 py-2.5 bg-gray-50/70 border border-gray-200 rounded-xl text-sm text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all font-medium"
                     />
                   </div>

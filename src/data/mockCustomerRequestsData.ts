@@ -184,6 +184,12 @@ function generateHistoricalRequests(): PickupRequest[] {
   const records: PickupRequest[] = [];
   const baseDate = new Date('2026-09-04T09:30:00Z'); // Just before the oldest active request (09:45 AM)
 
+  // Track all IDs from active operations so historical requests never collide
+  const activeIds = new Set(MOCK_LIVE_PICKUP_OPERATIONS.map((r) => r.id));
+  activeIds.add('TB-REQ-1028');
+
+  let nextNum = 1017;
+
   for (let i = 0; i < 230; i++) {
     // Index 0 is dedicated to the canonical Completed request TB-REQ-1028
     if (i === 0) {
@@ -211,9 +217,13 @@ function generateHistoricalRequests(): PickupRequest[] {
       continue;
     }
 
-    const refNum = 1028 - i;
+    while (activeIds.has(`TB-REQ-${nextNum}`)) {
+      nextNum--;
+    }
+    const refNum = nextNum;
     const reqId = `TB-REQ-${refNum}`;
     const cusId = `TB-CUS-${refNum}`;
+    nextNum--;
     
     // Decrement time: roughly 1.5 to 3 hours step backwards
     const minutesBack = 90 + (i * 105) % 180;
@@ -303,7 +313,10 @@ export function getAllCustomerRequests(activeRequests: PickupRequest[] = MOCK_LI
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  return [...sortedActive, ...MOCK_HISTORICAL_CUSTOMER_REQUESTS];
+  const seenIds = new Set(sortedActive.map((r) => r.id));
+  const uniqueHistorical = MOCK_HISTORICAL_CUSTOMER_REQUESTS.filter((r) => !seenIds.has(r.id));
+
+  return [...sortedActive, ...uniqueHistorical];
 }
 
 /**

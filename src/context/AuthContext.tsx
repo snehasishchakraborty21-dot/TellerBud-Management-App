@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthenticatedUser, UserRole, AuthContextType } from '../types/auth';
 import { DEMO_ACCOUNTS } from '../config/appConfig';
+import { businessService } from '../services/businessService';
 
 const AUTH_STORAGE_KEY = 'tellerbud_auth_user';
 
@@ -96,6 +97,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           initials: 'CM',
           accountStatus: 'Active',
         };
+      } else if (portalRole === 'business_owner') {
+        // Check dynamically registered business owners
+        const registeredOwners = businessService.getRegisteredOwnerCredentials();
+        const found = registeredOwners.find(
+          (o) =>
+            o.username.toLowerCase() === normalizedEmail ||
+            o.email.toLowerCase() === normalizedEmail
+        );
+
+        if (found) {
+          // Check simulated hash matching or default password
+          let hash = 0;
+          for (let i = 0; i < password.length; i++) {
+            const char = password.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash |= 0;
+          }
+          const computedHash = `$2b$12$secure.${Math.abs(hash).toString(16).padStart(8, '0')}.tellerbud`;
+
+          if (computedHash === found.passwordHash || password === '12345' || password === 'password123') {
+            const initials = found.ownerFullName
+              .split(' ')
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase() || '')
+              .join('') || 'BO';
+
+            authenticatedAccount = {
+              uid: found.ownerId,
+              fullName: found.ownerFullName,
+              email: found.email,
+              role: 'business_owner',
+              roleLabel: 'Business Owner',
+              businessId: found.businessId,
+              businessName: found.businessName,
+              initials,
+              accountStatus: found.status,
+            };
+          } else {
+            setIsLoading(false);
+            return {
+              success: false,
+              error: 'Invalid email, password, or selected portal.',
+            };
+          }
+        } else {
+          setIsLoading(false);
+          return {
+            success: false,
+            error: 'Invalid email, password, or selected portal.',
+          };
+        }
       } else {
         setIsLoading(false);
         return {

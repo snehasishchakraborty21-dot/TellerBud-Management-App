@@ -30,7 +30,7 @@ export const MobileMoneyPagination: React.FC<MobileMoneyPaginationProps> = ({
         <span>
           Showing <span className="font-semibold text-gray-900">{startIdx}</span> to{' '}
           <span className="font-semibold text-gray-900">{endIdx}</span> of{' '}
-          <span className="font-semibold text-gray-900">{totalItems.toLocaleString()}</span> entries
+          <span className="font-semibold text-gray-900">{(totalItems ?? 0).toLocaleString()}</span> entries
         </span>
 
         <div className="flex items-center gap-1.5 ml-2">

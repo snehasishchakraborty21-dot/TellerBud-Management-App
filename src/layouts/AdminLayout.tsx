@@ -63,9 +63,59 @@ export const AdminLayout: React.FC = () => {
       pathname === '/business-owner/dashboard' ||
       pathname === '/'
     ) {
-      return currentUser?.role === 'business_owner'
-        ? 'Dashboard'
-        : 'TellerBud Admin Dashboard';
+      return 'Dashboard';
+    }
+
+    if (
+      pathname === '/super-admin/people/businesses/add' ||
+      pathname === '/super-admin/businesses/add' ||
+      pathname.endsWith('/businesses/add')
+    ) {
+      return 'Add Business';
+    }
+
+    if (
+      pathname === '/super-admin/people/businesses' ||
+      pathname === '/super-admin/businesses' ||
+      pathname === '/tellerbud-admin/businesses'
+    ) {
+      return 'Businesses';
+    }
+
+    if (
+      pathname.startsWith('/super-admin/people/businesses/') ||
+      pathname.startsWith('/super-admin/businesses/') ||
+      pathname.includes('/businesses/')
+    ) {
+      return 'Business Details';
+    }
+
+    if (
+      pathname.startsWith('/super-admin/people/customers/') ||
+      pathname.startsWith('/super-admin/customers/')
+    ) {
+      return 'Customer Profile';
+    }
+
+    if (
+      pathname === '/super-admin/people/customers' ||
+      pathname === '/super-admin/customers'
+    ) {
+      return 'Customers';
+    }
+
+    if (
+      pathname.includes('/wallets/customers/') &&
+      pathname !== '/super-admin/wallets/customers'
+    ) {
+      return 'Customer Wallet Details';
+    }
+
+    if (
+      pathname === '/super-admin/wallets/customers' ||
+      pathname.endsWith('/wallets/customers')
+    ) {
+      return 'Customer Wallets';
     }
 
     if (
@@ -73,6 +123,22 @@ export const AdminLayout: React.FC = () => {
       pathname !== '/super-admin/wallets/customer-withdrawals'
     ) {
       return 'Withdrawal Details';
+    }
+
+    if (
+      pathname.includes('/wallets/add-funds/') ||
+      pathname.includes('/wallets/funding/')
+    ) {
+      return 'Wallet Funding Details';
+    }
+
+    if (
+      pathname === '/super-admin/wallets/add-funds' ||
+      pathname === '/super-admin/wallets/funding' ||
+      pathname.endsWith('/wallets/add-funds') ||
+      pathname.endsWith('/wallets/funding')
+    ) {
+      return 'Wallet Funding';
     }
 
     if (

@@ -91,11 +91,18 @@ export interface MobileMoneyFilters {
   vendor?: ApprovedVendor | 'ALL';
   status: MobileMoneyStatus | 'ALL' | 'Cancelled_Failed';
   business: string | 'ALL';
-  dateFrom: string;
-  dateTo: string;
+  selectedDate?: string; // e.g. YYYY-MM-DD
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface MobileMoneySummary {
+  // Primary KPI values
+  totalTransactions: number;
+  totalAmount: number;
+  serviceEarnings: number;
+
+  // Secondary operational counts
   total: number;
   pickup: number;
   walkIn: number;
