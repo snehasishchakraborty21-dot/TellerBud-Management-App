@@ -144,7 +144,7 @@ export type WithdrawalStatus =
 
 export type WithdrawalNetwork = 'MTN Mobile Money' | 'Airtel Money';
 
-export type WithdrawalFundsState = 'Pending' | 'Debited' | 'Released' | 'Cancelled';
+export type WithdrawalFundsState = 'Reserved' | 'Debited' | 'Released' | 'Cancelled' | 'Pending';
 
 export interface WithdrawalStatusHistoryItem {
   id: string;
@@ -157,6 +157,7 @@ export interface WithdrawalStatusHistoryItem {
 export interface CustomerWalletPosition {
   postedBalance: number; // in ZMW e.g. 15450
   availableBalance: number; // in ZMW e.g. 8250 or 15450
+  reservedFunds: number; // in ZMW e.g. 7200
   withdrawalAmount: number; // in ZMW e.g. 7200
   fundsState: WithdrawalFundsState;
 }
@@ -165,6 +166,8 @@ export interface CustomerWithdrawal {
   id: string; // Internal unique id e.g. 'WDR-REC-001'
   reference: string; // Reference e.g. 'TB-WDR-8812'
   customerName: string;
+  customerId?: string; // e.g. 'TB-CUS-1046'
+  walletId?: string; // e.g. 'TB-WAL-1046'
   customerPhone: string; // formatted Zambia phone e.g. '+260 97 123 4567'
   amount: number; // in ZMW
   network: WithdrawalNetwork;
@@ -172,6 +175,7 @@ export interface CustomerWithdrawal {
   requestedAt: string; // ISO string e.g. '2026-08-31T10:51:00Z'
   fundsState: WithdrawalFundsState;
   status: WithdrawalStatus;
+  reservedFunds?: number;
   notes?: string;
   initialPostedBalance?: number; // Base posted balance for calculating wallet positions
   walletStatus?: 'Active' | 'Suspended';

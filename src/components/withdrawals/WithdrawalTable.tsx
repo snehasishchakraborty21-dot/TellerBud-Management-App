@@ -1,20 +1,34 @@
 import React from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
-  CustomerWithdrawal,
-  WithdrawalSortField,
-  WithdrawalSortDirection,
-} from '../../types/admin';
-import { StatusChip } from '../shared/StatusChip';
-import { formatZMW, getWithdrawalDateParts, formatWithdrawalDate } from '../../utils/formatters';
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+  Clock,
+  CheckCircle2,
+  RotateCcw,
+  XCircle,
+  Ban,
+} from 'lucide-react';
+import { CustomerWithdrawal, WithdrawalStatus } from '../../types/admin';
+import { formatZMW, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
+import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
+import { useAuth } from '../../context/AuthContext';
+
+export type CustomerWithdrawalSortField =
+  | 'requestedAt'
+  | 'customer'
+  | 'provider'
+  | 'amount'
+  | 'status';
+export type CustomerWithdrawalSortDirection = 'asc' | 'desc';
 
 interface WithdrawalTableProps {
   withdrawals: CustomerWithdrawal[];
-  sortField: WithdrawalSortField;
-  sortDirection: WithdrawalSortDirection;
-  onSort: (field: WithdrawalSortField) => void;
-  onView: (withdrawal: CustomerWithdrawal) => void;
-  highlightedReference?: string | null;
+  sortField: CustomerWithdrawalSortField;
+  sortDirection: CustomerWithdrawalSortDirection;
+  onSort: (field: CustomerWithdrawalSortField) => void;
 }
 
 export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
@@ -22,246 +36,287 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
   sortField,
   sortDirection,
   onSort,
-  onView,
-  highlightedReference,
 }) => {
-  const formatDateTime = (isoStr: string) => {
-    return getWithdrawalDateParts(isoStr);
-  };
+  const { currentUser } = useAuth();
+  const isAuthorizedAdmin = !!currentUser;
 
-  const formatAmount = (amount: number) => {
-    return formatZMW(amount);
-  };
-
-  const renderSortIcon = (field: WithdrawalSortField) => {
+  const renderSortIcon = (field: CustomerWithdrawalSortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 opacity-60 group-hover:opacity-100" />;
+      return (
+        <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 opacity-60 group-hover:opacity-100 shrink-0" />
+      );
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="w-3.5 h-3.5 text-[#0D93AA]" />
+      <ArrowUp className="w-3.5 h-3.5 text-[#0D93AA] shrink-0" />
     ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-[#0D93AA]" />
+      <ArrowDown className="w-3.5 h-3.5 text-[#0D93AA] shrink-0" />
     );
+  };
+
+  const renderStatusBadge = (status: WithdrawalStatus) => {
+    switch (status) {
+      case 'Pending Review':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/70 whitespace-nowrap">
+            <Clock size={12} className="shrink-0" />
+            <span>Pending Review</span>
+          </span>
+        );
+      case 'Approved':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/70 whitespace-nowrap">
+            <CheckCircle2 size={12} className="shrink-0" />
+            <span>Approved</span>
+          </span>
+        );
+      case 'Processing':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200/70 whitespace-nowrap">
+            <RotateCcw size={12} className="shrink-0" />
+            <span>Processing</span>
+          </span>
+        );
+      case 'Paid':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 whitespace-nowrap">
+            <CheckCircle2 size={12} className="shrink-0" />
+            <span>Paid</span>
+          </span>
+        );
+      case 'Rejected':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/70 whitespace-nowrap">
+            <XCircle size={12} className="shrink-0" />
+            <span>Rejected</span>
+          </span>
+        );
+      case 'Cancelled':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200/80 whitespace-nowrap">
+            <Ban size={12} className="shrink-0" />
+            <span>Cancelled</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">
+            <span>{status}</span>
+          </span>
+        );
+    }
   };
 
   if (withdrawals.length === 0) {
     return (
-      <div className="bg-white border border-gray-100 rounded-xl p-12 text-center shadow-sm">
-        <p className="text-sm font-semibold text-gray-600">No withdrawal requests found.</p>
+      <div className="bg-white border border-gray-200/80 rounded-xl p-12 text-center shadow-xs">
+        <p className="text-sm font-semibold text-slate-600">No customer withdrawal requests found.</p>
+        <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search query.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-      {/* Desktop Table View */}
-      <div className="hidden lg:block overflow-x-auto">
+    <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden">
+      <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/75 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-              <th className="py-3.5 px-4 font-bold">Reference</th>
-              <th className="py-3.5 px-4 font-bold">Customer</th>
-              <th className="py-3.5 px-4 font-bold">Customer Phone</th>
-              <th className="py-3.5 px-4 font-bold">
-                <button
-                  type="button"
-                  onClick={() => onSort('amount')}
-                  className="group inline-flex items-center gap-1 font-bold text-gray-500 hover:text-[#0D93AA] focus:outline-none transition-colors"
-                  aria-label={`Sort by amount, currently ${sortField === 'amount' ? sortDirection : 'none'}`}
-                >
-                  <span>Amount</span>
-                  {renderSortIcon('amount')}
-                </button>
-              </th>
-              <th className="py-3.5 px-4 font-bold">Network</th>
-              <th className="py-3.5 px-4 font-bold">Payout Number</th>
-              <th className="py-3.5 px-4 font-bold">
+            <tr className="border-b border-gray-200 bg-slate-50/75 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              {/* 1. Withdrawal Ref / Submitted */}
+              <th scope="col" className="py-3 px-4 min-w-[170px]">
                 <button
                   type="button"
                   onClick={() => onSort('requestedAt')}
-                  className="group inline-flex items-center gap-1 font-bold text-gray-500 hover:text-[#0D93AA] focus:outline-none transition-colors"
-                  aria-label={`Sort by requested date, currently ${sortField === 'requestedAt' ? sortDirection : 'none'}`}
+                  className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
-                  <span>Requested</span>
+                  <span>Withdrawal Ref / Submitted</span>
                   {renderSortIcon('requestedAt')}
                 </button>
               </th>
-              <th className="py-3.5 px-4 font-bold">Funds</th>
-              <th className="py-3.5 px-4 font-bold">
+
+              {/* 2. Customer */}
+              <th scope="col" className="py-3 px-4 min-w-[210px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('customer')}
+                  className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
+                >
+                  <span>Customer</span>
+                  {renderSortIcon('customer')}
+                </button>
+              </th>
+
+              {/* 3. Provider */}
+              <th scope="col" className="py-3 px-4 min-w-[160px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('provider')}
+                  className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
+                >
+                  <span>Provider</span>
+                  {renderSortIcon('provider')}
+                </button>
+              </th>
+
+              {/* 4. Withdrawal Amount */}
+              <th scope="col" className="py-3 px-4 text-right min-w-[145px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('amount')}
+                  className="group inline-flex items-center justify-end gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors ml-auto"
+                >
+                  <span>Withdrawal Amount</span>
+                  {renderSortIcon('amount')}
+                </button>
+              </th>
+
+              {/* 5. Mobile Number */}
+              <th scope="col" className="py-3 px-4 min-w-[160px]">
+                Mobile Number
+              </th>
+
+              {/* 6. Reserved Funds */}
+              <th scope="col" className="py-3 px-4 text-right min-w-[140px]">
+                Reserved Funds
+              </th>
+
+              {/* 7. Status */}
+              <th scope="col" className="py-3 px-4 min-w-[140px]">
                 <button
                   type="button"
                   onClick={() => onSort('status')}
-                  className="group inline-flex items-center gap-1 font-bold text-gray-500 hover:text-[#0D93AA] focus:outline-none transition-colors"
-                  aria-label={`Sort by status, currently ${sortField === 'status' ? sortDirection : 'none'}`}
+                  className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
                   <span>Status</span>
                   {renderSortIcon('status')}
                 </button>
               </th>
-              <th className="py-3.5 px-4 text-right font-bold">Action</th>
+
+              {/* 8. Action */}
+              <th scope="col" className="py-3 px-4 text-center min-w-[145px] sticky right-0 bg-slate-50/95 backdrop-blur-xs z-10">
+                Action
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {withdrawals.map((item) => {
-              const { datePart, timePart } = formatDateTime(item.requestedAt);
-              const isHighlighted =
-                highlightedReference &&
-                (item.reference.toLowerCase() === highlightedReference.toLowerCase() ||
-                  item.id.toLowerCase() === highlightedReference.toLowerCase());
+
+          <tbody className="divide-y divide-gray-100 text-xs">
+            {withdrawals.map((record) => {
+              const fullMobile = isAuthorizedAdmin
+                ? formatZambianMobileNumber(record.payoutNumber || record.customerPhone)
+                : 'Access Restricted';
+
+              const isReservationActive =
+                record.status === 'Pending Review' ||
+                record.status === 'Approved' ||
+                record.status === 'Processing';
+
+              const reservedAmount = isReservationActive
+                ? (record.reservedFunds ?? record.amount)
+                : null;
 
               return (
                 <tr
-                  key={item.id}
-                  className={`hover:bg-gray-50/80 transition-colors ${
-                    isHighlighted
-                      ? 'bg-cyan-50/70 border-l-4 border-l-[#0D93AA]'
-                      : ''
-                  }`}
+                  key={record.id}
+                  className="hover:bg-slate-50/70 transition-colors"
                 >
-                  {/* Reference */}
-                  <td className="py-3 px-4 font-mono font-bold text-gray-900 whitespace-nowrap">
-                    {item.reference}
-                  </td>
-
-                  {/* Customer */}
-                  <td className="py-3 px-4 font-medium text-gray-900 whitespace-nowrap">
-                    {item.customerName}
-                  </td>
-
-                  {/* Customer Phone */}
-                  <td className="py-3 px-4 font-mono text-gray-600 whitespace-nowrap">
-                    {item.customerPhone}
-                  </td>
-
-                  {/* Amount */}
-                  <td className="py-3 px-4 font-bold text-gray-900 whitespace-nowrap">
-                    {formatAmount(item.amount)}
-                  </td>
-
-                  {/* Network */}
-                  <td className="py-3 px-4 font-medium text-gray-800 whitespace-nowrap">
-                    {item.network}
-                  </td>
-
-                  {/* Payout Number */}
-                  <td className="py-3 px-4 font-mono text-gray-600 whitespace-nowrap">
-                    {item.payoutNumber}
-                  </td>
-
-                  {/* Requested */}
-                  <td className="py-3 px-4 text-gray-700 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{datePart}</div>
-                    <div className="text-[11px] text-gray-400 font-mono">{timePart}</div>
-                  </td>
-
-                  {/* Funds */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <StatusChip status={item.fundsState} size="sm" />
-                  </td>
-
-                  {/* Status */}
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <StatusChip status={item.status} size="sm" />
-                  </td>
-
-                  {/* Action */}
-                  <td className="py-3 px-4 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => onView(item)}
-                      aria-label={`View withdrawal ${item.reference}`}
-                      className="px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer"
+                  {/* 1. Withdrawal Ref / Submitted */}
+                  <td className="py-3 px-4 align-middle">
+                    <Link
+                      to={`/super-admin/wallets/customer-withdrawals/${record.reference}`}
+                      className="font-mono font-bold text-slate-900 hover:text-[#0D93AA] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 text-xs block"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>View</span>
-                    </button>
+                      {record.reference}
+                    </Link>
+                    <div className="text-[11px] text-slate-500 font-mono mt-0.5 whitespace-nowrap">
+                      {formatWithdrawalDate(record.requestedAt)}
+                    </div>
+                  </td>
+
+                  {/* 2. Customer: Name, Customer ID, Wallet ID */}
+                  <td className="py-3 px-4 align-middle">
+                    <Link
+                      to={`/super-admin/people/customers/${record.customerId || 'TB-CUS-1052'}`}
+                      className="font-semibold text-slate-900 hover:text-[#0D93AA] transition-colors block leading-tight"
+                    >
+                      {record.customerName}
+                    </Link>
+                    <div className="flex items-center gap-1.5 mt-1 font-mono text-[11px]">
+                      <Link
+                        to={`/super-admin/people/customers/${record.customerId || 'TB-CUS-1052'}`}
+                        className="text-[#0D93AA] hover:underline font-semibold"
+                        title={`Customer ID: ${record.customerId}`}
+                      >
+                        {record.customerId}
+                      </Link>
+                      <span className="text-slate-300">/</span>
+                      <Link
+                        to={`/super-admin/wallets/customers/${record.walletId || 'TB-WAL-1052'}`}
+                        className="text-slate-600 hover:text-[#0D93AA] hover:underline font-medium"
+                        title={`Wallet ID: ${record.walletId}`}
+                      >
+                        {record.walletId}
+                      </Link>
+                    </div>
+                  </td>
+
+                  {/* 3. Provider with Logo */}
+                  <td className="py-3 px-4 align-middle">
+                    <div className="flex items-center gap-2">
+                      {record.network === 'MTN Mobile Money' ? (
+                        <MtnLogo className="w-5 h-5 rounded-full shrink-0" />
+                      ) : (
+                        <AirtelLogo className="w-5 h-5 rounded-full shrink-0" />
+                      )}
+                      <span className="font-medium text-slate-800 text-xs whitespace-nowrap">
+                        {record.network}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* 4. Withdrawal Amount (Right-aligned) */}
+                  <td className="py-3 px-4 align-middle text-right font-mono font-bold text-slate-900 text-xs">
+                    {formatZMW(record.amount)}
+                  </td>
+
+                  {/* 5. Mobile Number (Complete, Unmasked Zambian Format) */}
+                  <td className="py-3 px-4 align-middle">
+                    <span className="font-mono text-slate-800 font-medium select-all text-xs whitespace-nowrap">
+                      {fullMobile}
+                    </span>
+                  </td>
+
+                  {/* 6. Reserved Funds (Right-aligned, Em Dash when inactive) */}
+                  <td className="py-3 px-4 align-middle text-right font-mono text-xs">
+                    {reservedAmount !== null ? (
+                      <span className="font-bold text-slate-900">
+                        {formatZMW(reservedAmount)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-bold" title="Reservation Released">
+                        —
+                      </span>
+                    )}
+                  </td>
+
+                  {/* 7. Status Badge */}
+                  <td className="py-3 px-4 align-middle">
+                    {renderStatusBadge(record.status)}
+                  </td>
+
+                  {/* 8. Action: View Details */}
+                  <td className="py-3 px-4 align-middle text-center sticky right-0 bg-white/95 group-hover:bg-slate-50/95 transition-colors z-10 whitespace-nowrap">
+                    <Link
+                      to={`/super-admin/wallets/customer-withdrawals/${record.reference}`}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors border border-[#0D93AA]/20 shrink-0 cursor-pointer shadow-2xs whitespace-nowrap"
+                    >
+                      <Eye size={13} className="shrink-0" />
+                      <span className="whitespace-nowrap">View Details</span>
+                    </Link>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-      </div>
-
-      {/* Tablet & Mobile Card Layout */}
-      <div className="lg:hidden divide-y divide-gray-100">
-        {withdrawals.map((item) => {
-          const { datePart, timePart } = formatDateTime(item.requestedAt);
-          const isHighlighted =
-            highlightedReference &&
-            (item.reference.toLowerCase() === highlightedReference.toLowerCase() ||
-              item.id.toLowerCase() === highlightedReference.toLowerCase());
-
-          return (
-            <div
-              key={item.id}
-              className={`p-4 space-y-3 ${
-                isHighlighted ? 'bg-cyan-50/70 border-l-4 border-l-[#0D93AA]' : ''
-              }`}
-            >
-              {/* Header: Reference & Status */}
-              <div className="flex items-center justify-between">
-                <div className="font-mono font-bold text-sm text-gray-900">
-                  {item.reference}
-                </div>
-                <StatusChip status={item.status} size="sm" />
-              </div>
-
-              {/* Customer & Amount */}
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <div className="font-medium text-gray-900 text-sm">
-                    {item.customerName}
-                  </div>
-                  <div className="text-xs text-gray-500 font-mono mt-0.5">
-                    {item.customerPhone}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-gray-900 text-sm">
-                    {formatAmount(item.amount)}
-                  </div>
-                  <div className="mt-1">
-                    <StatusChip status={item.fundsState} size="sm" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Network, Payout & Date */}
-              <div className="pt-2 border-t border-gray-50 grid grid-cols-2 gap-2 text-xs text-gray-600">
-                <div>
-                  <span className="text-gray-400 text-[10px] uppercase font-bold block">
-                    Network
-                  </span>
-                  <span className="font-medium text-gray-800">{item.network}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-[10px] uppercase font-bold block">
-                    Payout To
-                  </span>
-                  <span className="font-mono text-gray-800">{item.payoutNumber}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400 text-[10px] uppercase font-bold block">
-                    Requested
-                  </span>
-                  <span className="text-gray-800">{formatWithdrawalDate(item.requestedAt)}</span>
-                </div>
-                <div className="flex items-end justify-end">
-                  <button
-                    type="button"
-                    onClick={() => onView(item)}
-                    aria-label={`View withdrawal ${item.reference}`}
-                    className="w-full py-1.5 px-3 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

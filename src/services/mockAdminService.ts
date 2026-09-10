@@ -352,11 +352,15 @@ class MockAdminService implements IAdminService {
         result = result.filter((w) => {
           const ref = w.reference.toLowerCase();
           const name = w.customerName.toLowerCase();
+          const custId = (w.customerId || '').toLowerCase();
+          const walId = (w.walletId || '').toLowerCase();
           const phone = w.customerPhone.replace(/\s+/g, '').toLowerCase();
           const payout = w.payoutNumber.replace(/\s+/g, '').toLowerCase();
           return (
             ref.includes(query) ||
             name.includes(query) ||
+            custId.includes(query) ||
+            walId.includes(query) ||
             phone.includes(cleanQuery) ||
             payout.includes(cleanQuery)
           );
@@ -518,10 +522,16 @@ class MockAdminService implements IAdminService {
       },
     ];
 
+    const newReservedFunds =
+      newStatus === 'Approved' || newStatus === 'Processing'
+        ? (current.reservedFunds ?? current.amount)
+        : 0;
+
     const updated: CustomerWithdrawal = {
       ...current,
       status: newStatus,
       fundsState: newFundsState,
+      reservedFunds: newReservedFunds,
       notes: reason ? reason : current.notes,
       history: [...existingHistory, newHistoryEntry],
     };

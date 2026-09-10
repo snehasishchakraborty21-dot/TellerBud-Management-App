@@ -126,8 +126,35 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
+      pathname === '/super-admin/wallets/customer-withdrawals' ||
+      pathname === '/wallets/customer-withdrawals' ||
+      pathname.endsWith('/wallets/customer-withdrawals')
+    ) {
+      return 'Customer Withdrawals';
+    }
+
+    if (
+      pathname.startsWith('/business-global-wallets/') ||
+      pathname.startsWith('/super-admin/business-global-wallets/') ||
+      (pathname.startsWith('/super-admin/wallets/business-agent/') &&
+        pathname !== '/super-admin/wallets/business-agent')
+    ) {
+      return 'Business Global Wallet Details';
+    }
+
+    if (
+      pathname === '/business-global-wallets' ||
+      pathname === '/super-admin/business-global-wallets' ||
+      pathname === '/super-admin/wallets/business-agent' ||
+      pathname.endsWith('/wallets/business-agent')
+    ) {
+      return 'Business Global Wallets';
+    }
+
+    if (
       pathname.includes('/wallets/add-funds/') ||
-      pathname.includes('/wallets/funding/')
+      pathname.includes('/wallets/funding/') ||
+      pathname.includes('/wallet-funding/')
     ) {
       return 'Wallet Funding Details';
     }
@@ -135,8 +162,10 @@ export const AdminLayout: React.FC = () => {
     if (
       pathname === '/super-admin/wallets/add-funds' ||
       pathname === '/super-admin/wallets/funding' ||
+      pathname === '/super-admin/wallet-funding' ||
       pathname.endsWith('/wallets/add-funds') ||
-      pathname.endsWith('/wallets/funding')
+      pathname.endsWith('/wallets/funding') ||
+      pathname.endsWith('/wallet-funding')
     ) {
       return 'Wallet Funding';
     }

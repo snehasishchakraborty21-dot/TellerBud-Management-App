@@ -39,6 +39,7 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       case 'Matching':
       case 'Finding an Agent':
       case 'Pending':
+      case 'Reserved':
         return {
           bg: 'bg-amber-50',
           text: 'text-amber-800',

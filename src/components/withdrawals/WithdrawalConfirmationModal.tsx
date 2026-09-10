@@ -60,6 +60,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
           confirmLabel: isProcessing ? 'Approving...' : 'Approve',
           confirmButtonClass:
             'bg-[#0D93AA] hover:bg-[#0b8296] text-white focus:ring-[#0D93AA]/40',
+          safetyStatement: `After approval, the funds reservation of ${formatZMW(withdrawal.amount)} remains active on the customer's wallet. The wallet balance will not be debited until marked Paid.`,
         };
       case 'Mark Processing':
         return {
@@ -67,6 +68,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
           confirmLabel: isProcessing ? 'Updating...' : 'Mark Processing',
           confirmButtonClass:
             'bg-[#0D93AA] hover:bg-[#0b8296] text-white focus:ring-[#0D93AA]/40',
+          safetyStatement: `Withdrawal payout is in progress with ${withdrawal.network}. The funds reservation remains active.`,
         };
       case 'Mark Paid':
         return {
@@ -74,7 +76,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
           confirmLabel: isProcessing ? 'Confirming Paid...' : 'Confirm Paid',
           confirmButtonClass:
             'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500/40',
-          safetyStatement: 'This will record the final wallet debit.',
+          safetyStatement: 'This will record the final wallet ledger debit and complete the withdrawal.',
         };
       case 'Reject':
         return {
@@ -82,7 +84,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
           confirmLabel: isProcessing ? 'Rejecting...' : 'Reject',
           confirmButtonClass:
             'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500/40',
-          safetyStatement: 'This will reject the withdrawal request and close the transaction.',
+          safetyStatement: `Rejecting this request will immediately release the ${formatZMW(withdrawal.amount)} reserved funds back to available balance. The wallet will not be debited.`,
         };
     }
   };
@@ -90,6 +92,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
   const config = getModalConfig();
 
   const handleConfirmClick = () => {
+    if (isProcessing) return;
     if (actionType === 'Reject') {
       if (!rejectionReason.trim()) {
         setReasonValidationErr('Please provide a reason for rejecting this withdrawal.');
@@ -207,7 +210,7 @@ export const WithdrawalConfirmationModal: React.FC<WithdrawalConfirmationModalPr
                     Funds State
                   </span>
                   <span className="font-semibold text-gray-800">
-                    {withdrawal.fundsState}
+                    {withdrawal.fundsState === 'Pending' ? 'Reserved' : withdrawal.fundsState}
                   </span>
                 </div>
               </>

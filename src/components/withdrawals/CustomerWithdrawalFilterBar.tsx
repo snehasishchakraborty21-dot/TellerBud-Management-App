@@ -1,21 +1,25 @@
 import React from 'react';
 import { Search, RotateCcw } from 'lucide-react';
-import {
-  WalletFundingFilters,
-  FundingProvider,
-  FundingStatus,
-} from '../../types/walletFunding';
+import { WithdrawalStatus, WithdrawalNetwork } from '../../types/admin';
 
-interface WalletFundingFilterBarProps {
-  filters: WalletFundingFilters;
-  onFilterChange: (filters: Partial<WalletFundingFilters>) => void;
+export interface CustomerWithdrawalFiltersState {
+  search: string;
+  provider: 'ALL' | WithdrawalNetwork;
+  status: 'ALL' | WithdrawalStatus;
+  submittedFrom: string;
+  submittedTo: string;
+}
+
+interface CustomerWithdrawalFilterBarProps {
+  filters: CustomerWithdrawalFiltersState;
+  onFilterChange: (changes: Partial<CustomerWithdrawalFiltersState>) => void;
   onClearFilters: () => void;
   onRefresh: () => void;
   hasActiveFilters: boolean;
   isRefreshing: boolean;
 }
 
-export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
+export const CustomerWithdrawalFilterBar: React.FC<CustomerWithdrawalFilterBarProps> = ({
   filters,
   onFilterChange,
   onClearFilters,
@@ -36,7 +40,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             type="text"
             value={filters.search}
             onChange={(e) => onFilterChange({ search: e.target.value })}
-            placeholder="Search funding reference, customer, Customer ID or mobile number…"
+            placeholder="Search reference, customer, ID or mobile…"
             className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-colors"
           />
         </div>
@@ -44,16 +48,16 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
         {/* Filter Controls Row */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Provider Select */}
-          <div className="w-[140px] shrink-0">
+          <div className="w-[145px] shrink-0">
             <select
               value={filters.provider}
               onChange={(e) =>
                 onFilterChange({
-                  provider: e.target.value as 'ALL' | FundingProvider,
+                  provider: e.target.value as 'ALL' | WithdrawalNetwork,
                 })
               }
               aria-label="Filter by provider"
-              className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white"
+              className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white cursor-pointer"
             >
               <option value="ALL">All Providers</option>
               <option value="MTN Mobile Money">MTN Mobile Money</option>
@@ -62,62 +66,61 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
           </div>
 
           {/* Status Select */}
-          <div className="w-[130px] shrink-0">
+          <div className="w-[140px] shrink-0">
             <select
               value={filters.status}
               onChange={(e) =>
                 onFilterChange({
-                  status: e.target.value as 'ALL' | FundingStatus,
+                  status: e.target.value as 'ALL' | WithdrawalStatus,
                 })
               }
               aria-label="Filter by status"
-              className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white"
+              className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white cursor-pointer"
             >
               <option value="ALL">All Statuses</option>
-              <option value="Initiated">Initiated</option>
-              <option value="Pending">Pending</option>
-              <option value="Completed">Completed</option>
-              <option value="Failed">Failed</option>
+              <option value="Pending Review">Pending Review</option>
+              <option value="Approved">Approved</option>
+              <option value="Processing">Processing</option>
+              <option value="Paid">Paid</option>
+              <option value="Rejected">Rejected</option>
               <option value="Cancelled">Cancelled</option>
-              <option value="Expired">Expired</option>
-              <option value="Reversed">Reversed</option>
             </select>
           </div>
 
-          {/* Initiated From Date with visible label */}
+          {/* Submitted From Date with label */}
           <div className="flex items-center gap-1.5 shrink-0">
             <label
-              htmlFor="filter-initiated-from"
+              htmlFor="filter-submitted-from"
               className="text-xs font-semibold text-slate-700 shrink-0"
             >
               From
             </label>
             <input
-              id="filter-initiated-from"
+              id="filter-submitted-from"
               type="date"
-              value={filters.initiatedFrom}
-              onChange={(e) => onFilterChange({ initiatedFrom: e.target.value })}
-              title="Initiated From Date"
-              aria-label="Initiated From Date"
+              value={filters.submittedFrom}
+              onChange={(e) => onFilterChange({ submittedFrom: e.target.value })}
+              title="Submitted From Date"
+              aria-label="Submitted From Date"
               className="w-[125px] px-2.5 py-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] focus:bg-white"
             />
           </div>
 
-          {/* Initiated To Date with visible label */}
+          {/* Submitted To Date with label */}
           <div className="flex items-center gap-1.5 shrink-0">
             <label
-              htmlFor="filter-initiated-to"
+              htmlFor="filter-submitted-to"
               className="text-xs font-semibold text-slate-700 shrink-0"
             >
               To
             </label>
             <input
-              id="filter-initiated-to"
+              id="filter-submitted-to"
               type="date"
-              value={filters.initiatedTo}
-              onChange={(e) => onFilterChange({ initiatedTo: e.target.value })}
-              title="Initiated To Date"
-              aria-label="Initiated To Date"
+              value={filters.submittedTo}
+              onChange={(e) => onFilterChange({ submittedTo: e.target.value })}
+              title="Submitted To Date"
+              aria-label="Submitted To Date"
               className="w-[125px] px-2.5 py-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] focus:bg-white"
             />
           </div>
@@ -136,12 +139,12 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             Clear Filters
           </button>
 
-          {/* Labelled Refresh Button */}
+          {/* Refresh Button */}
           <button
             type="button"
             onClick={onRefresh}
-            title="Refresh funding records"
-            aria-label="Refresh funding records"
+            title="Refresh customer withdrawal records"
+            aria-label="Refresh customer withdrawal records"
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-[#0D93AA] focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-colors cursor-pointer shrink-0 shadow-2xs"
           >
             <RotateCcw

@@ -23,7 +23,8 @@ export interface WalletFundingRecord {
   walletId: string; // e.g. 'TB-WAL-1052'
   customerId: string; // e.g. 'TB-CUS-1052'
   customerName: string; // e.g. 'Mwamba Mulenga'
-  maskedMobileNumber: string; // e.g. '+260 97 ••• 9012'
+  maskedMobileNumber: string; // e.g. '+260 96 123 9900'
+  customerMobileNumber?: string; // e.g. '+260 96 123 9900'
   provider: FundingProvider;
   amount: number;
   providerReference: string; // e.g. 'MTN-TXN-4910284'
@@ -35,6 +36,34 @@ export interface WalletFundingRecord {
   lastUpdated: string;
   lastUpdatedTimestamp: string;
   timeline: WalletFundingTimelineStep[];
+
+  // Ledger & Balance Impact
+  balanceBefore?: number;
+  fundingCredit?: number;
+  balanceAfter?: number;
+  postedAt?: string;
+  reversalDebitReference?: string | null;
+  reversalDebitAmount?: number | null;
+  reconciliationStatus?: 'Reconciled' | 'Compensated' | 'Pending' | 'Failed' | 'Zero Impact';
+
+  // Provider Verification Details
+  providerStatus?: string;
+  verificationMethod?: string;
+  callbackReceived?: string;
+  backendVerificationStatus?: 'Confirmed' | 'Pending' | 'Failed' | 'Compensated';
+  verificationAttempts?: number;
+  lastProviderResponseTime?: string;
+
+  // Operational Audit Details
+  createdBy?: string;
+  source?: string;
+  country?: string;
+  currency?: string;
+  providerIntegration?: string;
+  lastUpdatedBy?: string;
+  idempotencyCheck?: string;
+  duplicateCallbackCount?: number;
+  reconciliationResult?: string;
 }
 
 export interface WalletFundingSummary {

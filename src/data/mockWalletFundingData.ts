@@ -5,8 +5,9 @@ import {
   WalletFundingSortField,
   WalletFundingSortDirection,
 } from '../types/walletFunding';
+import { getCustomerRegisteredPhone } from './mockCustomerData';
 
-export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
+const BASE_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
   // 1. Mwamba Mulenga - Canonical Record 1
   {
     id: 'FND-1052-01',
@@ -24,6 +25,26 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
     initiatedTimestamp: '2025-01-14T09:58:00Z',
     lastUpdated: '14 Jan 2025, 10:00 AM',
     lastUpdatedTimestamp: '2025-01-14T10:00:00Z',
+    balanceBefore: 0.0,
+    fundingCredit: 10000.0,
+    balanceAfter: 10000.0,
+    postedAt: '14 Jan 2025, 10:00 AM',
+    reconciliationStatus: 'Reconciled',
+    providerStatus: 'SUCCESSFUL',
+    verificationMethod: 'Direct Provider API',
+    callbackReceived: 'Yes (Signed Webhook)',
+    backendVerificationStatus: 'Confirmed',
+    verificationAttempts: 1,
+    lastProviderResponseTime: '14 Jan 2025, 09:59:58 AM',
+    createdBy: 'Customer',
+    source: 'TellerBud Customer Mobile App',
+    country: 'Zambia',
+    currency: 'ZMW',
+    providerIntegration: 'MTN Mobile Money Direct REST API (TLS 1.3)',
+    lastUpdatedBy: 'System / Automated Webhook Service',
+    idempotencyCheck: 'Passed (Unique Key: IDEMP-TB-FND-1052-01)',
+    duplicateCallbackCount: 0,
+    reconciliationResult: 'Match - Ledger Credited Exactly Once',
     timeline: [
       {
         step: '1',
@@ -34,29 +55,36 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
       },
       {
         step: '2',
-        title: 'MTN API Handshake Acknowledged',
+        title: 'Provider Request Sent',
         description: 'Direct TLS API call to MTN MoMo collection endpoint succeeded (HTTP 202 Accepted).',
         timestamp: '14 Jan 2025, 09:58:04 AM',
         status: 'completed',
       },
       {
         step: '3',
-        title: 'Customer USSD Push Prompt Confirmed',
-        description: 'Customer authorized collection prompt on registered Zambian SIM handset.',
+        title: 'Customer Authorization Pending',
+        description: 'Customer authorized collection prompt on registered Zambian SIM handset (+260 97 ••• 9012).',
         timestamp: '14 Jan 2025, 09:59:12 AM',
         status: 'completed',
       },
       {
         step: '4',
-        title: 'MTN Webhook Callback Verified',
+        title: 'Provider Confirmation Received',
         description: 'Direct provider webhook received with HMAC-SHA256 signature (Status: SUCCESSFUL).',
         timestamp: '14 Jan 2025, 09:59:58 AM',
         status: 'completed',
       },
       {
         step: '5',
-        title: 'Wallet Ledger Credited',
-        description: 'Posted immutable ledger credit TB-LED-1052-01 for ZMW 10,000.00.',
+        title: 'Backend Verification Completed',
+        description: 'Cryptographic signature, nonce uniqueness, and idempotency key verified by core engine.',
+        timestamp: '14 Jan 2025, 09:59:59 AM',
+        status: 'completed',
+      },
+      {
+        step: '6',
+        title: 'Wallet Credited',
+        description: 'Posted immutable ledger credit TB-LED-1052-01 for ZMW 10,000.00. Balance: ZMW 10,000.00.',
         timestamp: '14 Jan 2025, 10:00:00 AM',
         status: 'completed',
       },
@@ -80,6 +108,26 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
     initiatedTimestamp: '2025-02-20T13:12:00Z',
     lastUpdated: '20 Feb 2025, 03:15 PM',
     lastUpdatedTimestamp: '2025-02-20T13:15:00Z',
+    balanceBefore: 10000.0,
+    fundingCredit: 15000.0,
+    balanceAfter: 25000.0,
+    postedAt: '20 Feb 2025, 03:15 PM',
+    reconciliationStatus: 'Reconciled',
+    providerStatus: 'SUCCESSFUL',
+    verificationMethod: 'Direct Provider API',
+    callbackReceived: 'Yes (Signed Webhook)',
+    backendVerificationStatus: 'Confirmed',
+    verificationAttempts: 1,
+    lastProviderResponseTime: '20 Feb 2025, 03:14:55 PM',
+    createdBy: 'Customer',
+    source: 'TellerBud Customer Mobile App',
+    country: 'Zambia',
+    currency: 'ZMW',
+    providerIntegration: 'Airtel Money B2B Collection Gateway',
+    lastUpdatedBy: 'System / Automated Webhook Service',
+    idempotencyCheck: 'Passed (Unique Key: IDEMP-TB-FND-1052-02)',
+    duplicateCallbackCount: 0,
+    reconciliationResult: 'Match - Ledger Credited Exactly Once',
     timeline: [
       {
         step: '1',
@@ -90,29 +138,36 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
       },
       {
         step: '2',
-        title: 'Airtel Gateway Push Dispatched',
+        title: 'Provider Request Sent',
         description: 'Direct B2B collection push dispatched to subscriber +260 96 ••• 0123.',
         timestamp: '20 Feb 2025, 03:12:03 PM',
         status: 'completed',
       },
       {
         step: '3',
-        title: 'Handset Approval Received',
+        title: 'Customer Authorization Pending',
         description: 'Customer entered PIN authorization dialog on Airtel SIM handset.',
         timestamp: '20 Feb 2025, 03:13:40 PM',
         status: 'completed',
       },
       {
         step: '4',
-        title: 'Airtel Callback Verified',
+        title: 'Provider Confirmation Received',
         description: 'Webhook callback reference AIR-TXN-8201948 confirmed by webhook signature.',
         timestamp: '20 Feb 2025, 03:14:55 PM',
         status: 'completed',
       },
       {
         step: '5',
-        title: 'Wallet Ledger Credited',
-        description: 'Posted immutable ledger credit TB-LED-1052-02 for ZMW 15,000.00.',
+        title: 'Backend Verification Completed',
+        description: 'Provider transaction payload validated and verified.',
+        timestamp: '20 Feb 2025, 03:14:58 PM',
+        status: 'completed',
+      },
+      {
+        step: '6',
+        title: 'Wallet Credited',
+        description: 'Posted immutable ledger credit TB-LED-1052-02 for ZMW 15,000.00. Balance: ZMW 25,000.00.',
         timestamp: '20 Feb 2025, 03:15:00 PM',
         status: 'completed',
       },
@@ -136,6 +191,25 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
     initiatedTimestamp: '2026-09-02T14:22:00Z',
     lastUpdated: '02 Sept 2026, 04:24 PM',
     lastUpdatedTimestamp: '2026-09-02T14:24:00Z',
+    balanceBefore: 18450.0,
+    fundingCredit: 0.0,
+    balanceAfter: 18450.0,
+    reconciliationStatus: 'Zero Impact',
+    providerStatus: 'FAILED (USER_CANCELLED)',
+    verificationMethod: 'Direct Provider API',
+    callbackReceived: 'Yes (Rejection Notice)',
+    backendVerificationStatus: 'Failed',
+    verificationAttempts: 1,
+    lastProviderResponseTime: '02 Sep 2026, 04:23:45 PM',
+    createdBy: 'Customer',
+    source: 'TellerBud Customer Mobile App',
+    country: 'Zambia',
+    currency: 'ZMW',
+    providerIntegration: 'MTN Mobile Money Direct REST API (TLS 1.3)',
+    lastUpdatedBy: 'System / Automated Webhook Service',
+    idempotencyCheck: 'Passed (Unique Key: IDEMP-TB-FND-1052-03)',
+    duplicateCallbackCount: 0,
+    reconciliationResult: 'Zero Ledger Balance Impact',
     timeline: [
       {
         step: '1',
@@ -146,22 +220,36 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
       },
       {
         step: '2',
-        title: 'MTN Collection Push Dispatched',
+        title: 'Provider Request Sent',
         description: 'Direct USSD collection prompt dispatched to customer terminal.',
         timestamp: '02 Sep 2026, 04:22:04 PM',
         status: 'completed',
       },
       {
         step: '3',
-        title: 'Customer Prompt Rejected',
+        title: 'Customer Authorization Pending',
         description: 'Subscriber cancelled authorization prompt on handset (Code: USER_CANCELLED).',
         timestamp: '02 Sep 2026, 04:23:45 PM',
         status: 'failed',
       },
       {
         step: '4',
-        title: 'No Wallet Credit Posted',
-        description: 'Transaction marked failed; ledger balance unchanged.',
+        title: 'Provider Confirmation Received',
+        description: 'Provider reported transaction failed due to user rejection.',
+        timestamp: '02 Sep 2026, 04:23:50 PM',
+        status: 'failed',
+      },
+      {
+        step: '5',
+        title: 'Backend Verification Completed',
+        description: 'Zero settlement verified. Transaction flagged as rejected.',
+        timestamp: '02 Sep 2026, 04:23:55 PM',
+        status: 'failed',
+      },
+      {
+        step: '6',
+        title: 'No Wallet Credit Created',
+        description: 'No wallet credit has been created. Ledger balance remains unchanged at ZMW 18,450.00.',
         timestamp: '02 Sep 2026, 04:24:00 PM',
         status: 'failed',
       },
@@ -1257,6 +1345,21 @@ export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
 ];
 
 /**
+ * All wallet funding records enriched with unmasked customer mobile numbers.
+ * Retrieved directly from existing customer records using format: +260 96 123 9900.
+ */
+export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = BASE_WALLET_FUNDING_RECORDS.map(
+  (record) => {
+    const fullPhone = getCustomerRegisteredPhone(record.customerId, record.customerName);
+    return {
+      ...record,
+      customerMobileNumber: fullPhone,
+      maskedMobileNumber: fullPhone,
+    };
+  }
+);
+
+/**
  * Calculates summary metrics derived from the funding dataset
  */
 export function calculateWalletFundingSummary(records: WalletFundingRecord[]): WalletFundingSummary {
@@ -1318,15 +1421,20 @@ export function filterAndSortWalletFunding(
   // 2. Search filter: Reference, customer name, customer ID, mobile number, provider reference
   if (filters.search && filters.search.trim() !== '') {
     const q = filters.search.toLowerCase().trim();
-    result = result.filter(
-      (r) =>
+    const qDigits = q.replace(/\D/g, '');
+    result = result.filter((r) => {
+      const phone = r.customerMobileNumber || r.maskedMobileNumber || '';
+      const phoneDigits = phone.replace(/\D/g, '');
+      return (
         r.fundingReference.toLowerCase().includes(q) ||
         r.customerName.toLowerCase().includes(q) ||
         r.customerId.toLowerCase().includes(q) ||
-        r.maskedMobileNumber.toLowerCase().includes(q) ||
+        phone.toLowerCase().includes(q) ||
+        (qDigits.length >= 3 && phoneDigits.includes(qDigits)) ||
         r.providerReference.toLowerCase().includes(q) ||
         (r.walletCreditReference && r.walletCreditReference.toLowerCase().includes(q))
-    );
+      );
+    });
   }
 
   // 3. Provider filter
@@ -1401,3 +1509,70 @@ export function formatZMW(amount: number): string {
     maximumFractionDigits: 2,
   })}`;
 }
+
+export interface ExtendedFundingDetails {
+  balanceBefore: number;
+  fundingCredit: number;
+  balanceAfter: number;
+  postedAt: string;
+  reversalDebitReference: string | null;
+  reversalDebitAmount: number | null;
+  reconciliationStatus: string;
+  providerStatus: string;
+  verificationMethod: string;
+  callbackReceived: string;
+  backendVerificationStatus: string;
+  verificationAttempts: number;
+  lastProviderResponseTime: string;
+  createdBy: string;
+  source: string;
+  country: string;
+  currency: string;
+  providerIntegration: string;
+  lastUpdatedBy: string;
+  idempotencyCheck: string;
+  duplicateCallbackCount: number;
+  reconciliationResult: string;
+}
+
+/**
+ * Returns full ledger, provider verification, and operational audit details for any record
+ */
+export function getFundingExtendedDetails(record: WalletFundingRecord): ExtendedFundingDetails {
+  const isCompleted = record.status === 'Completed';
+  const isReversed = record.status === 'Reversed';
+  const isPending = record.status === 'Pending' || record.status === 'Initiated';
+  const isFailed = record.status === 'Failed' || record.status === 'Cancelled' || record.status === 'Expired';
+
+  const defaultBalanceBefore = record.balanceBefore ?? (isCompleted ? 0 : 5000);
+  const defaultFundingCredit = isCompleted ? record.amount : (isReversed ? record.amount : 0);
+  const defaultBalanceAfter = isCompleted
+    ? defaultBalanceBefore + record.amount
+    : defaultBalanceBefore;
+
+  return {
+    balanceBefore: record.balanceBefore ?? defaultBalanceBefore,
+    fundingCredit: record.fundingCredit ?? defaultFundingCredit,
+    balanceAfter: record.balanceAfter ?? defaultBalanceAfter,
+    postedAt: record.postedAt ?? (isCompleted ? record.lastUpdated : '—'),
+    reversalDebitReference: record.reversalDebitReference ?? (isReversed ? (record.reversalCreditReference || `${record.walletCreditReference || 'TB-LED'}-REV`) : null),
+    reversalDebitAmount: record.reversalDebitAmount ?? (isReversed ? record.amount : null),
+    reconciliationStatus: record.reconciliationStatus ?? (isCompleted ? 'Reconciled' : isReversed ? 'Compensated' : isFailed ? 'Zero Impact' : 'Pending'),
+    providerStatus: record.providerStatus ?? (isCompleted ? 'SUCCESSFUL' : isReversed ? 'REVERSED' : isPending ? 'Processing by Provider' : 'FAILED'),
+    verificationMethod: record.verificationMethod ?? 'Direct Provider API',
+    callbackReceived: record.callbackReceived ?? (isCompleted ? 'Yes (Signed Webhook)' : isReversed ? 'Yes (Signed Webhook)' : isPending ? 'Awaiting Provider Response' : 'Rejected / Error Payload'),
+    backendVerificationStatus: record.backendVerificationStatus ?? (isCompleted ? 'Confirmed' : isReversed ? 'Compensated' : isPending ? 'Pending' : 'Failed'),
+    verificationAttempts: record.verificationAttempts ?? 1,
+    lastProviderResponseTime: record.lastProviderResponseTime ?? record.lastUpdated,
+    createdBy: record.createdBy ?? 'Customer',
+    source: record.source ?? 'TellerBud Customer Mobile App',
+    country: record.country ?? 'Zambia',
+    currency: record.currency ?? 'ZMW',
+    providerIntegration: record.providerIntegration ?? (record.provider === 'MTN Mobile Money' ? 'MTN Mobile Money Direct REST API (TLS 1.3)' : 'Airtel Money B2B Collection Gateway'),
+    lastUpdatedBy: record.lastUpdatedBy ?? 'System / Automated Webhook Service',
+    idempotencyCheck: record.idempotencyCheck ?? `Passed (Unique Key: IDEMP-${record.fundingReference})`,
+    duplicateCallbackCount: record.duplicateCallbackCount ?? 0,
+    reconciliationResult: record.reconciliationResult ?? (isCompleted ? 'Match - Ledger Credited Exactly Once' : isReversed ? 'Compensating Reversal Ledger Balanced' : 'Zero Ledger Balance Impact'),
+  };
+}
+

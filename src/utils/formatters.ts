@@ -95,3 +95,26 @@ export const getWithdrawalDateParts = (isoStr: string): { datePart: string; time
   }
 };
 
+/**
+ * Formats a Zambian mobile number as "+260 XX XXX XXXX", e.g. "+260 96 123 9900"
+ * Never masks, truncates, or replaces digits with asterisks.
+ */
+export const formatZambianMobileNumber = (phone?: string | null): string => {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  let nationalDigits = '';
+  if (digits.startsWith('260') && digits.length >= 12) {
+    nationalDigits = digits.slice(3, 12);
+  } else if (digits.startsWith('0') && digits.length >= 10) {
+    nationalDigits = digits.slice(1, 10);
+  } else if (digits.length >= 9) {
+    nationalDigits = digits.slice(0, 9);
+  } else {
+    return phone;
+  }
+  const op = nationalDigits.slice(0, 2);
+  const part1 = nationalDigits.slice(2, 5);
+  const part2 = nationalDigits.slice(5, 9);
+  return `+260 ${op} ${part1} ${part2}`;
+};
+

@@ -42,8 +42,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   // Keep businesses submenu expanded when viewing Businesses list, Business Details, or Add Business
   const isBusinessesPath =
-    location.pathname.includes('/businesses') ||
-    location.pathname.includes('/people/businesses');
+    (location.pathname.includes('/businesses') ||
+      location.pathname.includes('/people/businesses')) &&
+    !location.pathname.includes('business-global-wallets');
 
   useEffect(() => {
     if (isBusinessesPath) {
@@ -152,8 +153,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               if (item.children && item.children.length > 0) {
                 const isSubmenuOpen = !isDesktopCollapsed && (expandedSubmenus[item.id] ?? false);
                 const isParentActive =
-                  location.pathname.includes('/businesses') ||
-                  location.pathname.includes('/people/businesses');
+                  (location.pathname.includes('/businesses') ||
+                    location.pathname.includes('/people/businesses')) &&
+                  !location.pathname.includes('business-global-wallets');
 
                 return (
                   <div key={item.id} className="space-y-[2px]">
@@ -206,7 +208,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                             ? location.pathname.endsWith('/add')
                             : !location.pathname.endsWith('/add') &&
                               (location.pathname.includes('/businesses') ||
-                               location.pathname.includes('/people/businesses'));
+                                location.pathname.includes('/people/businesses')) &&
+                              !location.pathname.includes('business-global-wallets');
 
                           return (
                             <NavLink
@@ -239,6 +242,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               const isActive =
                 location.pathname === item.path ||
                 (!isDashboard && location.pathname.startsWith(item.path + '/')) ||
+                (item.id === 'business-agent-wallets' &&
+                  (location.pathname.includes('/business-global-wallets') ||
+                   location.pathname.includes('/wallets/business-agent'))) ||
                 (item.id === 'add-funds' &&
                   (location.pathname.includes('/wallets/add-funds') ||
                    location.pathname.includes('/wallets/funding'))) ||

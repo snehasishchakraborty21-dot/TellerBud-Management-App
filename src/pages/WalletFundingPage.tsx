@@ -100,7 +100,7 @@ export const WalletFundingPage: React.FC = () => {
   };
 
   const handleViewDetails = (reference: string) => {
-    navigate(`/super-admin/wallets/add-funds/${encodeURIComponent(reference)}`);
+    navigate(`/super-admin/wallet-funding/${encodeURIComponent(reference)}`);
   };
 
   const hasActiveFilters =
@@ -112,7 +112,7 @@ export const WalletFundingPage: React.FC = () => {
     filters.kpiFilter !== 'ALL';
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-4 sm:space-y-5 pb-16">
       {/* 5 Clickable KPI Cards with Oceanic Blue active-state */}
       <WalletFundingKpiCards
         summary={summary}

@@ -37,6 +37,8 @@ import { BusinessDetailsPage } from './pages/BusinessDetailsPage';
 import { AddBusinessPage } from './pages/AddBusinessPage';
 import { CustomerWalletsPage } from './pages/CustomerWalletsPage';
 import { CustomerWalletDetailPage } from './pages/CustomerWalletDetailPage';
+import { BusinessGlobalWalletsPage } from './pages/BusinessGlobalWalletsPage';
+import { BusinessGlobalWalletDetailPage } from './pages/BusinessGlobalWalletDetailPage';
 import { WalletFundingPage } from './pages/WalletFundingPage';
 import { WalletFundingDetailPage } from './pages/WalletFundingDetailPage';
 import { GenericPageScaffold } from './pages/GenericPageScaffold';
@@ -104,6 +106,11 @@ function TellerbudAdminBusinessIdRedirect() {
   return <Navigate to={`/super-admin/people/businesses/${businessId || id}`} replace />;
 }
 
+function WalletFundingLegacyRedirect() {
+  const { fundingId } = useParams<{ fundingId?: string }>();
+  return <Navigate to={`/super-admin/wallet-funding/${fundingId || ''}`} replace />;
+}
+
 function AppRoutes() {
   // TellerBud Admin custom routes that have explicit page implementations
   const superAdminCustomPaths = [
@@ -114,8 +121,12 @@ function AppRoutes() {
     '/super-admin/customer-wallets',
     '/super-admin/wallets/add-funds',
     '/super-admin/wallets/funding',
+    '/super-admin/wallet-funding',
     '/super-admin/wallets/customer-withdrawals',
     '/super-admin/wallets/withdrawals',
+    '/super-admin/wallets/business-agent',
+    '/super-admin/business-global-wallets',
+    '/business-global-wallets',
     '/super-admin/operations/agent-to-agent-liquidity',
     '/super-admin/operations/agent-liquidity',
     '/super-admin/mobile-money-transactions',
@@ -224,11 +235,19 @@ function AppRoutes() {
         <Route path="wallets/add-funds/:fundingId" element={<WalletFundingDetailPage />} />
         <Route path="wallets/funding" element={<Navigate to="/super-admin/wallets/add-funds" replace />} />
         <Route path="wallets/funding/:fundingId" element={<WalletFundingDetailPage />} />
+        <Route path="wallet-funding" element={<Navigate to="/super-admin/wallets/add-funds" replace />} />
+        <Route path="wallet-funding/:fundingId" element={<WalletFundingDetailPage />} />
 
         {/* Customer Withdrawals */}
         <Route path="wallets/customer-withdrawals" element={<CustomerWithdrawalsPage />} />
         <Route path="wallets/customer-withdrawals/:reference" element={<CustomerWithdrawalDetailPage />} />
         <Route path="wallets/withdrawals" element={<Navigate to="/super-admin/wallets/customer-withdrawals" replace />} />
+
+        {/* Business Global Wallets */}
+        <Route path="wallets/business-agent" element={<BusinessGlobalWalletsPage />} />
+        <Route path="wallets/business-agent/:walletId" element={<BusinessGlobalWalletDetailPage />} />
+        <Route path="business-global-wallets" element={<BusinessGlobalWalletsPage />} />
+        <Route path="business-global-wallets/:walletId" element={<BusinessGlobalWalletDetailPage />} />
 
         {/* Agent to Agent Liquidity */}
         <Route path="operations/agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
@@ -557,6 +576,29 @@ function AppRoutes() {
         path="/tellerbud-admin/businesses/:businessId"
         element={<TellerbudAdminBusinessIdRedirect />}
       />
+
+      {/* Wallet Funding Direct & Legacy Routes */}
+      <Route
+        path="/wallet-funding"
+        element={<Navigate to="/super-admin/wallets/add-funds" replace />}
+      />
+      <Route
+        path="/wallet-funding/:fundingId"
+        element={<WalletFundingLegacyRedirect />}
+      />
+
+      {/* Business Global Wallets Direct & Details Routes */}
+      <Route
+        path="/business-global-wallets"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<BusinessGlobalWalletsPage />} />
+        <Route path=":walletId" element={<BusinessGlobalWalletDetailPage />} />
+      </Route>
 
       {/* Catch-all Fallback */}
       <Route path="*" element={<RootRedirect />} />

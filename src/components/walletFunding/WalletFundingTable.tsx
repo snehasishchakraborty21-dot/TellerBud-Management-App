@@ -6,6 +6,8 @@ import {
   WalletFundingSortDirection,
 } from '../../types/walletFunding';
 import { formatZMW } from '../../data/mockWalletFundingData';
+import { getCustomerRegisteredPhone } from '../../data/mockCustomerData';
+import { useAuth } from '../../context/AuthContext';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 import {
   ArrowUpDown,
@@ -34,6 +36,9 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
   onSort,
   onViewDetails,
 }) => {
+  const { currentUser } = useAuth();
+  const isAuthorizedAdmin = !!currentUser;
+
   const renderSortIcon = (field: WalletFundingSortField) => {
     if (sortField !== field) {
       return <ArrowUpDown size={12} className="text-slate-400 shrink-0" />;
@@ -154,13 +159,13 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
   return (
     <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1060px] text-left border-collapse">
+        <table className="w-full min-w-[1080px] text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-gray-200 text-[11px] uppercase tracking-wider font-semibold text-slate-500">
+            <tr className="bg-slate-50/80 border-b border-gray-200 text-[11px] uppercase tracking-wider font-semibold text-slate-600">
               {/* 1. Funding Reference / Initiated */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 select-none w-[180px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none w-[190px]"
                 onClick={() => onSort('reference')}
               >
                 <div className="flex items-center gap-1.5">
@@ -169,10 +174,10 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                 </div>
               </th>
 
-              {/* 2. Customer */}
+              {/* 2. Customer (Widened) */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 select-none w-[200px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none w-[270px]"
                 onClick={() => onSort('customer')}
               >
                 <div className="flex items-center gap-1.5">
@@ -184,7 +189,7 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
               {/* 3. Provider */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 select-none w-[160px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none w-[170px]"
                 onClick={() => onSort('provider')}
               >
                 <div className="flex items-center gap-1.5">
@@ -196,7 +201,7 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
               {/* 4. Amount */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 select-none text-right w-[140px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-right w-[140px]"
                 onClick={() => onSort('amount')}
               >
                 <div className="flex items-center justify-end gap-1.5">
@@ -205,15 +210,10 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                 </div>
               </th>
 
-              {/* 5. Provider Reference */}
-              <th scope="col" className="py-3 px-4 w-[160px]">
-                Provider Ref
-              </th>
-
-              {/* 6. Status */}
+              {/* 5. Status */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-700 select-none w-[120px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none w-[130px]"
                 onClick={() => onSort('status')}
               >
                 <div className="flex items-center gap-1.5">
@@ -222,12 +222,12 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                 </div>
               </th>
 
-              {/* 7. Wallet Credit */}
-              <th scope="col" className="py-3 px-4 w-[160px]">
+              {/* 6. Wallet Credit */}
+              <th scope="col" className="py-3 px-4 w-[170px]">
                 Wallet Credit
               </th>
 
-              {/* 8. Action */}
+              {/* 7. Action */}
               <th
                 scope="col"
                 className="py-3 px-4 text-center w-[120px] sticky right-0 bg-slate-50/80"
@@ -238,86 +238,93 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
           </thead>
 
           <tbody className="divide-y divide-gray-100 text-xs">
-            {records.map((record) => (
-              <tr
-                key={record.id}
-                className="hover:bg-slate-50/70 transition-colors"
-              >
-                {/* 1. Funding Reference / Initiated */}
-                <td className="py-3 px-4 align-middle">
-                  <div className="font-mono font-bold text-slate-900 text-xs">
-                    {record.fundingReference}
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                    {record.initiatedAt}
-                  </div>
-                </td>
+            {records.map((record) => {
+              const fullCustomerPhone = isAuthorizedAdmin
+                ? (record.customerMobileNumber || getCustomerRegisteredPhone(record.customerId, record.customerName))
+                : 'Access Restricted';
 
-                {/* 2. Customer */}
-                <td className="py-3 px-4 align-middle">
-                  <div className="font-semibold text-slate-900 leading-tight">
-                    {record.customerName}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono text-[11px] text-[#0D93AA]">
-                      {record.customerId}
-                    </span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      {record.maskedMobileNumber}
-                    </span>
-                  </div>
-                </td>
+              return (
+                <tr
+                  key={record.id}
+                  className="hover:bg-slate-50/70 transition-colors"
+                >
+                  {/* 1. Funding Reference / Initiated */}
+                  <td className="py-3 px-4 align-middle">
+                    <button
+                      type="button"
+                      onClick={() => onViewDetails(record.fundingReference)}
+                      aria-label={`View details for funding reference ${record.fundingReference}`}
+                      title={`View details for ${record.fundingReference}`}
+                      className="font-mono font-bold text-slate-900 hover:text-[#0D93AA] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 text-xs text-left cursor-pointer rounded"
+                    >
+                      {record.fundingReference}
+                    </button>
+                    <div className="text-[11px] text-slate-600 font-mono mt-0.5">
+                      {record.initiatedAt}
+                    </div>
+                  </td>
 
-                {/* 3. Provider */}
-                <td className="py-3 px-4 align-middle">
-                  <div className="flex items-center gap-2">
-                    {record.provider === 'MTN Mobile Money' ? (
-                      <MtnLogo className="w-5 h-5 rounded-full shrink-0" />
-                    ) : (
-                      <AirtelLogo className="w-5 h-5 rounded-full shrink-0" />
-                    )}
-                    <span className="font-medium text-slate-800 text-xs whitespace-nowrap">
-                      {record.provider}
-                    </span>
-                  </div>
-                </td>
+                  {/* 2. Customer - Widened with full unmasked phone number */}
+                  <td className="py-3 px-4 align-middle">
+                    <div className="font-semibold text-slate-900 leading-tight">
+                      {record.customerName}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[11px]">
+                      <span className="text-[#0D93AA] font-semibold">
+                        {record.customerId}
+                      </span>
+                      <span className="text-slate-300">/</span>
+                      <span className="text-slate-800 font-medium select-all">
+                        {fullCustomerPhone}
+                      </span>
+                    </div>
+                  </td>
 
-                {/* 4. Amount */}
-                <td className="py-3 px-4 align-middle text-right font-mono font-bold text-slate-900 text-xs">
-                  {formatZMW(record.amount)}
-                </td>
+                  {/* 3. Provider */}
+                  <td className="py-3 px-4 align-middle">
+                    <div className="flex items-center gap-2">
+                      {record.provider === 'MTN Mobile Money' ? (
+                        <MtnLogo className="w-5 h-5 rounded-full shrink-0" />
+                      ) : (
+                        <AirtelLogo className="w-5 h-5 rounded-full shrink-0" />
+                      )}
+                      <span className="font-medium text-slate-800 text-xs whitespace-nowrap">
+                        {record.provider}
+                      </span>
+                    </div>
+                  </td>
 
-                {/* 5. Provider Reference */}
-                <td className="py-3 px-4 align-middle">
-                  <span className="font-mono text-xs text-slate-700 select-all">
-                    {record.providerReference}
-                  </span>
-                </td>
+                  {/* 4. Amount */}
+                  <td className="py-3 px-4 align-middle text-right font-mono font-bold text-slate-900 text-xs">
+                    {formatZMW(record.amount)}
+                  </td>
 
-                {/* 6. Status */}
-                <td className="py-3 px-4 align-middle whitespace-nowrap">
-                  {renderStatusBadge(record.status)}
-                </td>
+                  {/* 5. Status */}
+                  <td className="py-3 px-4 align-middle whitespace-nowrap">
+                    {renderStatusBadge(record.status)}
+                  </td>
 
-                {/* 7. Wallet Credit */}
-                <td className="py-3 px-4 align-middle">
-                  {renderWalletCredit(record)}
-                </td>
+                  {/* 6. Wallet Credit */}
+                  <td className="py-3 px-4 align-middle">
+                    {renderWalletCredit(record)}
+                  </td>
 
-                {/* 8. Action */}
-                <td className="py-3 px-4 align-middle text-center sticky right-0 bg-white group-hover:bg-slate-50/70">
-                  <button
-                    type="button"
-                    onClick={() => onViewDetails(record.fundingReference)}
-                    className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0D93AA] text-slate-700 hover:text-white transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                  >
-                    <Eye size={13} />
-                    <span>View Details</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  {/* 7. Action */}
+                  <td className="py-3 px-4 align-middle text-center sticky right-0 bg-white group-hover:bg-slate-50/70">
+                    <button
+                      type="button"
+                      onClick={() => onViewDetails(record.fundingReference)}
+                      aria-label={`View details for record ${record.fundingReference}`}
+                      title={`View details for ${record.fundingReference}`}
+                      className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0D93AA] text-slate-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                    >
+                      <Eye size={13} />
+                      <span>View Details</span>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

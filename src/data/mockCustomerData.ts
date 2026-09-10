@@ -459,6 +459,150 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     registeredDateIso: '2024-02-10',
     city: 'Lusaka',
   },
+  {
+    id: 'TB-CUS-1033',
+    name: 'Kondwani Banda',
+    phone: '+260 96 345 6789',
+    avatarInitials: 'KB',
+    accountStatus: 'Active',
+    walletBalance: 7800.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '12 Sep 2026, 09:30 AM',
+    lastActivityTimestamp: '2026-09-12T09:30:00Z',
+    registeredDate: '15 Mar 2024',
+    registeredDateIso: '2024-03-15',
+    city: 'Ndola',
+  },
+  {
+    id: 'TB-CUS-1035',
+    name: 'Natasha Tembo',
+    phone: '+260 97 556 7890',
+    avatarInitials: 'NT',
+    accountStatus: 'Active',
+    walletBalance: 11200.0,
+    activeRequestsCount: 1,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '14 Sep 2026, 11:20 AM',
+    lastActivityTimestamp: '2026-09-14T11:20:00Z',
+    registeredDate: '22 Apr 2024',
+    registeredDateIso: '2024-04-22',
+    city: 'Lusaka',
+  },
+  {
+    id: 'TB-CUS-1041',
+    name: 'Mutale Mwape',
+    phone: '+260 96 123 9900',
+    avatarInitials: 'MM',
+    accountStatus: 'Active',
+    walletBalance: 15400.0,
+    activeRequestsCount: 1,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '14 Sep 2026, 02:40 PM',
+    lastActivityTimestamp: '2026-09-14T14:40:00Z',
+    registeredDate: '08 Jan 2024',
+    registeredDateIso: '2024-01-08',
+    city: 'Kitwe',
+  },
+  {
+    id: 'TB-CUS-1025',
+    name: 'Kabwe Musonda',
+    phone: '+260 95 667 8899',
+    avatarInitials: 'KM',
+    accountStatus: 'Active',
+    walletBalance: 9800.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '10 Sep 2026, 04:15 PM',
+    lastActivityTimestamp: '2026-09-10T16:15:00Z',
+    registeredDate: '19 Nov 2023',
+    registeredDateIso: '2023-11-19',
+    city: 'Livingstone',
+  },
+  {
+    id: 'TB-CUS-1043',
+    name: 'Sibeso Mutale',
+    phone: '+260 97 555 6677',
+    avatarInitials: 'SM',
+    accountStatus: 'Active',
+    walletBalance: 6300.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '11 Sep 2026, 01:10 PM',
+    lastActivityTimestamp: '2026-09-11T13:10:00Z',
+    registeredDate: '04 May 2024',
+    registeredDateIso: '2024-05-04',
+    city: 'Lusaka',
+  },
+  {
+    id: 'TB-CUS-1038',
+    name: 'Chilufya Bwalya',
+    phone: '+260 97 334 5566',
+    avatarInitials: 'CB',
+    accountStatus: 'Active',
+    walletBalance: 8400.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '13 Sep 2026, 10:15 AM',
+    lastActivityTimestamp: '2026-09-13T10:15:00Z',
+    registeredDate: '27 Feb 2024',
+    registeredDateIso: '2024-02-27',
+    city: 'Ndola',
+  },
+  {
+    id: 'TB-CUS-1029',
+    name: 'Dalitso Zulu',
+    phone: '+260 95 222 3344',
+    avatarInitials: 'DZ',
+    accountStatus: 'Active',
+    walletBalance: 12500.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '12 Sep 2026, 03:20 PM',
+    lastActivityTimestamp: '2026-09-12T15:20:00Z',
+    registeredDate: '14 Jan 2024',
+    registeredDateIso: '2024-01-14',
+    city: 'Lusaka',
+  },
+  {
+    id: 'TB-CUS-1031',
+    name: 'Mapalo Kangwa',
+    phone: '+260 96 998 7766',
+    avatarInitials: 'MK',
+    accountStatus: 'Active',
+    walletBalance: 14800.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '11 Sep 2026, 11:05 AM',
+    lastActivityTimestamp: '2026-09-11T11:05:00Z',
+    registeredDate: '05 Apr 2024',
+    registeredDateIso: '2024-04-05',
+    city: 'Kabwe',
+  },
+  {
+    id: 'TB-CUS-1040',
+    name: 'Precious Chisamba',
+    phone: '+260 95 889 0011',
+    avatarInitials: 'PC',
+    accountStatus: 'Active',
+    walletBalance: 4200.0,
+    activeRequestsCount: 0,
+    pendingWithdrawalsCount: 0,
+    hasRecoverySupport: false,
+    lastActivity: '09 Sep 2026, 04:50 PM',
+    lastActivityTimestamp: '2026-09-09T16:50:00Z',
+    registeredDate: '19 Jan 2024',
+    registeredDateIso: '2024-01-19',
+    city: 'Lusaka',
+  },
 ];
 
 /**
@@ -481,6 +625,51 @@ export const getCustomerSummary = (
  */
 export const getCustomerById = (id: string): CustomerRecord | undefined => {
   return MOCK_REGISTERED_CUSTOMERS.find((c) => c.id === id);
+};
+
+/**
+ * Retrieves a customer by their full name.
+ */
+export const getCustomerByName = (name: string): CustomerRecord | undefined => {
+  const q = name.toLowerCase().trim();
+  return MOCK_REGISTERED_CUSTOMERS.find((c) => c.name.toLowerCase() === q);
+};
+
+/**
+ * Formats or validates Zambian mobile number to canonical "+260 96 123 9900" style.
+ * Displays all digits with no asterisks, bullets, or hidden digits.
+ */
+export const formatZambianFullPhone = (phone: string): string => {
+  if (!phone) return '+260 96 123 9900';
+  const cleanDigits = phone.replace(/\D/g, '');
+  if (cleanDigits.startsWith('260') && cleanDigits.length === 12) {
+    const net = cleanDigits.slice(3, 5);
+    const mid = cleanDigits.slice(5, 8);
+    const last = cleanDigits.slice(8, 12);
+    return `+260 ${net} ${mid} ${last}`;
+  }
+  if (cleanDigits.length === 9) {
+    const net = cleanDigits.slice(0, 2);
+    const mid = cleanDigits.slice(2, 5);
+    const last = cleanDigits.slice(5, 9);
+    return `+260 ${net} ${mid} ${last}`;
+  }
+  return phone;
+};
+
+/**
+ * Retrieves the unmasked, complete registered mobile number for a customer.
+ * Adheres strictly to format "+260 96 123 9900" with zero masked characters.
+ */
+export const getCustomerRegisteredPhone = (
+  customerId: string,
+  customerName?: string
+): string => {
+  const customer = getCustomerById(customerId) || (customerName ? getCustomerByName(customerName) : undefined);
+  if (customer && customer.phone) {
+    return formatZambianFullPhone(customer.phone);
+  }
+  return '+260 96 123 9900';
 };
 
 /**

@@ -18,10 +18,10 @@ export const WithdrawalCustomerInfo: React.FC<WithdrawalCustomerInfoProps> = ({ 
         </h2>
         <button
           type="button"
-          onClick={() => navigate('/people/customers')}
-          className="inline-flex items-center gap-1 text-xs font-bold text-[#0D93AA] hover:text-[#0b8296] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded px-1.5 py-1"
+          onClick={() => navigate(`/super-admin/people/customers/${withdrawal.customerId || 'TB-CUS-1046'}`)}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0D93AA] hover:text-[#0b8296] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded px-2 py-1 hover:bg-[#0D93AA]/5"
         >
-          <span>View Customer</span>
+          <span>View Customer Profile</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -40,7 +40,7 @@ export const WithdrawalCustomerInfo: React.FC<WithdrawalCustomerInfoProps> = ({ 
           <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
             Customer Phone
           </span>
-          <span className="font-mono font-medium text-gray-900">
+          <span className="font-mono font-medium text-gray-900 select-all">
             {withdrawal.customerPhone}
           </span>
         </div>

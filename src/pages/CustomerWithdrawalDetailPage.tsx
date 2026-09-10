@@ -70,7 +70,7 @@ export const CustomerWithdrawalDetailPage: React.FC = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/wallets/customer-withdrawals');
+      navigate('/super-admin/wallets/customer-withdrawals');
     }
   };
 
@@ -228,7 +228,10 @@ export const CustomerWithdrawalDetailPage: React.FC = () => {
               <span className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
                 Funds
               </span>
-              <StatusChip status={withdrawal.fundsState} size="sm" />
+              <StatusChip
+                status={withdrawal.fundsState === 'Pending' ? 'Reserved' : withdrawal.fundsState}
+                size="sm"
+              />
             </div>
           </div>
 
