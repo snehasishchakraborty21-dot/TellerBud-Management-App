@@ -23,4 +23,5 @@ export interface AuthContextType {
   ) => Promise<{ success: boolean; error?: string; roleMismatch?: boolean }>;
   logout: () => void;
   isLoading: boolean;
+  isCheckingAuth: boolean;
 }

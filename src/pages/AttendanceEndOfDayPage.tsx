@@ -61,10 +61,10 @@ export const AttendanceEndOfDayPage: React.FC = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [attendanceMetrics, setAttendanceMetrics] = useState<AttendanceMetrics>({
     totalAgents: 8,
-    checkedIn: 5,
-    late: 1,
-    absent: 1,
+    checkedIn: 6,
+    checkedOut: 0,
     notCheckedIn: 1,
+    noAttendanceRecord: 1,
   });
   const [attendanceFilters, setAttendanceFilters] = useState<AttendanceFilters>({
     search: '',

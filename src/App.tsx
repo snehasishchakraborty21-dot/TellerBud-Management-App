@@ -44,13 +44,18 @@ import {
   SUPER_ADMIN_NAVIGATION_CONFIG,
   BUSINESS_OWNER_NAVIGATION_CONFIG,
 } from './config/navigation';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { LoadingState } from './components/common/LoadingState';
 
 /**
  * Root Redirect Handler: Routes authenticated users to their respective dashboard,
  * or unauthenticated users to the /login screen.
  */
 function RootRedirect() {
-  const { currentUser } = useAuth();
+  const { currentUser, isCheckingAuth } = useAuth();
+  if (isCheckingAuth) {
+    return <LoadingState message="Loading portal..." />;
+  }
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
@@ -64,7 +69,10 @@ function RootRedirect() {
  * Public Login Route Guard: If already authenticated, redirect to appropriate dashboard.
  */
 function PublicLoginRoute() {
-  const { currentUser } = useAuth();
+  const { currentUser, isCheckingAuth } = useAuth();
+  if (isCheckingAuth) {
+    return <LoadingState message="Loading portal..." />;
+  }
   if (currentUser) {
     if (currentUser.role === 'business_owner') {
       return <Navigate to="/business-owner/dashboard" replace />;
@@ -78,7 +86,10 @@ function PublicLoginRoute() {
  * Legacy Path Resolver: Redirects older non-prefixed paths to role-scoped paths.
  */
 function LegacyRedirect({ defaultSuperAdminPath, defaultBusinessOwnerPath }: { defaultSuperAdminPath: string; defaultBusinessOwnerPath: string }) {
-  const { currentUser } = useAuth();
+  const { currentUser, isCheckingAuth } = useAuth();
+  if (isCheckingAuth) {
+    return <LoadingState message="Redirecting..." />;
+  }
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
@@ -555,10 +566,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

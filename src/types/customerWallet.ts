@@ -161,6 +161,7 @@ export interface CustomerWalletWithdrawalRecord {
   reservationReference: string; // e.g. 'TB-RES-1052-01'
   reservedAmount: number;
   status: CustomerWithdrawalStatus;
+  paidOrSettledAt?: string;
   lastUpdated: string;
   lastUpdatedTimestamp: string;
 }

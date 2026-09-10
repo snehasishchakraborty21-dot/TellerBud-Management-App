@@ -324,7 +324,6 @@ export const CustomerProfilePage: React.FC = () => {
       {/* Live Request Details Drawer */}
       <LiveRequestDetailsDrawer
         request={selectedRequest}
-        isOpen={selectedRequest !== null}
         onClose={() => setSelectedRequest(null)}
       />
 

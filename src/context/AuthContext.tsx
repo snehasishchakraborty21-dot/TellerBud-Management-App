@@ -8,7 +8,13 @@ const AUTH_STORAGE_KEY = 'tellerbud_auth_user';
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(() => {
+  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
+  const [selectedLoginRole, setSelectedLoginRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Initialize and check persisted session on mount
+  useEffect(() => {
     try {
       const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
       if (saved) {
@@ -16,19 +22,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (parsed?.role === 'super_admin' && parsed?.roleLabel !== 'TellerBud Admin') {
           parsed.roleLabel = 'TellerBud Admin';
         }
-        return parsed;
+        setCurrentUser(parsed);
       }
     } catch (e) {
       console.error('Failed to parse saved auth session:', e);
+    } finally {
+      setIsCheckingAuth(false);
     }
-    return null;
-  });
-
-  const [selectedLoginRole, setSelectedLoginRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  }, []);
 
   // Sync to sessionStorage
   useEffect(() => {
+    if (isCheckingAuth) return; // Wait until initial check finishes
     try {
       if (currentUser) {
         sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(currentUser));
@@ -38,7 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (e) {
       console.error('Failed to persist auth session:', e);
     }
-  }, [currentUser]);
+  }, [currentUser, isCheckingAuth]);
 
   const login = async (
     email: string,
@@ -182,6 +187,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         logout,
         isLoading,
+        isCheckingAuth,
       }}
     >
       {children}
