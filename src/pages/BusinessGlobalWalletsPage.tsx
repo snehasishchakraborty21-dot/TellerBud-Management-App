@@ -19,7 +19,6 @@ export const BusinessGlobalWalletsPage: React.FC = () => {
   const [filters, setFilters] = useState<BusinessWalletFilters>({
     search: '',
     state: 'ALL',
-    health: 'ALL',
     balanceRange: 'ALL',
     updatedFrom: '',
     updatedTo: '',
@@ -61,7 +60,6 @@ export const BusinessGlobalWalletsPage: React.FC = () => {
     return Boolean(
       (filters.search && filters.search.trim() !== '') ||
         filters.state !== 'ALL' ||
-        filters.health !== 'ALL' ||
         filters.balanceRange !== 'ALL' ||
         filters.updatedFrom !== '' ||
         filters.updatedTo !== '' ||
@@ -79,7 +77,6 @@ export const BusinessGlobalWalletsPage: React.FC = () => {
     setFilters({
       search: '',
       state: 'ALL',
-      health: 'ALL',
       balanceRange: 'ALL',
       updatedFrom: '',
       updatedTo: '',

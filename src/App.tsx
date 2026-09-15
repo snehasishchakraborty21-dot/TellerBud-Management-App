@@ -15,6 +15,8 @@ import { AgentLiquidityDetailPage } from './pages/AgentLiquidityDetailPage';
 import { WalkInTransactionsPage } from './pages/WalkInTransactionsPage';
 import { WalkInDetailPage } from './pages/WalkInDetailPage';
 import { MobileMoneyTransactionsPage } from './pages/MobileMoneyTransactionsPage';
+import { BusinessOwnerMobileMoneyPage } from './pages/BusinessOwnerMobileMoneyPage';
+import { BusinessOwnerMobileMoneyDetailPage } from './pages/BusinessOwnerMobileMoneyDetailPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { AgentDetailPage } from './pages/AgentDetailPage';
 import { AttendanceEndOfDayPage } from './pages/AttendanceEndOfDayPage';
@@ -23,11 +25,14 @@ import { EndOfDayDetailPage } from './pages/EndOfDayDetailPage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
 import { GlobalWalletPage } from './pages/GlobalWalletPage';
 import { WalletLedgerPage } from './pages/WalletLedgerPage';
+import { LedgerEntryDetailPage } from './pages/LedgerEntryDetailPage';
 import { AllTransactionsPage } from './pages/AllTransactionsPage';
 import { TransactionDetailPage } from './pages/TransactionDetailPage';
 import { ChargesCommissionsPage } from './pages/ChargesCommissionsPage';
+import { ChargeCommissionDetailPage } from './pages/ChargeCommissionDetailPage';
 import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificationsPage';
-import { BusinessOwnerChatsPage } from './pages/BusinessOwnerChatsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { NotificationDetailsPage } from './pages/NotificationDetailsPage';
 import { LiveOperationsPage } from './pages/LiveOperationsPage';
 import { CustomerRequestsPage } from './pages/CustomerRequestsPage';
 import { CustomersPage } from './pages/CustomersPage';
@@ -41,7 +46,16 @@ import { BusinessGlobalWalletsPage } from './pages/BusinessGlobalWalletsPage';
 import { BusinessGlobalWalletDetailPage } from './pages/BusinessGlobalWalletDetailPage';
 import { WalletFundingPage } from './pages/WalletFundingPage';
 import { WalletFundingDetailPage } from './pages/WalletFundingDetailPage';
+import { ApiLedgerReconciliationPage } from './pages/ApiLedgerReconciliationPage';
+import { ApiLedgerReconciliationDetailPage } from './pages/ApiLedgerReconciliationDetailPage';
 import { GenericPageScaffold } from './pages/GenericPageScaffold';
+import { VendorsPage } from './pages/VendorsPage';
+import { VendorDetailsPage } from './pages/VendorDetailsPage';
+import { VendorEligibilityPage } from './pages/VendorEligibilityPage';
+import { ServiceModesPage } from './pages/ServiceModesPage';
+import { ServiceModeDetailPage } from './pages/ServiceModeDetailPage';
+import { SystemSettingsPage } from './pages/SystemSettingsPage';
+import { VendorProvider } from './context/VendorContext';
 import {
   SUPER_ADMIN_NAVIGATION_CONFIG,
   BUSINESS_OWNER_NAVIGATION_CONFIG,
@@ -115,7 +129,6 @@ function AppRoutes() {
   // TellerBud Admin custom routes that have explicit page implementations
   const superAdminCustomPaths = [
     '/super-admin/dashboard',
-    '/super-admin/operations/live',
     '/super-admin/operations/requests',
     '/super-admin/wallets/customers',
     '/super-admin/customer-wallets',
@@ -127,6 +140,14 @@ function AppRoutes() {
     '/super-admin/wallets/business-agent',
     '/super-admin/business-global-wallets',
     '/business-global-wallets',
+    '/super-admin/wallets/ledger',
+    '/super-admin/wallet-ledger',
+    '/wallet-ledger',
+    '/super-admin/wallets/reconciliation',
+    '/super-admin/wallets/reconciliation/:reconciliationId',
+    '/super-admin/api-ledger-reconciliation',
+    '/api-ledger-reconciliation',
+    '/api-ledger-reconciliation/:reconciliationId',
     '/super-admin/operations/agent-to-agent-liquidity',
     '/super-admin/operations/agent-liquidity',
     '/super-admin/mobile-money-transactions',
@@ -138,6 +159,37 @@ function AppRoutes() {
     '/super-admin/people/businesses/add',
     '/super-admin/businesses',
     '/super-admin/businesses/add',
+    '/super-admin/transactions/all',
+    '/super-admin/transactions',
+    '/transactions/all',
+    '/transactions',
+    '/super-admin/transactions/commissions',
+    '/super-admin/transactions/charges-commissions',
+    '/super-admin/charges-commissions',
+    '/charges-commissions',
+    '/super-admin/configuration/vendors',
+    '/configuration/vendors',
+    '/super-admin/configuration/vendors/:vendorId',
+    '/configuration/vendors/:vendorId',
+    '/super-admin/configuration/vendor-eligibility',
+    '/configuration/vendor-eligibility',
+    '/super-admin/vendor-eligibility',
+    '/vendor-eligibility',
+    '/super-admin/configuration/service-modes',
+    '/configuration/service-modes',
+    '/super-admin/configuration/service-modes/:serviceId',
+    '/configuration/service-modes/:serviceId',
+    '/super-admin/service-modes',
+    '/service-modes',
+    '/service-modes/:serviceId',
+    '/super-admin/configuration/notifications',
+    '/configuration/notifications',
+    '/super-admin/notifications',
+    '/notifications',
+    '/super-admin/configuration/settings',
+    '/configuration/settings',
+    '/super-admin/settings',
+    '/settings',
   ];
 
   const superAdminScaffolds = SUPER_ADMIN_NAVIGATION_CONFIG.flatMap((g) =>
@@ -169,8 +221,6 @@ function AppRoutes() {
     '/business-owner/transactions/charges-commissions',
     '/business-owner/communication/notifications',
     '/business-owner/notifications',
-    '/business-owner/communication/chats',
-    '/business-owner/chats',
   ];
 
   const businessOwnerScaffolds = BUSINESS_OWNER_NAVIGATION_CONFIG.flatMap((g) =>
@@ -197,8 +247,11 @@ function AppRoutes() {
         <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
 
-        {/* Live Operations */}
-        <Route path="operations/live" element={<LiveOperationsPage />} />
+        {/* Live Operations -> Redirected to Customer Requests */}
+        <Route path="operations/live" element={<Navigate to="/super-admin/operations/requests" replace />} />
+        <Route path="operations/live/*" element={<Navigate to="/super-admin/operations/requests" replace />} />
+        <Route path="live" element={<Navigate to="/super-admin/operations/requests" replace />} />
+        <Route path="live/*" element={<Navigate to="/super-admin/operations/requests" replace />} />
 
         {/* Customer Requests */}
         <Route path="operations/requests" element={<CustomerRequestsPage />} />
@@ -249,6 +302,18 @@ function AppRoutes() {
         <Route path="business-global-wallets" element={<BusinessGlobalWalletsPage />} />
         <Route path="business-global-wallets/:walletId" element={<BusinessGlobalWalletDetailPage />} />
 
+        {/* Wallet Ledger */}
+        <Route path="wallets/ledger" element={<WalletLedgerPage />} />
+        <Route path="wallets/ledger/:ledgerEntryId" element={<LedgerEntryDetailPage />} />
+        <Route path="wallet-ledger" element={<WalletLedgerPage />} />
+        <Route path="wallet-ledger/:ledgerEntryId" element={<LedgerEntryDetailPage />} />
+
+        {/* API & Ledger Reconciliation */}
+        <Route path="wallets/reconciliation" element={<ApiLedgerReconciliationPage />} />
+        <Route path="wallets/reconciliation/:reconciliationId" element={<ApiLedgerReconciliationDetailPage />} />
+        <Route path="api-ledger-reconciliation" element={<Navigate to="/super-admin/wallets/reconciliation" replace />} />
+        <Route path="api-ledger-reconciliation/:reconciliationId" element={<ApiLedgerReconciliationDetailPage />} />
+
         {/* Agent to Agent Liquidity */}
         <Route path="operations/agent-to-agent-liquidity" element={<AgentLiquidityPage />} />
         <Route path="operations/agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
@@ -280,6 +345,45 @@ function AppRoutes() {
         <Route path="people/agents/*" element={<Navigate to="/super-admin/people/businesses" replace />} />
         <Route path="agents" element={<Navigate to="/super-admin/people/businesses" replace />} />
         <Route path="agents/*" element={<Navigate to="/super-admin/people/businesses" replace />} />
+
+        {/* All Transactions */}
+        <Route path="transactions/all" element={<AllTransactionsPage />} />
+        <Route path="transactions/all/:transactionId" element={<TransactionDetailPage />} />
+        <Route path="transactions/:transactionId" element={<TransactionDetailPage />} />
+        <Route path="transactions" element={<Navigate to="/super-admin/transactions/all" replace />} />
+
+        {/* Charges & Commissions */}
+        <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
+        <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
+
+        {/* Configuration: Vendors */}
+        <Route path="configuration/vendors" element={<VendorsPage />} />
+        <Route path="configuration/vendors/:vendorId" element={<VendorDetailsPage />} />
+        <Route path="vendors/:vendorId" element={<VendorDetailsPage />} />
+        <Route path="vendors" element={<Navigate to="/super-admin/configuration/vendors" replace />} />
+
+        {/* Configuration: Vendor Eligibility */}
+        <Route path="configuration/vendor-eligibility" element={<VendorEligibilityPage />} />
+        <Route path="vendor-eligibility" element={<Navigate to="/super-admin/configuration/vendor-eligibility" replace />} />
+
+        {/* Configuration: Service Modes */}
+        <Route path="configuration/service-modes" element={<ServiceModesPage />} />
+        <Route path="configuration/service-modes/:serviceId" element={<ServiceModeDetailPage />} />
+        <Route path="service-modes/:serviceId" element={<ServiceModeDetailPage />} />
+        <Route path="service-modes" element={<Navigate to="/super-admin/configuration/service-modes" replace />} />
+
+        {/* Configuration: Notifications */}
+        <Route path="configuration/notifications" element={<NotificationsPage />} />
+        <Route path="configuration/notifications/:notificationId" element={<NotificationDetailsPage />} />
+        <Route path="notifications" element={<Navigate to="/super-admin/configuration/notifications" replace />} />
+        <Route path="notifications/:notificationId" element={<NotificationDetailsPage />} />
+
+        {/* Configuration: System Settings */}
+        <Route path="configuration/settings" element={<SystemSettingsPage />} />
+        <Route path="settings" element={<Navigate to="/super-admin/configuration/settings" replace />} />
 
         {/* TellerBud Admin Scaffold Modules */}
         {superAdminScaffolds.map((item) => {
@@ -324,8 +428,8 @@ function AppRoutes() {
         <Route path="agent-to-agent-liquidity/:reference" element={<AgentLiquidityDetailPage />} />
 
         {/* Mobile Money Transactions (formerly Walk-In Transactions) */}
-        <Route path="mobile-money-transactions" element={<MobileMoneyTransactionsPage />} />
-        <Route path="mobile-money-transactions/:reference" element={<MobileMoneyTransactionsPage />} />
+        <Route path="mobile-money-transactions" element={<BusinessOwnerMobileMoneyPage />} />
+        <Route path="mobile-money-transactions/:reference" element={<BusinessOwnerMobileMoneyDetailPage />} />
         <Route path="walk-in-transactions" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
         <Route path="walk-in-transactions/:reference" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
         <Route path="operations/walk-in" element={<Navigate to="/business-owner/mobile-money-transactions" replace />} />
@@ -368,17 +472,16 @@ function AppRoutes() {
 
         {/* Charges & Commissions (Scoped to Business) */}
         <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="commissions" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
         <Route path="charges" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
 
         {/* Notifications (Scoped to Business) */}
         <Route path="communication/notifications" element={<BusinessOwnerNotificationsPage />} />
         <Route path="notifications" element={<Navigate to="/business-owner/communication/notifications" replace />} />
-
-        {/* Chats (Scoped to Business Owner & Authorised Agents) */}
-        <Route path="communication/chats" element={<BusinessOwnerChatsPage />} />
-        <Route path="chats" element={<Navigate to="/business-owner/communication/chats" replace />} />
 
         {/* Business Owner Scaffold Modules */}
         {businessOwnerScaffolds.map((item) => {
@@ -399,7 +502,7 @@ function AppRoutes() {
         path="/operations/live"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/operations/live"
+            defaultSuperAdminPath="/super-admin/operations/requests"
             defaultBusinessOwnerPath="/business-owner/operations/live"
           />
         }
@@ -408,7 +511,7 @@ function AppRoutes() {
         path="/live"
         element={
           <LegacyRedirect
-            defaultSuperAdminPath="/super-admin/operations/live"
+            defaultSuperAdminPath="/super-admin/operations/requests"
             defaultBusinessOwnerPath="/business-owner/operations/live"
           />
         }
@@ -556,12 +659,32 @@ function AppRoutes() {
       />
       <Route
         path="/transactions/all"
-        element={<Navigate to="/business-owner/transactions/all" replace />}
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/transactions/all"
+            defaultBusinessOwnerPath="/business-owner/transactions/all"
+          />
+        }
       />
       <Route
         path="/transactions"
-        element={<Navigate to="/business-owner/transactions/all" replace />}
+        element={
+          <LegacyRedirect
+            defaultSuperAdminPath="/super-admin/transactions/all"
+            defaultBusinessOwnerPath="/business-owner/transactions/all"
+          />
+        }
       />
+      <Route
+        path="/transactions/:transactionId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<TransactionDetailPage />} />
+      </Route>
 
       {/* TellerBud Admin Businesses Direct & Legacy Routes */}
       <Route
@@ -600,6 +723,138 @@ function AppRoutes() {
         <Route path=":walletId" element={<BusinessGlobalWalletDetailPage />} />
       </Route>
 
+      {/* Wallet Ledger Direct & Details Routes */}
+      <Route
+        path="/wallet-ledger"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<WalletLedgerPage />} />
+        <Route path=":ledgerEntryId" element={<LedgerEntryDetailPage />} />
+      </Route>
+
+      {/* API & Ledger Reconciliation Direct & Details Routes */}
+      <Route
+        path="/api-ledger-reconciliation"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ApiLedgerReconciliationPage />} />
+        <Route path=":reconciliationId" element={<ApiLedgerReconciliationDetailPage />} />
+      </Route>
+
+      {/* Charges & Commissions Direct & Details Routes */}
+      <Route
+        path="/charges-commissions"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ChargesCommissionsPage />} />
+        <Route path=":recordId" element={<ChargeCommissionDetailPage />} />
+      </Route>
+
+      {/* Configuration Vendors Direct & Details Routes */}
+      <Route
+        path="/configuration/vendors"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<VendorsPage />} />
+        <Route path=":vendorId" element={<VendorDetailsPage />} />
+      </Route>
+
+      {/* Dynamic /vendors/:vendorId route */}
+      <Route
+        path="/vendors/:vendorId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<VendorDetailsPage />} />
+      </Route>
+
+      <Route path="/vendors" element={<Navigate to="/super-admin/configuration/vendors" replace />} />
+
+      {/* Configuration Vendor Eligibility Direct Route */}
+      <Route
+        path="/configuration/vendor-eligibility"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<VendorEligibilityPage />} />
+      </Route>
+
+      <Route path="/vendor-eligibility" element={<Navigate to="/super-admin/configuration/vendor-eligibility" replace />} />
+
+      {/* Configuration Service Modes Direct & Details Routes */}
+      <Route
+        path="/configuration/service-modes"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ServiceModesPage />} />
+        <Route path=":serviceId" element={<ServiceModeDetailPage />} />
+      </Route>
+
+      {/* Direct /service-modes route */}
+      <Route
+        path="/service-modes"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="/super-admin/configuration/service-modes" replace />} />
+        <Route path=":serviceId" element={<ServiceModeDetailPage />} />
+      </Route>
+
+      {/* Direct /notifications and /notifications/:notificationId routes */}
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<NotificationsPage />} />
+        <Route path=":notificationId" element={<NotificationDetailsPage />} />
+      </Route>
+
+      {/* Direct /configuration/settings and /settings routes */}
+      <Route
+        path="/configuration/settings"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<SystemSettingsPage />} />
+      </Route>
+      <Route path="/settings" element={<Navigate to="/super-admin/configuration/settings" replace />} />
+
       {/* Catch-all Fallback */}
       <Route path="*" element={<RootRedirect />} />
     </Routes>
@@ -610,9 +865,11 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <VendorProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </VendorProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

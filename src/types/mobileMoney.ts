@@ -1,7 +1,7 @@
 import { ApprovedVendor } from './admin';
 
 export type ServiceChannel = 'Pickup' | 'Walk-In';
-export type MobileMoneyTransactionType = 'Deposit' | 'Withdrawal' | 'Purchase';
+export type MobileMoneyTransactionType = 'Deposit' | 'Withdrawal' | 'Purchase' | 'Liquidity Transfer';
 
 export type MobileMoneyStatus =
   | 'Agent Confirmed'
@@ -61,6 +61,8 @@ export interface MobileMoneyTransaction {
   reservationCharge: number;
   otherCharges: number;
   customerTotal: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
 
   // Processing & Confirmation
   principalProcessingMethod: string;
@@ -70,6 +72,9 @@ export interface MobileMoneyTransaction {
   agentConfirmationStatus: 'Confirmed' | 'Pending' | 'In Progress';
   agentConfirmationTimestamp?: string;
   agentConfirmationMethod?: string;
+  completionInformation?: string;
+  failureReason?: string;
+  cancellationReason?: string;
 
   // Status & Date
   status: MobileMoneyStatus;
@@ -111,5 +116,12 @@ export interface MobileMoneySummary {
   cancelledFailed: number;
 }
 
-export type MobileMoneySortField = 'postedAt' | 'amount' | 'status' | 'reference';
+export type MobileMoneySortField = 'postedAt' | 'amount' | 'status' | 'reference' | 'balanceAfter';
 export type MobileMoneySortDirection = 'asc' | 'desc';
+
+export interface MobileMoneyKPIPeriods {
+  todayCount: number;
+  weekToDateCount: number;
+  monthToDateCount: number;
+  yearToDateCount: number;
+}

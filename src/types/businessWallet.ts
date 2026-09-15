@@ -32,7 +32,6 @@ export type BalanceRangeFilter =
 export interface BusinessWalletFilters {
   search: string;
   state: BusinessWalletState | 'ALL';
-  health: BusinessWalletHealth | 'ALL';
   balanceRange: BalanceRangeFilter;
   updatedFrom: string;
   updatedTo: string;
@@ -45,7 +44,6 @@ export type BusinessWalletSortField =
   | 'postedBalance'
   | 'availableBalance'
   | 'reservedFunds'
-  | 'health'
   | 'state'
   | 'updatedAt';
 
@@ -57,4 +55,67 @@ export interface BusinessWalletSummary {
   totalAvailableBalance: number;
   totalReservedFunds: number;
   walletsNeedingReview: number;
+}
+
+export type BusinessWalletDetailTab =
+  | 'overview'
+  | 'ledger'
+  | 'reservations'
+  | 'funding-requests'
+  | 'agents';
+
+export interface BusinessWalletReservation {
+  id: string;
+  reference: string;
+  purpose: string;
+  amount: number;
+  status: 'Active' | 'Released' | 'Completed';
+  allocatedTo: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface BusinessWalletLedgerEntry {
+  id: string;
+  reference: string;
+  type: 'Credit' | 'Debit' | 'Hold Memo';
+  date: string;
+  timestamp: string;
+  amount: number;
+  resultingBalance: number;
+  description: string;
+  counterparty: string;
+  actor: string;
+  actorId: string;
+}
+
+export interface BusinessAgentRecord {
+  id: string;
+  agentId: string;
+  name: string;
+  mobileNumber: string; // All digits visible to authorised admin
+  status: 'Online' | 'Offline';
+  lastActive: string;
+  assignedTerminal: string;
+  currentFloat: number;
+}
+
+export interface BusinessAgentFundingRequest {
+  id: string;
+  reference: string;
+  agentName: string;
+  agentId: string;
+  agentPhone: string;
+  submittedAt: string;
+  status: 'Pending Review' | 'Approved' | 'Dispatched' | 'Rejected';
+  currentFloat: number;
+  // NOTE: Per strict requirement, NO requested amount and NO custom message
+}
+
+export interface BusinessWalletActivity {
+  lastActivityTime: string;
+  activityType: string;
+  transactionReference: string;
+  actingUser: string;
+  actingUserId: string;
 }

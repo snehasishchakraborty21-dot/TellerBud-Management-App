@@ -70,7 +70,9 @@ import {
   MobileMoneySummary,
   MobileMoneySortField,
   MobileMoneySortDirection,
+  MobileMoneyKPIPeriods,
 } from '../types/mobileMoney';
+import { calculateMobileMoneyPeriodKPIs } from '../utils/financialUtils';
 import {
   MOCK_MOBILE_MONEY_TRANSACTIONS,
   queryMobileMoneyTransactions,
@@ -151,6 +153,7 @@ function getInitialBusinessProfiles(): Record<string, BusinessProfile> {
 }
 
 import { boNotificationService } from './notificationService';
+import { tellerBudNotificationService } from './tellerBudNotificationService';
 
 function persistBusinessProfiles(profiles: Record<string, BusinessProfile>): void {
   try {
@@ -313,7 +316,7 @@ class MockAdminService implements IAdminService {
     if (businessName) {
       return boNotificationService.getAdminNotifications();
     }
-    return [...this.notifications];
+    return tellerBudNotificationService.getAdminNotifications();
   }
 
   async getUserProfile(): Promise<AdminUserProfile> {
@@ -325,6 +328,7 @@ class MockAdminService implements IAdminService {
       n.id === id ? { ...n, read: true } : n
     );
     boNotificationService.markAsRead(id);
+    tellerBudNotificationService.markAsRead(id);
   }
 
   async markAllNotificationsAsRead(businessName?: string): Promise<void> {
@@ -332,6 +336,7 @@ class MockAdminService implements IAdminService {
       boNotificationService.markAllAsRead();
     } else {
       this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
+      tellerBudNotificationService.markAllAsRead();
     }
   }
 
@@ -1064,8 +1069,13 @@ class MockAdminService implements IAdminService {
     );
   }
 
+  async getMobileMoneyKPIs(businessScope?: string): Promise<MobileMoneyKPIPeriods> {
+    return calculateMobileMoneyPeriodKPIs(this.mobileMoneyTransactions, businessScope);
+  }
+
   async getMobileMoneyTransactionByReference(
-    reference: string
+    reference: string,
+    businessScope?: string
   ): Promise<MobileMoneyTransaction | null> {
     const cleanRef = reference.trim().toLowerCase();
     const found = this.mobileMoneyTransactions.find(
@@ -1074,7 +1084,20 @@ class MockAdminService implements IAdminService {
         (t.sourceReference && t.sourceReference.toLowerCase() === cleanRef) ||
         t.id.toLowerCase() === cleanRef
     );
-    return found ? { ...found } : null;
+    if (!found) return null;
+
+    // Strict backend-level isolation for business owners
+    if (businessScope && businessScope !== 'ALL') {
+      const scopeLower = businessScope.toLowerCase().trim();
+      const belongs =
+        found.businessName.toLowerCase().trim() === scopeLower ||
+        found.businessId.toLowerCase().trim() === scopeLower;
+      if (!belongs) {
+        return null;
+      }
+    }
+
+    return { ...found };
   }
 
   // ==========================================

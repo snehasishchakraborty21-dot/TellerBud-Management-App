@@ -27,9 +27,11 @@ import {
   buildNormalizedLifecycleTimeline,
   buildNormalizedWalletImpact,
 } from '../utils/transactionLifecycle';
+import { MOCK_ALL_TRANSACTIONS } from '../data/mockAllTransactionsData';
 
 export const TransactionDetailPage: React.FC = () => {
-  const { reference } = useParams<{ reference: string }>();
+  const { reference, transactionId } = useParams<{ reference?: string; transactionId?: string }>();
+  const targetRef = transactionId || reference;
   const navigate = useNavigate();
 
   const [transaction, setTransaction] = useState<BusinessTransactionRecord | null>(null);
@@ -38,18 +40,78 @@ export const TransactionDetailPage: React.FC = () => {
 
   useEffect(() => {
     const fetchTransaction = async () => {
-      if (!reference) return;
+      if (!targetRef) return;
       setIsLoading(true);
       setError(null);
       try {
         const item = await adminService.getBusinessTransactionByReference(
-          reference,
+          targetRef,
           'BIZ-LUS-001'
         );
         if (item) {
           setTransaction(item);
         } else {
-          setError(`Transaction with reference "${reference}" could not be found.`);
+          const foundAll = MOCK_ALL_TRANSACTIONS.find(
+            (t) =>
+              t.reference.toLowerCase() === targetRef.toLowerCase() ||
+              t.id.toLowerCase() === targetRef.toLowerCase()
+          );
+
+          if (foundAll) {
+            const adapted: BusinessTransactionRecord = {
+              id: foundAll.id,
+              reference: foundAll.reference,
+              category: foundAll.service as any,
+              transactionType: foundAll.transactionType,
+              amount: foundAll.amount,
+              status: foundAll.status as any,
+              customerOrCounterparty: foundAll.customerName,
+              customerPhone: foundAll.customerId !== '—' ? '+260 96 1234567' : undefined,
+              businessId: foundAll.businessId || 'BIZ-LUS-001',
+              businessName:
+                foundAll.businessName !== '—'
+                  ? foundAll.businessName
+                  : 'TellerBud Network Operations',
+              agentId: foundAll.agentId,
+              agentName:
+                foundAll.agentName !== '—'
+                  ? foundAll.agentName
+                  : foundAll.sendingAgent
+                  ? `${foundAll.sendingAgent} → ${foundAll.receivingAgent}`
+                  : undefined,
+              vendor: foundAll.provider as any,
+              dateTime: foundAll.dateTime,
+              rawDate: foundAll.rawDate,
+              description:
+                foundAll.description || `${foundAll.service} via ${foundAll.provider}`,
+              relatedLedgerEntry: foundAll.relatedLedgerEntryId,
+              createdAt: `${foundAll.rawDate}T08:00:00+02:00`,
+              updatedAt: `${foundAll.rawDate}T08:05:00+02:00`,
+              completedAt:
+                foundAll.status === 'Completed' || foundAll.status === 'Paid'
+                  ? `${foundAll.rawDate}T08:05:00+02:00`
+                  : undefined,
+              lifecycleTimeline: [
+                {
+                  id: 'TL-1',
+                  status: 'Initiated',
+                  timestamp: `${foundAll.rawDate}T08:00:00+02:00`,
+                  actor: foundAll.customerName !== '—' ? foundAll.customerName : 'Operational User',
+                  details: `Transaction initiated via ${foundAll.source}.`,
+                },
+                {
+                  id: 'TL-2',
+                  status: foundAll.status,
+                  timestamp: `${foundAll.rawDate}T08:05:00+02:00`,
+                  actor: foundAll.agentName !== '—' ? foundAll.agentName : 'TellerBud System',
+                  details: foundAll.description,
+                },
+              ],
+            };
+            setTransaction(adapted);
+          } else {
+            setError(`Transaction with reference "${targetRef}" could not be found.`);
+          }
         }
       } catch (err) {
         console.error('Error fetching transaction detail:', err);
@@ -60,7 +122,7 @@ export const TransactionDetailPage: React.FC = () => {
     };
 
     fetchTransaction();
-  }, [reference]);
+  }, [targetRef]);
 
   if (isLoading) {
     return (
@@ -79,7 +141,13 @@ export const TransactionDetailPage: React.FC = () => {
           <h2 className="text-base font-bold text-red-900">Transaction Not Found</h2>
           <p className="text-sm text-red-700">{error || 'Unable to locate transaction record.'}</p>
           <button
-            onClick={() => navigate('/business-owner/transactions/all')}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/transactions/all');
+              }
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors"
           >
             <ArrowLeft size={14} />
@@ -134,8 +202,14 @@ export const TransactionDetailPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <button
           id="btn-back-to-all-transactions"
-          onClick={() => navigate('/business-owner/transactions/all')}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#0D93AA] hover:text-[#0b7e92] transition-colors"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/transactions/all');
+            }
+          }}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#0D93AA] hover:text-[#0b7e92] transition-colors cursor-pointer"
         >
           <ArrowLeft size={16} />
           <span>Back to All Transactions</span>
@@ -297,13 +371,27 @@ export const TransactionDetailPage: React.FC = () => {
             <div className="flex justify-between items-center py-1 border-t border-slate-50">
               <span className="text-slate-500 font-medium">Channel / Terminal</span>
               <span className="font-semibold text-slate-900 text-right">
-                External USSD Dialler
+                {transaction.category === 'Wallet Funding'
+                  ? 'Mobile Money API Gateway'
+                  : transaction.category === 'Customer Withdrawal'
+                  ? 'Customer App / Payout Gateway'
+                  : transaction.category === 'Agent-to-Agent Liquidity'
+                  ? 'Internal Ledger Settlement'
+                  : transaction.category === 'Cash Pickup'
+                  ? 'Customer App & Agent Kiosk'
+                  : 'Agent Counter Terminal'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-t border-slate-50">
               <span className="text-slate-500 font-medium">Transaction Method</span>
               <span className="font-medium text-slate-800 text-right">
-                External USSD
+                {transaction.category === 'Wallet Funding'
+                  ? 'Automated Provider API'
+                  : transaction.category === 'Customer Withdrawal'
+                  ? 'Mobile Money Payout'
+                  : transaction.category === 'Agent-to-Agent Liquidity'
+                  ? 'Internal Ledger Transfer'
+                  : 'External USSD'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-t border-slate-50">

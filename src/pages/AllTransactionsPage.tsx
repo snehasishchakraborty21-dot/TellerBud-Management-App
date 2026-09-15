@@ -1,247 +1,135 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   RotateCw,
+  RotateCcw,
   Download,
-  X,
-  Layers,
+  Receipt,
   CheckCircle2,
   Clock,
-  Coins,
+  XCircle,
+  Wallet,
   ChevronLeft,
   ChevronRight,
   Eye,
-  ArrowRight,
-  Filter,
 } from 'lucide-react';
 import {
-  BusinessTransactionRecord,
-  BusinessTransactionCategory,
-  BusinessTransactionStatus,
-  ApprovedVendor,
-} from '../types/admin';
-import { adminService } from '../services/mockAdminService';
-import { formatZMW } from '../utils/formatters';
-import { StatusChip } from '../components/shared/StatusChip';
-import { VendorLogo } from '../components/walk-in/VendorLogo';
-import { TransactionSummaryModal } from '../components/transactions/TransactionSummaryModal';
-import { CATEGORY_TYPE_MAPPING } from '../data/mockBusinessTransactionsData';
-
-type StatusTabType = 'All' | BusinessTransactionStatus;
-
-const STATUS_TABS: { label: string; value: StatusTabType }[] = [
-  { label: 'All Transactions', value: 'All' },
-  { label: 'Completed', value: 'Completed' },
-  { label: 'Processing', value: 'Processing' },
-  { label: 'Pending', value: 'Pending' },
-  { label: 'Failed', value: 'Failed' },
-  { label: 'Cancelled', value: 'Cancelled' },
-  { label: 'Reversed', value: 'Reversed' },
-];
-
-const CATEGORIES: BusinessTransactionCategory[] = [
-  'Walk-In Transaction',
-  'Customer Pickup Transaction',
-  'Cash / Float Fulfilment',
-  'Agent-to-Agent Liquidity',
-  'Global Wallet Transaction',
-  'Charge or Commission',
-  'Refund or Reversal',
-];
-
-const VENDORS: ApprovedVendor[] = [
-  'Zanaco',
-  'MTN',
-  'Airtel',
-  'Zamtel',
-  'Stanbic',
-  'FNB',
-  'Access',
-  'INDO',
-];
-
-const AGENTS = [
-  'Kelvin Phiri',
-  'Natasha Zulu',
-  'Joseph Kaunda',
-  'Mwape Tembo',
-  'Gift Banda',
-  'Brian Chanda',
-  'Memory Lungu',
-  'Kondwani Mwale',
-];
+  MOCK_ALL_TRANSACTIONS,
+  ALL_TRANSACTIONS_SUMMARY,
+  AllTransactionRecord,
+  TransactionSource,
+  TransactionService,
+  TransactionType,
+  TransactionProvider,
+  TransactionStatus,
+} from '../data/mockAllTransactionsData';
+import { TransactionProviderLogo } from '../components/transactions/TransactionProviderLogo';
+import { TransactionStatusBadge } from '../components/transactions/TransactionStatusBadge';
 
 export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // Primary Data State
-  const [transactions, setTransactions] = useState<BusinessTransactionRecord[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [transactions, setTransactions] = useState<AllTransactionRecord[]>(MOCK_ALL_TRANSACTIONS);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Active Status Tab
-  const [activeTab, setActiveTab] = useState<StatusTabType>('All');
-
   // Filter States
-  const [searchQuery, setSearchQuery] = useState<string>(() => {
-    return searchParams.get('search') || searchParams.get('ref') || searchParams.get('reference') || '';
-  });
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedType, setSelectedType] = useState<string>('All');
-  const [selectedVendor, setSelectedVendor] = useState<string>('All');
-  const [selectedAgent, setSelectedAgent] = useState<string>('All');
-  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sourceFilter, setSourceFilter] = useState<string>('ALL');
+  const [serviceFilter, setServiceFilter] = useState<string>('ALL');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [providerFilter, setProviderFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
 
-  useEffect(() => {
-    const q = searchParams.get('search') || searchParams.get('ref') || searchParams.get('reference');
-    if (q) {
-      setSearchQuery(q);
-    }
-  }, [searchParams]);
-
-  // Pagination State
+  // Pagination State (Default 20 per specification)
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(20);
 
-  // Modal State
-  const [summaryModalOpen, setSummaryModalOpen] = useState<boolean>(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<BusinessTransactionRecord | null>(null);
-
-  // Fetch transactions
-  const loadTransactions = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await adminService.getBusinessTransactions(
-        undefined,
-        'BIZ-LUS-001'
-      );
-      setTransactions(response.items);
-    } catch (error) {
-      console.error('Failed to load business transactions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  // Filter Handling
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSourceFilter('ALL');
+    setServiceFilter('ALL');
+    setTypeFilter('ALL');
+    setProviderFilter('ALL');
+    setStatusFilter('ALL');
+    setFromDate('');
+    setToDate('');
+    setCurrentPage(1);
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    try {
-      await loadTransactions();
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 400);
-    }
+    setTimeout(() => {
+      setTransactions([...MOCK_ALL_TRANSACTIONS]);
+      setIsRefreshing(false);
+    }, 350);
   };
 
-  // Dynamic Transaction Types based on selected category
-  const availableTypes = useMemo(() => {
-    if (selectedCategory === 'All' || !selectedCategory) {
-      // Return all unique types across all categories
-      const allTypes = Object.values(CATEGORY_TYPE_MAPPING).flat();
-      return Array.from(new Set(allTypes));
-    }
-    const cat = selectedCategory as BusinessTransactionCategory;
-    return CATEGORY_TYPE_MAPPING[cat] || [];
-  }, [selectedCategory]);
-
-  // When category changes, reset selected type if not in the new category
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCategory = e.target.value;
-    setSelectedCategory(newCategory);
-    setSelectedType('All');
-    setCurrentPage(1);
-  };
-
-  // Reset all filters
-  const handleClearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('All');
-    setSelectedType('All');
-    setSelectedVendor('All');
-    setSelectedAgent('All');
-    setSelectedStatus('All');
-    setFromDate('');
-    setToDate('');
-    setActiveTab('All');
-    setCurrentPage(1);
-  };
-
-  // Tab Counts: accurate counts for each status across the entire business dataset
-  const tabCounts = useMemo(() => {
-    const counts: Record<StatusTabType, number> = {
-      All: transactions.length,
-      Completed: 0,
-      Processing: 0,
-      Pending: 0,
-      Failed: 0,
-      Cancelled: 0,
-      Reversed: 0,
-    };
-
-    transactions.forEach((tx) => {
-      if (counts[tx.status] !== undefined) {
-        counts[tx.status]++;
-      }
-    });
-
-    return counts;
-  }, [transactions]);
-
-  // Filtered dataset
+  // Filter logic
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      // 1. Tab filter
-      if (activeTab !== 'All' && tx.status !== activeTab) {
-        return false;
-      }
-
-      // 2. Status dropdown filter
-      if (selectedStatus !== 'All' && tx.status !== selectedStatus) {
-        return false;
-      }
-
-      // 3. Search query: reference, agent, customer phone, vendor, counterparty
+      // 1. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matchesRef = tx.reference.toLowerCase().includes(q);
+        const matchesCustName = tx.customerName ? tx.customerName.toLowerCase().includes(q) : false;
+        const matchesCustId = tx.customerId ? tx.customerId.toLowerCase().includes(q) : false;
         const matchesAgent = tx.agentName ? tx.agentName.toLowerCase().includes(q) : false;
-        const matchesCounterparty = tx.customerOrCounterparty.toLowerCase().includes(q);
-        const matchesPhone = tx.customerPhone ? tx.customerPhone.includes(q) : false;
-        const matchesVendor = tx.vendor ? tx.vendor.toLowerCase().includes(q) : false;
-        const matchesDesc = tx.description ? tx.description.toLowerCase().includes(q) : false;
-        if (!matchesRef && !matchesAgent && !matchesCounterparty && !matchesPhone && !matchesVendor && !matchesDesc) {
+        const matchesAgentId = tx.agentId ? tx.agentId.toLowerCase().includes(q) : false;
+        const matchesSending = tx.sendingAgent ? tx.sendingAgent.toLowerCase().includes(q) : false;
+        const matchesReceiving = tx.receivingAgent ? tx.receivingAgent.toLowerCase().includes(q) : false;
+        const matchesBiz = tx.businessName ? tx.businessName.toLowerCase().includes(q) : false;
+        const matchesProvider = tx.provider.toLowerCase().includes(q);
+        const matchesService = tx.service.toLowerCase().includes(q);
+        const matchesType = tx.transactionType.toLowerCase().includes(q);
+
+        if (
+          !matchesRef &&
+          !matchesCustName &&
+          !matchesCustId &&
+          !matchesAgent &&
+          !matchesAgentId &&
+          !matchesSending &&
+          !matchesReceiving &&
+          !matchesBiz &&
+          !matchesProvider &&
+          !matchesService &&
+          !matchesType
+        ) {
           return false;
         }
       }
 
-      // 4. Category
-      if (selectedCategory !== 'All' && tx.category !== selectedCategory) {
+      // 2. Source
+      if (sourceFilter !== 'ALL' && tx.source !== sourceFilter) {
         return false;
       }
 
-      // 5. Transaction Type
-      if (selectedType !== 'All' && tx.transactionType !== selectedType) {
+      // 3. Service
+      if (serviceFilter !== 'ALL' && tx.service !== serviceFilter) {
         return false;
       }
 
-      // 6. Vendor
-      if (selectedVendor !== 'All' && tx.vendor !== selectedVendor) {
+      // 4. Transaction Type
+      if (typeFilter !== 'ALL' && tx.transactionType !== typeFilter) {
         return false;
       }
 
-      // 7. Agent
-      if (selectedAgent !== 'All' && tx.agentName !== selectedAgent) {
+      // 5. Provider
+      if (providerFilter !== 'ALL' && tx.provider !== providerFilter) {
         return false;
       }
 
-      // 8. Date Range
+      // 6. Status
+      if (statusFilter !== 'ALL' && tx.status !== statusFilter) {
+        return false;
+      }
+
+      // 7. Date Range
       if (fromDate && tx.rawDate < fromDate) {
         return false;
       }
@@ -253,589 +141,535 @@ export const AllTransactionsPage: React.FC = () => {
     });
   }, [
     transactions,
-    activeTab,
-    selectedStatus,
     searchQuery,
-    selectedCategory,
-    selectedType,
-    selectedVendor,
-    selectedAgent,
+    sourceFilter,
+    serviceFilter,
+    typeFilter,
+    providerFilter,
+    statusFilter,
     fromDate,
     toDate,
   ]);
 
-  // 4 SUMMARY CARDS:
-  // - Total Transactions
-  // - Total Transaction Value (operational reporting value, not Global Wallet balance)
-  // - Completed Transactions
-  // - Pending / Processing
-  const summaryMetrics = useMemo(() => {
-    // Total Transactions in business
-    const totalCount = transactions.length;
-
-    // Total Transaction Value: Sum of all operational transaction amounts
-    const totalValue = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Completed Transactions count
-    const completedCount = transactions.filter((tx) => tx.status === 'Completed').length;
-
-    // Pending / Processing count
-    const pendingProcessingCount = transactions.filter(
-      (tx) => tx.status === 'Pending' || tx.status === 'Processing'
-    ).length;
-
-    return {
-      totalCount,
-      totalValue,
-      completedCount,
-      pendingProcessingCount,
-    };
-  }, [transactions]);
-
-  // Pagination calculations
-  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / rowsPerPage));
-  const paginatedTransactions = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredTransactions.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredTransactions, currentPage, rowsPerPage]);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
-
-  // CSV Export
-  const handleExportCSV = () => {
-    if (filteredTransactions.length === 0) return;
-
+  // Export Filtered Transactions
+  const handleExport = useCallback(() => {
     const headers = [
-      'Reference',
-      'Date Time',
-      'Category',
+      'Transaction Reference',
+      'Date and Time',
+      'Source',
+      'Customer Name',
+      'Customer ID',
+      'Agent / Counterparty',
+      'Business Name',
+      'Service',
       'Transaction Type',
-      'Agent',
-      'Customer / Counterparty',
-      'Vendor',
+      'Provider',
       'Amount (ZMW)',
       'Status',
-      'Related Reference',
-      'Related Ledger Entry',
-      'Business',
     ];
 
     const rows = filteredTransactions.map((tx) => [
       tx.reference,
-      `"${tx.dateTime}"`,
-      `"${tx.category}"`,
-      `"${tx.transactionType}"`,
-      `"${tx.agentName || '—'}"`,
-      `"${tx.customerOrCounterparty.replace(/"/g, '""')}"`,
-      `"${tx.vendor || '—'}"`,
+      tx.dateTime,
+      tx.source,
+      tx.customerName || '—',
+      tx.customerId || '—',
+      tx.service === 'Agent-to-Agent Liquidity'
+        ? `Sender: ${tx.sendingAgent || '—'} -> Receiver: ${tx.receivingAgent || '—'}`
+        : `${tx.agentName}${tx.agentId ? ` (${tx.agentId})` : ''}`,
+      tx.businessName || '—',
+      tx.service,
+      tx.transactionType,
+      tx.provider,
       tx.amount.toFixed(2),
-      `"${tx.status}"`,
-      `"${tx.relatedReference || '—'}"`,
-      `"${tx.relatedLedgerEntry || '—'}"`,
-      `"${tx.businessName}"`,
+      tx.status,
     ]);
 
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `All_Transactions_BIZ-LUS-001_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `TellerBud_Transactions_Export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [filteredTransactions]);
 
-  // Open Summary Modal
-  const handleOpenSummary = (tx: BusinessTransactionRecord) => {
-    setSelectedTransaction(tx);
-    setSummaryModalOpen(true);
-  };
+  // Pagination Math
+  const totalFilteredCount = filteredTransactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / rowsPerPage));
+  const validCurrentPage = Math.min(currentPage, totalPages);
 
-  // Open Full Details Page
-  const handleOpenFullDetails = (reference: string) => {
-    setSummaryModalOpen(false);
-    navigate(`/business-owner/transactions/all/${reference}`);
+  const paginatedTransactions = useMemo(() => {
+    const start = (validCurrentPage - 1) * rowsPerPage;
+    return filteredTransactions.slice(start, start + rowsPerPage);
+  }, [filteredTransactions, validCurrentPage, rowsPerPage]);
+
+  const startIndex = totalFilteredCount === 0 ? 0 : (validCurrentPage - 1) * rowsPerPage + 1;
+  const endIndex = Math.min(validCurrentPage * rowsPerPage, totalFilteredCount);
+
+  // Helper for source badge
+  const renderSourceBadge = (source: TransactionSource) => {
+    let classes = 'bg-slate-100 text-slate-700 border-slate-200';
+    if (source === 'Customer App') {
+      classes = 'bg-sky-50 text-sky-700 border-sky-200';
+    } else if (source === 'Agent App') {
+      classes = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    } else if (source === 'Business Owner Portal') {
+      classes = 'bg-slate-100 text-slate-700 border-slate-200';
+    } else if (source === 'TellerBud Admin') {
+      classes = 'bg-teal-50 text-teal-700 border-teal-200';
+    } else if (source === 'Provider API') {
+      classes = 'bg-amber-50 text-amber-700 border-amber-200';
+    }
+
+    return (
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${classes}`}>
+        {source}
+      </span>
+    );
   };
 
   return (
-    <div id="all-transactions-page" className="max-w-7xl mx-auto space-y-6 pb-12">
-      {/* Top Action Controls Bar (Application Header presents the primary page title) */}
-      <div className="flex items-center justify-end gap-3">
-        <button
-          id="btn-refresh-transactions"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs disabled:opacity-50"
-        >
-          <RotateCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-          <span>Refresh</span>
-        </button>
-
-        <button
-          id="btn-export-csv"
-          onClick={handleExportCSV}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors shadow-2xs"
-        >
-          <Download size={14} />
-          <span>Export CSV</span>
-        </button>
-      </div>
-
-      {/* 1. STATUS TABS WITH ACCURATE COUNTS */}
-      <div className="border-b border-slate-200">
-        <nav
-          id="status-tabs"
-          className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-px scrollbar-thin"
-          aria-label="Transaction Status Tabs"
-        >
-          {STATUS_TABS.map((tab) => {
-            const isActive = activeTab === tab.value;
-            const count = tabCounts[tab.value];
-            return (
-              <button
-                key={tab.value}
-                id={`tab-status-${tab.value.toLowerCase()}`}
-                onClick={() => {
-                  setActiveTab(tab.value);
-                  setCurrentPage(1);
-                }}
-                className={`flex items-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
-                  isActive
-                    ? 'border-[#0D93AA] text-[#0D93AA]'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-bold rounded-full transition-colors ${
-                    isActive
-                      ? 'bg-[#0D93AA]/10 text-[#0D93AA]'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* 2. SUMMARY CARDS: EXACTLY FOUR COMPACT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Transactions */}
-        <div
-          id="card-total-transactions"
-          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+    <div className="w-full max-w-[1720px] mx-auto space-y-4 pb-32 sm:pb-36 px-3 sm:px-6 pt-2">
+      {/* 1. SUMMARY CARDS (5 Compact Cards per specification) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.25fr] gap-3 sm:gap-4">
+        {/* Card 1: Total Transactions */}
+        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
               Total Transactions
             </span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Layers size={16} />
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+              {ALL_TRANSACTIONS_SUMMARY.total}
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold font-mono text-slate-900 tracking-tight">
-              {summaryMetrics.totalCount}
-            </span>
+          <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
+            <Receipt size={20} className="stroke-[2.2]" />
           </div>
         </div>
 
-        {/* Total Transaction Value (Operational reporting value, not Global Wallet) */}
-        <div
-          id="card-total-transaction-value"
-          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        {/* Card 2: Completed */}
+        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+              Completed
+            </span>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+              {ALL_TRANSACTIONS_SUMMARY.completed}
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
+            <CheckCircle2 size={20} className="stroke-[2.2]" />
+          </div>
+        </div>
+
+        {/* Card 3: Pending or Processing (reconciles with completed: 276, pending: 40, failed: 12) */}
+        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+              Pending or Processing
+            </span>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+              {ALL_TRANSACTIONS_SUMMARY.pendingOrProcessing}
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100">
+            <Clock size={20} className="stroke-[2.2]" />
+          </div>
+        </div>
+
+        {/* Card 4: Failed or Cancelled */}
+        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+              Failed or Cancelled
+            </span>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+              {ALL_TRANSACTIONS_SUMMARY.failedOrCancelled}
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 border border-rose-100">
+            <XCircle size={20} className="stroke-[2.2]" />
+          </div>
+        </div>
+
+        {/* Card 5: Total Transaction Value - Complete info, no ellipsis, single line */}
+        <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+          <div className="min-w-0 flex-1 pr-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
               Total Transaction Value
             </span>
-            <div className="w-8 h-8 rounded-lg bg-[#0D93AA]/10 text-[#0D93AA] flex items-center justify-center">
-              <Coins size={16} />
+            <div className="text-base sm:text-lg xl:text-xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+              ZMW {ALL_TRANSACTIONS_SUMMARY.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold font-mono text-[#0D93AA] tracking-tight">
-              {formatZMW(summaryMetrics.totalValue)}
-            </span>
-          </div>
-        </div>
-
-        {/* Completed Transactions */}
-        <div
-          id="card-completed-transactions"
-          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Completed Transactions
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <CheckCircle2 size={16} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold font-mono text-emerald-700 tracking-tight">
-              {summaryMetrics.completedCount}
-            </span>
-          </div>
-        </div>
-
-        {/* Pending / Processing */}
-        <div
-          id="card-pending-processing"
-          className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Pending / Processing
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Clock size={16} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold font-mono text-amber-700 tracking-tight">
-              {summaryMetrics.pendingProcessingCount}
-            </span>
+          <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
+            <Wallet size={20} className="stroke-[2.2]" />
           </div>
         </div>
       </div>
 
-      {/* 3. SEARCH AND FILTERS */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-        {/* Search Row */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
+      {/* 2. COMPACT TWO-ROW FILTER AREA */}
+      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+        {/* Row 1: Search + Source + Service + Transaction Type */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
+          {/* Search Box */}
+          <div className="lg:col-span-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={15} />
             <input
-              id="input-transaction-search"
               type="text"
-              placeholder="Search by reference, Agent, customer phone or vendor..."
+              placeholder="Search transaction, customer, agent, business or mobile..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-[#0D93AA] focus:ring-1 focus:ring-[#0D93AA] text-slate-800 placeholder-slate-400 transition-colors"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-800 placeholder-slate-400 transition-colors"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X size={14} />
-              </button>
-            )}
           </div>
-          <button
-            id="btn-clear-filters"
-            onClick={handleClearFilters}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap"
-          >
-            <X size={13} />
-            <span>Clear</span>
-          </button>
+
+          {/* Transaction Source */}
+          <div className="lg:col-span-2">
+            <select
+              value={sourceFilter}
+              onChange={(e) => {
+                setSourceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
+            >
+              <option value="ALL">All Sources</option>
+              <option value="Customer App">Customer App</option>
+              <option value="Agent App">Agent App</option>
+              <option value="Business Owner Portal">Business Owner Portal</option>
+              <option value="TellerBud Admin">TellerBud Admin</option>
+              <option value="Provider API">Provider API</option>
+            </select>
+          </div>
+
+          {/* Service */}
+          <div className="lg:col-span-3">
+            <select
+              value={serviceFilter}
+              onChange={(e) => {
+                setServiceFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
+            >
+              <option value="ALL">All Services</option>
+              <option value="Cash Pickup">Cash Pickup</option>
+              <option value="Walk-In Transaction">Walk-In Transaction</option>
+              <option value="Agent-to-Agent Liquidity">Agent-to-Agent Liquidity</option>
+              <option value="Wallet Funding">Wallet Funding</option>
+              <option value="Customer Withdrawal">Customer Withdrawal</option>
+              <option value="Business Wallet Transaction">Business Wallet Transaction</option>
+            </select>
+          </div>
+
+          {/* Transaction Type */}
+          <div className="lg:col-span-3">
+            <select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
+            >
+              <option value="ALL">All Transaction Types</option>
+              <option value="Deposit">Deposit</option>
+              <option value="Withdrawal">Withdrawal</option>
+              <option value="Purchase">Purchase</option>
+              <option value="Liquidity Transfer">Liquidity Transfer</option>
+              <option value="Wallet Funding">Wallet Funding</option>
+              <option value="Wallet Payout">Wallet Payout</option>
+              <option value="Reversal">Reversal</option>
+            </select>
+          </div>
         </div>
 
-        {/* Dropdowns Row: Category, Type, Vendor, Agent, Status, From Date, To Date */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 pt-1">
-          {/* Transaction Category */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Category
-            </label>
+        {/* Row 2: Provider + Status + Date Range + Action Buttons */}
+        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 pt-0.5">
+          {/* Provider */}
+          <div className="w-full sm:w-auto min-w-[150px] flex-1">
             <select
-              id="filter-category"
-              value={selectedCategory}
-              onChange={handleCategoryChange}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
+              value={providerFilter}
+              onChange={(e) => {
+                setProviderFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
             >
-              <option value="All">All Categories</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
+              <option value="ALL">All Providers</option>
+              <option value="MTN Mobile Money">MTN Mobile Money</option>
+              <option value="Airtel Money">Airtel Money</option>
+              <option value="Zamtel">Zamtel</option>
+              <option value="Zanaco">Zanaco</option>
+              <option value="FNB">FNB</option>
+              <option value="INDO">INDO</option>
+              <option value="Stanbic">Stanbic</option>
+              <option value="Access">Access</option>
+              <option value="TellerBud Ledger">TellerBud Ledger</option>
             </select>
           </div>
 
-          {/* Transaction Type (dynamically matches selected category) */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Type
-            </label>
+          {/* Status - Standardized "Finding an Agent", "Pending Review", "Paid" */}
+          <div className="w-full sm:w-auto min-w-[145px] flex-1">
             <select
-              id="filter-type"
-              value={selectedType}
+              value={statusFilter}
               onChange={(e) => {
-                setSelectedType(e.target.value);
+                setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
+              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
             >
-              <option value="All">All Types</option>
-              {availableTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Vendor */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Vendor
-            </label>
-            <select
-              id="filter-vendor"
-              value={selectedVendor}
-              onChange={(e) => {
-                setSelectedVendor(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
-            >
-              <option value="All">All Vendors</option>
-              {VENDORS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Agent */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Agent
-            </label>
-            <select
-              id="filter-agent"
-              value={selectedAgent}
-              onChange={(e) => {
-                setSelectedAgent(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
-            >
-              <option value="All">All Agents</option>
-              {AGENTS.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Status
-            </label>
-            <select
-              id="filter-status"
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
-            >
-              <option value="All">All Statuses</option>
+              <option value="ALL">All Statuses</option>
               <option value="Completed">Completed</option>
+              <option value="Paid">Paid</option>
+              <option value="Finding an Agent">Finding an Agent</option>
+              <option value="Agent Confirmed">Agent Confirmed</option>
+              <option value="Ready for Pickup">Ready for Pickup</option>
+              <option value="Pending Review">Pending Review</option>
+              <option value="Approved">Approved</option>
               <option value="Processing">Processing</option>
+              <option value="Pending Confirmation">Pending Confirmation</option>
               <option value="Pending">Pending</option>
               <option value="Failed">Failed</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="Rejected">Rejected</option>
               <option value="Reversed">Reversed</option>
             </select>
           </div>
 
-          {/* From Date */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              From Date
-            </label>
+          {/* Date: From */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">From</span>
             <input
-              id="filter-from-date"
               type="date"
               value={fromDate}
               onChange={(e) => {
                 setFromDate(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
+              className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
             />
           </div>
 
-          {/* To Date */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              To Date
-            </label>
+          {/* Date: To */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">To</span>
             <input
-              id="filter-to-date"
               type="date"
               value={toDate}
               onChange={(e) => {
                 setToDate(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-[#0D93AA]"
+              className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
             />
+          </div>
+
+          {/* Action Buttons: Clear Filters, Refresh, Export Transactions */}
+          <div className="flex items-center gap-2 ml-auto shrink-0 w-full sm:w-auto justify-end">
+            <button
+              onClick={handleClearFilters}
+              className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              title="Reset all filters"
+            >
+              <RotateCcw size={13} />
+              <span>Clear Filters</span>
+            </button>
+
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              title="Refresh transaction records"
+            >
+              <RotateCw size={13} className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
+              title="Export currently filtered records to CSV"
+            >
+              <Download size={13} />
+              <span>Export Transactions</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 4. TRANSACTIONS TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Table responsive container */}
+      {/* 3. TRANSACTION TABLE */}
+      <div className="bg-white border border-gray-200/90 rounded-xl shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[980px]">
+          <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-4">Reference</th>
-                <th className="py-3 px-4">Date & Time</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Transaction Type</th>
-                <th className="py-3 px-4">Agent</th>
-                <th className="py-3 px-4">Vendor</th>
-                <th className="py-3 px-4 text-right">Amount</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Action</th>
+              <tr className="bg-slate-50/90 border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-3.5 sm:px-4 font-semibold whitespace-nowrap">Transaction</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Customer</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Agent / Business</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Service</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Provider</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold text-right whitespace-nowrap">Amount</th>
+                <th className="py-3 px-3 sm:px-4 font-semibold text-center whitespace-nowrap">Status</th>
+                <th className="py-3 px-3.5 sm:px-4 font-semibold text-right whitespace-nowrap min-w-[110px]">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {isLoading ? (
+            <tbody className="divide-y divide-gray-100">
+              {paginatedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <div className="inline-flex items-center gap-2">
-                      <RotateCw size={18} className="animate-spin text-[#0D93AA]" />
-                      <span>Loading transactions...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <p className="text-sm font-medium text-slate-600">No transactions found</p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      No records match the current filters or search query.
-                    </p>
-                    <button
-                      onClick={handleClearFilters}
-                      className="mt-3 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 rounded-lg hover:bg-[#0D93AA]/20 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                    <Receipt size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="font-semibold text-sm text-slate-700">No matching transactions found</p>
+                    <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
                   </td>
                 </tr>
               ) : (
                 paginatedTransactions.map((tx) => (
                   <tr
                     key={tx.id}
-                    id={`transaction-row-${tx.reference.toLowerCase()}`}
-                    className="hover:bg-slate-50/80 transition-colors"
+                    className="hover:bg-slate-50/70 transition-colors group"
                   >
-                    {/* Reference */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
-                      <button
-                        onClick={() => handleOpenSummary(tx)}
-                        className="text-left text-[#0D93AA] hover:underline"
-                        title="Click to view summary"
-                      >
-                        {tx.reference}
-                      </button>
+                    {/* 1. TRANSACTION COLUMN */}
+                    <td className="py-3 px-3.5 sm:px-4 align-top">
+                      <div className="space-y-1">
+                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors">
+                          {tx.reference}
+                        </span>
+                        <span className="text-[11px] text-slate-600 block whitespace-nowrap font-medium">
+                          {tx.dateTime}
+                        </span>
+                        <div>{renderSourceBadge(tx.source)}</div>
+                      </div>
                     </td>
 
-                    {/* Date and Time */}
-                    <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
-                      {tx.dateTime}
+                    {/* 2. CUSTOMER COLUMN - Requirement 3: No Customer ID prefix, displayed directly beneath, whitespace-nowrap */}
+                    <td className="py-3 px-3 sm:px-4 align-top min-w-[130px]">
+                      {tx.customerName === '—' ? (
+                        <div className="text-slate-400 font-medium text-xs">—</div>
+                      ) : (
+                        <div className="space-y-0.5">
+                          <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                            {tx.customerName}
+                          </div>
+                          {tx.customerId && tx.customerId !== '—' && (
+                            <div className="text-[11px] font-mono text-slate-600 font-medium whitespace-nowrap">
+                              {tx.customerId}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
 
-                    {/* Category */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-slate-700">
-                        {tx.category}
-                      </span>
-                    </td>
-
-                    {/* Transaction Type */}
-                    <td className="py-3.5 px-4 font-medium text-slate-800 whitespace-nowrap">
-                      {tx.transactionType}
-                    </td>
-
-                    {/* Agent */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-slate-800">
-                      {tx.agentName ? (
-                        <div>
-                          <span className="font-medium text-slate-900 block">
-                            {tx.agentName}
-                          </span>
-                          {tx.agentId && (
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {tx.agentId}
-                            </span>
+                    {/* 3. AGENT / BUSINESS COLUMN - Requirement 3 & 7: Agent ID beneath name, whitespace-nowrap, proper Business Wallet display */}
+                    <td className="py-3 px-3 sm:px-4 align-top min-w-[180px]">
+                      {tx.service === 'Agent-to-Agent Liquidity' ? (
+                        <div className="space-y-0.5">
+                          <div className="text-xs text-slate-800 whitespace-nowrap">
+                            <span className="text-slate-500 font-medium">From: </span>
+                            <span className="font-semibold text-slate-900">{tx.sendingAgent || '—'}</span>
+                            {tx.sendingAgentId && (
+                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1 whitespace-nowrap">
+                                ({tx.sendingAgentId})
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-800 whitespace-nowrap">
+                            <span className="text-slate-500 font-medium">To: </span>
+                            <span className="font-semibold text-slate-900">{tx.receivingAgent || '—'}</span>
+                            {tx.receivingAgentId && (
+                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1 whitespace-nowrap">
+                                ({tx.receivingAgentId})
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
+                            {tx.businessName}
+                          </div>
+                        </div>
+                      ) : tx.agentName === 'Automated Provider API' ? (
+                        <div className="space-y-0.5">
+                          <div className="font-semibold text-slate-800 text-xs whitespace-nowrap">
+                            Automated Provider API
+                          </div>
+                          <div className="text-[11px] text-slate-600">
+                            System Integration
+                          </div>
+                        </div>
+                      ) : tx.agentName === '—' ? (
+                        <div className="space-y-0.5">
+                          <div className="text-xs text-slate-400 font-medium">—</div>
+                          {tx.businessName && tx.businessName !== '—' && (
+                            <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
+                              {tx.businessName}
+                            </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <div className="space-y-0.5">
+                          <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                            {tx.agentName}
+                          </div>
+                          {tx.agentId && (
+                            <div className="text-[11px] font-mono text-slate-600 font-medium whitespace-nowrap">
+                              {tx.agentId}
+                            </div>
+                          )}
+                          {tx.businessName && tx.businessName !== '—' && (
+                            <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
+                              {tx.businessName}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </td>
 
-                    {/* Vendor */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      {tx.vendor ? (
-                        <VendorLogo vendor={tx.vendor} size="table" showName={true} />
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-
-                    {/* Amount */}
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                      {formatZMW(tx.amount)}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <StatusChip status={tx.status} size="sm" />
-                    </td>
-
-                    {/* Action */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 justify-end">
-                        <button
-                          id={`btn-view-summary-${tx.reference.toLowerCase()}`}
-                          onClick={() => handleOpenSummary(tx)}
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
-                        >
-                          View Summary
-                        </button>
-                        <button
-                          id={`btn-view-details-${tx.reference.toLowerCase()}`}
-                          onClick={() => handleOpenFullDetails(tx.reference)}
-                          className="p-1 text-[#0D93AA] hover:bg-[#0D93AA]/10 rounded-md transition-colors"
-                          title="Open Full Details"
-                        >
-                          <ArrowRight size={15} />
-                        </button>
+                    {/* 4. SERVICE COLUMN */}
+                    <td className="py-3 px-3 sm:px-4 align-top">
+                      <div className="space-y-0.5">
+                        <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                          {tx.service}
+                        </div>
+                        <div className="text-[11px] text-slate-600 font-medium whitespace-nowrap">
+                          {tx.transactionType}
+                        </div>
                       </div>
+                    </td>
+
+                    {/* 5. PROVIDER COLUMN */}
+                    <td className="py-3 px-3 sm:px-4 align-top">
+                      <TransactionProviderLogo provider={tx.provider} size="table" showName={true} />
+                    </td>
+
+                    {/* 6. AMOUNT COLUMN */}
+                    <td className="py-3 px-3 sm:px-4 align-top text-right">
+                      <span className="font-bold text-slate-900 text-xs sm:text-sm tabular-nums whitespace-nowrap">
+                        ZMW {tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </td>
+
+                    {/* 7. STATUS COLUMN */}
+                    <td className="py-3 px-3 sm:px-4 align-top text-center">
+                      <TransactionStatusBadge status={tx.status} />
+                    </td>
+
+                    {/* 8. ACTION COLUMN - Requirement 8: Single line, visible */}
+                    <td className="py-3 px-3.5 sm:px-4 align-top text-right whitespace-nowrap">
+                      <button
+                        onClick={() => navigate(`/transactions/${tx.reference}`)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors cursor-pointer whitespace-nowrap"
+                        title={`View Details for ${tx.reference}`}
+                      >
+                        <Eye size={13} className="shrink-0 stroke-[2.2]" />
+                        <span>View Details</span>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -844,27 +678,15 @@ export const AllTransactionsPage: React.FC = () => {
           </table>
         </div>
 
-        {/* Table Pagination Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-slate-50/50">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <span>Showing</span>
-            <span className="font-semibold text-slate-900">
-              {filteredTransactions.length === 0
-                ? 0
-                : (currentPage - 1) * rowsPerPage + 1}
+        {/* 4. PAGINATION FOOTER */}
+        <div className="border-t border-gray-100 bg-slate-50/70 px-4 py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+          <div className="flex items-center gap-4">
+            <span className="font-medium text-slate-700">
+              Showing <span className="font-bold text-slate-900">{startIndex}</span> to{' '}
+              <span className="font-bold text-slate-900">{endIndex}</span> of{' '}
+              <span className="font-bold text-slate-900">{totalFilteredCount}</span> transactions
             </span>
-            <span>to</span>
-            <span className="font-semibold text-slate-900">
-              {Math.min(currentPage * rowsPerPage, filteredTransactions.length)}
-            </span>
-            <span>of</span>
-            <span className="font-semibold text-slate-900">
-              {filteredTransactions.length}
-            </span>
-            <span>transactions</span>
-          </div>
 
-          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <span>Rows per page:</span>
               <select
@@ -873,31 +695,36 @@ export const AllTransactionsPage: React.FC = () => {
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-2 py-1 text-xs bg-white border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:border-[#0D93AA]"
+                className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
               >
                 <option value={10}>10</option>
-                <option value={25}>25</option>
+                <option value={20}>20</option>
                 <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-slate-500 font-medium">
+              Page <strong className="text-slate-800">{validCurrentPage}</strong> of{' '}
+              <strong className="text-slate-800">{totalPages}</strong>
+            </span>
 
             <div className="inline-flex items-center gap-1">
               <button
-                id="btn-prev-page"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-1 rounded text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={validCurrentPage <= 1}
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Previous Page"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-xs font-medium text-slate-700 px-2">
-                Page {currentPage} of {totalPages}
-              </span>
               <button
-                id="btn-next-page"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded text-slate-500 hover:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={validCurrentPage >= totalPages}
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Next Page"
               >
                 <ChevronRight size={16} />
               </button>
@@ -905,14 +732,6 @@ export const AllTransactionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* 6. TRANSACTION SUMMARY MODAL */}
-      <TransactionSummaryModal
-        isOpen={summaryModalOpen}
-        onClose={() => setSummaryModalOpen(false)}
-        transaction={selectedTransaction}
-        onOpenFullDetails={handleOpenFullDetails}
-      />
     </div>
   );
 };

@@ -94,7 +94,7 @@ export const DashboardPage: React.FC = () => {
       {/* Live Pickup Operations (Section C) */}
       <LivePickupOperationsTable
         requests={pickupRequests.slice(0, 4)}
-        onViewAll={() => navigate('/super-admin/operations/live')}
+        onViewAll={() => navigate('/super-admin/operations/requests')}
       />
 
       {/* Recent Financial Activity (Section E) */}

@@ -6,6 +6,7 @@ import {
   MobileMoneySortDirection,
 } from '../types/mobileMoney';
 import { calculateMobileMoneyKPIs } from '../utils/financialUtils';
+import { getLusakaDateString } from '../utils/dateUtils';
 import { MOCK_WALK_IN_TRANSACTIONS } from './mockWalkInData';
 import { MOCK_LIVE_PICKUP_OPERATIONS } from './mockAdminData';
 import { getAllCustomerRequests } from './mockCustomerRequestsData';
@@ -652,6 +653,53 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     recordSource: 'TellerBud Pickup Engine',
     lastUpdated: '08 Sep 2026, 08:45',
   },
+  {
+    id: 'MMT-TODAY-09B',
+    reference: 'TB-TXN-9089-LT',
+    sourceReference: 'TB-LIQ-1011',
+    sourceReferenceType: 'Customer Request',
+    serviceChannel: 'Walk-In',
+    transactionType: 'Liquidity Transfer',
+    vendor: 'INDO',
+    vendorType: 'Bank API',
+    isRegisteredCustomer: true,
+    customerId: 'TB-CUS-1024',
+    customerName: 'Kelvin Phiri Float Fund',
+    customerPhone: '+260 97 234 5678',
+    customerAccountStatus: 'Verified KYC Tier 2',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessLocation: 'Cairo Road Commercial Suite, Lusaka',
+    walkInLocation: 'Lusaka Central Express Agency - Counter 1',
+    processingAgent: 'Natasha Zulu (TB-AGT-1062)',
+    terminalId: 'POS-LUS-01',
+    receiptNumber: 'REC-INDO-90892',
+    initiationTimestamp: '2026-09-08T08:00:00+02:00',
+    amount: 15000.0,
+    reservationCharge: 0,
+    otherCharges: 0,
+    customerTotal: 15000.0,
+    principalProcessingMethod: 'Vendor Portal API Switch',
+    customerConfirmationStatus: 'Confirmed',
+    customerConfirmationTimestamp: '2026-09-08T08:05:00+02:00',
+    customerConfirmationMethod: 'Bank Core Direct Authorization',
+    agentConfirmationStatus: 'Confirmed',
+    agentConfirmationTimestamp: '2026-09-08T08:05:00+02:00',
+    agentConfirmationMethod: 'TellerBud Agent POS Terminal PIN',
+    status: 'Completed',
+    postedAt: '2026-09-08T08:05:00+02:00',
+    formattedDate: '08 Sep 2026, 08:05',
+    timeline: [
+      { id: 'TL-9089B-1', eventName: 'Liquidity Transfer Initiated', actor: 'Supervisor', timestamp: '2026-09-08T08:00:00+02:00', result: 'Inter-agency float rebalancing transfer of ZMW 15,000.00' },
+      { id: 'TL-9089B-2', eventName: 'Vendor Switch Confirmed', actor: 'INDO Bank API', timestamp: '2026-09-08T08:04:00+02:00', result: 'INDO Zambia Bank float account debited successfully' },
+      { id: 'TL-9089B-3', eventName: 'Float Ledger Credited', actor: 'System', timestamp: '2026-09-08T08:05:00+02:00', result: 'Counter cash till credited with ZMW 15,000.00' },
+    ],
+    recordSource: 'TellerBud Treasury Module',
+    lastUpdated: '08 Sep 2026, 08:05',
+  },
   // Today records from OTHER businesses (visible to Super Admin, hidden from Business Owner):
   {
     id: 'MMT-TODAY-10',
@@ -1019,9 +1067,67 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
   },
 ];
 
+// Dynamically anchor curated today and yesterday transactions to the Africa/Lusaka CAT calendar
+const todayLusaka = getLusakaDateString();
+const [y, m, d] = todayLusaka.split('-').map(Number);
+const yesterdayUtc = new Date(Date.UTC(y, m - 1, d - 1));
+const yesterdayLusaka = yesterdayUtc.toISOString().slice(0, 10);
+
+const normalizedDatedTransactions: MobileMoneyTransaction[] = DATED_MOBILE_MONEY_TRANSACTIONS.map((t) => {
+  if (t.id.startsWith('MMT-TODAY-')) {
+    const updatedPostedAt = t.postedAt.replace(/^\d{4}-\d{2}-\d{2}/, todayLusaka);
+    const dateObj = new Date(updatedPostedAt);
+    const formattedDate =
+      dateObj.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }) +
+      ', ' +
+      dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return {
+      ...t,
+      postedAt: updatedPostedAt,
+      customerConfirmationTimestamp: t.customerConfirmationTimestamp
+        ? t.customerConfirmationTimestamp.replace(/^\d{4}-\d{2}-\d{2}/, todayLusaka)
+        : undefined,
+      agentConfirmationTimestamp: t.agentConfirmationTimestamp
+        ? t.agentConfirmationTimestamp.replace(/^\d{4}-\d{2}-\d{2}/, todayLusaka)
+        : undefined,
+      formattedDate,
+      lastUpdated: formattedDate,
+    };
+  }
+  if (t.id.startsWith('MMT-YEST-')) {
+    const updatedPostedAt = t.postedAt.replace(/^\d{4}-\d{2}-\d{2}/, yesterdayLusaka);
+    const dateObj = new Date(updatedPostedAt);
+    const formattedDate =
+      dateObj.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }) +
+      ', ' +
+      dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return {
+      ...t,
+      postedAt: updatedPostedAt,
+      customerConfirmationTimestamp: t.customerConfirmationTimestamp
+        ? t.customerConfirmationTimestamp.replace(/^\d{4}-\d{2}-\d{2}/, yesterdayLusaka)
+        : undefined,
+      agentConfirmationTimestamp: t.agentConfirmationTimestamp
+        ? t.agentConfirmationTimestamp.replace(/^\d{4}-\d{2}-\d{2}/, yesterdayLusaka)
+        : undefined,
+      formattedDate,
+      lastUpdated: formattedDate,
+    };
+  }
+  return t;
+});
+
 // Unified list of all Mobile Money Transactions
 const allTransactions = [
-  ...DATED_MOBILE_MONEY_TRANSACTIONS,
+  ...normalizedDatedTransactions,
   ...mappedPickupTransactions,
   ...mappedWalkInTransactions,
 ];
@@ -1035,7 +1141,38 @@ export const MOCK_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = allTrans
     seenTxnIds.add(t.id);
     return true;
   })
-  .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+  .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime())
+  .map((t, idx) => {
+    // Generate realistic, consistent agency float balance
+    const baseBal = 125000 - ((idx * 3150) % 85000);
+    const balBefore = t.balanceBefore !== undefined ? t.balanceBefore : Math.round(baseBal * 100) / 100;
+    const delta = t.transactionType === 'Deposit' ? -t.amount : t.amount;
+    const balAfter =
+      t.balanceAfter !== undefined
+        ? t.balanceAfter
+        : Math.round(Math.max(1200, balBefore + (t.status === 'Completed' ? delta : 0)) * 100) / 100;
+
+    return {
+      ...t,
+      balanceBefore: balBefore,
+      balanceAfter: balAfter,
+      completionInformation:
+        t.completionInformation ||
+        (t.status === 'Completed'
+          ? `Settled successfully via ${t.principalProcessingMethod || 'MNO Direct Gateway'}. Authorization reference: ${t.receiptNumber || 'REC-' + t.reference}`
+          : undefined),
+      failureReason:
+        t.failureReason ||
+        (t.status === 'Failed'
+          ? 'Transaction timed out at telecom operator payment gateway during customer confirmation.'
+          : undefined),
+      cancellationReason:
+        t.cancellationReason ||
+        (t.status === 'Cancelled'
+          ? 'Transaction was cancelled prior to terminal cash handover.'
+          : undefined),
+    };
+  });
 
 /**
  * Filter and query mobile money transactions
@@ -1157,6 +1294,8 @@ export function queryMobileMoneyTransactions(
       comparison = a.status.localeCompare(b.status);
     } else if (sort.field === 'reference') {
       comparison = a.reference.localeCompare(b.reference);
+    } else if (sort.field === 'balanceAfter') {
+      comparison = a.balanceAfter - b.balanceAfter;
     }
     return sort.direction === 'asc' ? comparison : -comparison;
   });

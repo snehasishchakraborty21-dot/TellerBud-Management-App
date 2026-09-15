@@ -8,6 +8,7 @@ import { AdminNotification } from '../types/admin';
 import { useAuth } from '../context/AuthContext';
 
 import { boNotificationService } from '../services/notificationService';
+import { tellerBudNotificationService } from '../services/tellerBudNotificationService';
 
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
@@ -31,12 +32,21 @@ export const AdminLayout: React.FC = () => {
     }
     loadHeaderData();
 
+    const unsubscribeTB = tellerBudNotificationService.subscribe(() => {
+      loadHeaderData();
+    });
+
     if (currentUser?.role === 'business_owner') {
       const unsubscribe = boNotificationService.subscribe(() => {
         loadHeaderData();
       });
-      return () => unsubscribe();
+      return () => {
+        unsubscribeTB();
+        unsubscribe();
+      };
     }
+
+    return () => unsubscribeTB();
   }, [currentUser]);
 
   // Determine current page title based on active path
@@ -44,18 +54,12 @@ export const AdminLayout: React.FC = () => {
     const pathname = location.pathname;
     if (
       pathname === '/business-owner/communication/notifications' ||
-      pathname === '/business-owner/notifications'
+      pathname === '/business-owner/notifications' ||
+      pathname === '/super-admin/configuration/notifications' ||
+      pathname === '/super-admin/notifications' ||
+      pathname === '/notifications'
     ) {
       return 'Notifications';
-    }
-
-    if (
-      pathname === '/business-owner/communication/chats' ||
-      pathname === '/business-owner/chats' ||
-      pathname === '/super-admin/communication/chats' ||
-      pathname === '/super-admin/chats'
-    ) {
-      return 'Chats';
     }
 
     if (
@@ -235,10 +239,148 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
+      pathname.startsWith('/wallet-ledger/') ||
+      pathname.includes('/wallets/ledger/')
+    ) {
+      return 'Ledger Entry Details';
+    }
+
+    if (
+      pathname === '/super-admin/wallets/ledger' ||
+      pathname === '/super-admin/wallet-ledger' ||
+      pathname === '/wallet-ledger' ||
+      pathname === '/wallets/ledger' ||
+      pathname.endsWith('/wallets/ledger') ||
+      pathname.endsWith('/wallet-ledger') ||
       pathname === '/business-owner/wallets/ledger' ||
       pathname === '/business-owner/ledger'
     ) {
       return 'Wallet Ledger';
+    }
+
+    if (
+      pathname.includes('/wallets/reconciliation/') ||
+      pathname.startsWith('/api-ledger-reconciliation/')
+    ) {
+      return 'Reconciliation Details';
+    }
+
+    if (
+      pathname === '/super-admin/wallets/reconciliation' ||
+      pathname === '/api-ledger-reconciliation' ||
+      pathname.endsWith('/wallets/reconciliation') ||
+      pathname.endsWith('/api-ledger-reconciliation')
+    ) {
+      return 'API & Ledger Reconciliation';
+    }
+
+    if (
+      pathname === '/super-admin/transactions/all' ||
+      pathname === '/business-owner/transactions/all' ||
+      pathname === '/transactions/all' ||
+      pathname === '/transactions' ||
+      pathname.endsWith('/transactions/all')
+    ) {
+      return 'All Transactions';
+    }
+
+    if (
+      (pathname.startsWith('/transactions/') && pathname !== '/transactions/all') ||
+      (pathname.startsWith('/super-admin/transactions/') &&
+        pathname !== '/super-admin/transactions/all' &&
+        !pathname.includes('/transactions/commissions')) ||
+      pathname.includes('/transactions/all/')
+    ) {
+      return 'Transaction Details';
+    }
+
+    if (
+      pathname === '/super-admin/transactions/commissions' ||
+      pathname === '/business-owner/transactions/commissions' ||
+      pathname === '/charges-commissions' ||
+      pathname.endsWith('/transactions/commissions') ||
+      pathname.endsWith('/transactions/charges-commissions')
+    ) {
+      return 'Charges & Commissions';
+    }
+
+    if (
+      pathname.startsWith('/charges-commissions/') ||
+      pathname.includes('/transactions/commissions/')
+    ) {
+      const seg = pathname.split('/').filter(Boolean).pop() || '';
+      if (seg.toUpperCase().includes('COM')) {
+        return 'Commission Details';
+      }
+      return 'Charge Details';
+    }
+
+    if (
+      pathname === '/super-admin/configuration/vendor-eligibility' ||
+      pathname === '/configuration/vendor-eligibility' ||
+      pathname === '/vendor-eligibility'
+    ) {
+      return 'Vendor Eligibility';
+    }
+
+    if (
+      pathname === '/super-admin/configuration/service-modes' ||
+      pathname === '/configuration/service-modes' ||
+      pathname === '/service-modes'
+    ) {
+      return 'Service Modes';
+    }
+
+    if (
+      pathname.startsWith('/super-admin/configuration/service-modes/') ||
+      pathname.startsWith('/configuration/service-modes/') ||
+      pathname.startsWith('/service-modes/')
+    ) {
+      return 'Service Mode Details';
+    }
+
+    if (
+      pathname === '/super-admin/configuration/vendors' ||
+      pathname === '/configuration/vendors' ||
+      pathname === '/vendors' ||
+      pathname.endsWith('/configuration/vendors')
+    ) {
+      return 'Vendors';
+    }
+
+    if (
+      pathname.startsWith('/super-admin/configuration/vendors/') ||
+      pathname.startsWith('/configuration/vendors/') ||
+      pathname.startsWith('/vendors/')
+    ) {
+      return 'Vendor Details';
+    }
+
+    if (
+      pathname.startsWith('/notifications/') ||
+      pathname.startsWith('/super-admin/notifications/') ||
+      pathname.startsWith('/super-admin/configuration/notifications/') ||
+      (pathname.includes('/notifications/') && pathname.split('/notifications/')[1]?.length > 0)
+    ) {
+      return 'Notification Details';
+    }
+
+    if (
+      pathname === '/notifications' ||
+      pathname === '/super-admin/notifications' ||
+      pathname === '/super-admin/configuration/notifications' ||
+      pathname.endsWith('/notifications')
+    ) {
+      return 'Notifications';
+    }
+
+    if (
+      pathname === '/super-admin/configuration/settings' ||
+      pathname === '/configuration/settings' ||
+      pathname === '/settings' ||
+      pathname.endsWith('/configuration/settings')
+    ) {
+      return 'System Settings';
     }
 
     for (const group of navigationConfig) {

@@ -121,7 +121,7 @@ export const LivePickupOperationsTable: React.FC<LivePickupOperationsTableProps>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <h2 className="font-bold text-base text-gray-900">
-            Live Operations
+            Customer Requests
           </h2>
           <span className="px-2.5 py-0.5 rounded-full bg-[#0D93AA]/10 text-[#0D93AA] text-xs font-bold border border-[#0D93AA]/20">
             {filteredRequests.length} Active
@@ -203,7 +203,7 @@ export const LivePickupOperationsTable: React.FC<LivePickupOperationsTableProps>
               onClick={onRefresh}
               disabled={isRefreshing}
               className="h-8 px-2.5 text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md transition-colors flex items-center gap-1.5"
-              title="Refresh live operations"
+              title="Refresh customer requests"
             >
               <RefreshCw size={12} className={isRefreshing ? 'animate-spin text-[#0D93AA]' : 'text-gray-500'} />
               <span>Refresh</span>
@@ -256,7 +256,7 @@ export const LivePickupOperationsTable: React.FC<LivePickupOperationsTableProps>
                 <td colSpan={10} className="py-12 text-center">
                   <div className="max-w-xs mx-auto space-y-1.5">
                     <Radio size={20} className="text-gray-400 mx-auto" />
-                    <div className="text-xs font-bold text-gray-800">No live operations</div>
+                    <div className="text-xs font-bold text-gray-800">No customer requests found</div>
                     <div className="text-[11px] text-gray-500">
                       {hasActiveFilters
                         ? 'No active customer requests match your current filters.'

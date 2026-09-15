@@ -252,18 +252,6 @@ export const AgentSummaryModal: React.FC<AgentSummaryModalProps> = ({
           </button>
           <button
             type="button"
-            id={`btn-modal-chat-agent-${agent.id}`}
-            onClick={() => {
-              onClose();
-              navigate(`/business-owner/communication/chats?agentId=${agent.id}`);
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 border border-[#0D93AA]/30 rounded-lg transition-colors cursor-pointer"
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Chat</span>
-          </button>
-          <button
-            type="button"
             onClick={handleOpenFullDetails}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7A8D] rounded-lg shadow-2xs transition-colors cursor-pointer"
           >

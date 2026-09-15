@@ -1,4 +1,5 @@
-import { MobileMoneyTransaction } from '../types/mobileMoney';
+import { MobileMoneyTransaction, MobileMoneyKPIPeriods } from '../types/mobileMoney';
+import { getLusakaDateString, getLusakaPeriodBoundaries } from './dateUtils';
 
 /**
  * Format currency into Zambian Kwacha (ZMW) format with two decimal places.
@@ -66,5 +67,72 @@ export function calculateMobileMoneyKPIs(transactions: MobileMoneyTransaction[])
     totalTransactions: transactions.length,
     totalAmount: principalCents / 100,
     serviceEarnings: serviceEarningsCents / 100,
+  };
+}
+
+/**
+ * Calculates the fixed 5-card Mobile Money KPI period transaction counts:
+ * 1. Today's Transactions: Total transactions created today (Africa/Lusaka CAT).
+ * 2. Week to Date: Total transactions from Monday through current day (CAT).
+ * 3. Month to Date: Total transactions from 1st day of current month through today (CAT).
+ * 4. Year to Date: Total transactions from 1 January through today (CAT).
+ *
+ * Scope:
+ * - Platform-wide for TellerBud Admin (when businessScope is undefined or 'ALL')
+ * - Strictly isolated to the business and linked agents for Business Owner.
+ */
+export function calculateMobileMoneyPeriodKPIs(
+  transactions: MobileMoneyTransaction[],
+  businessScope?: string
+): MobileMoneyKPIPeriods {
+  let scoped = transactions;
+
+  if (businessScope && businessScope !== 'ALL') {
+    const scopeLower = businessScope.toLowerCase().trim();
+    scoped = transactions.filter(
+      (t) =>
+        t.businessName.toLowerCase().trim() === scopeLower ||
+        t.businessId.toLowerCase().trim() === scopeLower
+    );
+  }
+
+  const { todayLusaka, mondayLusaka, monthStartLusaka, yearStartLusaka } =
+    getLusakaPeriodBoundaries();
+
+  let todayCount = 0;
+  let weekToDateCount = 0;
+  let monthToDateCount = 0;
+  let yearToDateCount = 0;
+
+  for (const t of scoped) {
+    const tDate = getLusakaDateString(t.postedAt);
+    if (!tDate) continue;
+
+    // Today's Transactions: created today
+    if (tDate === todayLusaka) {
+      todayCount++;
+    }
+
+    // Week to Date: Monday through current day
+    if (tDate >= mondayLusaka && tDate <= todayLusaka) {
+      weekToDateCount++;
+    }
+
+    // Month to Date: 1st day of current month through today
+    if (tDate >= monthStartLusaka && tDate <= todayLusaka) {
+      monthToDateCount++;
+    }
+
+    // Year to Date: 1 January through today
+    if (tDate >= yearStartLusaka && tDate <= todayLusaka) {
+      yearToDateCount++;
+    }
+  }
+
+  return {
+    todayCount,
+    weekToDateCount,
+    monthToDateCount,
+    yearToDateCount,
   };
 }

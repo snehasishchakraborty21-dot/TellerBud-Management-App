@@ -159,15 +159,6 @@ export const AgentDetailPage: React.FC = () => {
               <span className="text-xs text-gray-500 font-medium">
                 Last active: <span className="text-gray-800 font-semibold">{agent.lastActive}</span>
               </span>
-              <button
-                type="button"
-                id={`btn-chat-agent-${agent.id}`}
-                onClick={() => navigate(`/business-owner/communication/chats?agentId=${agent.id}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7F93] rounded-xl shadow-xs transition-colors cursor-pointer"
-              >
-                <MessageSquare size={13} />
-                <span>Chat with Agent</span>
-              </button>
             </div>
           </div>
         </div>

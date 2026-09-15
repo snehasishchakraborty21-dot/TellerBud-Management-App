@@ -4,15 +4,51 @@
  */
 
 /**
+ * Returns a date string in YYYY-MM-DD format for Africa/Lusaka (CAT, UTC+2) time zone.
+ */
+export function getLusakaDateString(date: Date | string | number = new Date()): string {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Lusaka',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+/**
  * Returns today's date string in YYYY-MM-DD format for Africa/Lusaka.
  * Dynamically calculated from system time.
  */
 export function getZambiaTodayString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return getLusakaDateString(new Date());
+}
+
+/**
+ * Returns the fixed KPI period boundaries (Today, Week to Date Monday, Month to Date 1st, Year to Date 1 Jan)
+ * calculated strictly in the Africa/Lusaka (CAT) time zone.
+ */
+export function getLusakaPeriodBoundaries(currentDate: Date = new Date()) {
+  const todayLusaka = getLusakaDateString(currentDate);
+  const [y, m, d] = todayLusaka.split('-').map(Number);
+
+  // Day of week calculation: UTC representation of Lusaka date
+  const todayUtc = new Date(Date.UTC(y, m - 1, d));
+  const dayOfWeek = todayUtc.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const mondayUtc = new Date(Date.UTC(y, m - 1, d - daysSinceMonday));
+  const mondayLusaka = mondayUtc.toISOString().slice(0, 10);
+
+  const monthStartLusaka = `${y}-${String(m).padStart(2, '0')}-01`;
+  const yearStartLusaka = `${y}-01-01`;
+
+  return {
+    todayLusaka,
+    mondayLusaka,
+    monthStartLusaka,
+    yearStartLusaka,
+  };
 }
 
 /**

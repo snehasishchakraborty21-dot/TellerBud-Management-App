@@ -5,10 +5,6 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Lock,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
   Ban,
   Building2,
 } from 'lucide-react';
@@ -16,7 +12,6 @@ import {
   BusinessGlobalWallet,
   BusinessWalletSortField,
   BusinessWalletSortDirection,
-  BusinessWalletHealth,
   BusinessWalletState,
 } from '../../types/businessWallet';
 import { formatZMW } from '../../data/mockBusinessWalletData';
@@ -57,41 +52,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
     );
   };
 
-  // Health badge renderer
-  const renderHealthBadge = (health: BusinessWalletHealth) => {
-    switch (health) {
-      case 'Healthy':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-            <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-            Healthy
-          </span>
-        );
-      case 'Low Balance':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
-            <Clock size={12} className="text-amber-600 shrink-0" />
-            Low Balance
-          </span>
-        );
-      case 'Funds Reserved':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50/80 text-amber-800 border border-amber-300 shadow-2xs whitespace-nowrap">
-            <Lock size={12} className="text-amber-700 shrink-0" />
-            Funds Reserved
-          </span>
-        );
-      case 'Needs Review':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200/80 whitespace-nowrap">
-            <AlertTriangle size={12} className="text-rose-600 shrink-0" />
-            Needs Review
-          </span>
-        );
-    }
-  };
-
-  // State badge renderer
+  // State badge renderer - Active, Pending, Suspended
   const renderStateBadge = (state: BusinessWalletState) => {
     switch (state) {
       case 'Active':
@@ -108,7 +69,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
         );
       case 'Suspended':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap">
             <Ban size={11} className="text-slate-500 shrink-0" />
             Suspended
           </span>
@@ -126,18 +87,17 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
               key={i}
               className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
             >
-              <div className="flex items-center gap-3 w-1/4">
+              <div className="flex items-center gap-3 w-1/3">
                 <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse shrink-0" />
                 <div className="space-y-1.5 flex-1">
                   <div className="h-3.5 bg-slate-200 rounded w-3/4 animate-pulse" />
                   <div className="h-2.5 bg-slate-100 rounded w-1/2 animate-pulse" />
                 </div>
               </div>
+              <div className="h-4 bg-slate-100 rounded w-28 animate-pulse" />
+              <div className="h-4 bg-slate-100 rounded w-24 animate-pulse" />
               <div className="h-4 bg-slate-100 rounded w-24 animate-pulse" />
               <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-slate-100 rounded w-16 animate-pulse" />
-              <div className="h-6 bg-slate-100 rounded-full w-24 animate-pulse" />
               <div className="h-6 bg-slate-100 rounded-full w-20 animate-pulse" />
               <div className="h-8 bg-slate-200 rounded-lg w-24 animate-pulse" />
             </div>
@@ -175,11 +135,11 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
   return (
     <div className="bg-white border border-gray-200/90 rounded-xl shadow-xs overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[1000px]">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/90 border-b border-gray-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider select-none">
-              {/* 1. Business */}
-              <th scope="col" className="py-3 pl-4 pr-3 min-w-[260px]">
+              {/* 1. Business - expanded width */}
+              <th scope="col" className="py-3 pl-4 pr-3 min-w-[220px]">
                 <button
                   type="button"
                   onClick={() => onSort('businessName')}
@@ -190,8 +150,8 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                 </button>
               </th>
 
-              {/* 2. Business Owner */}
-              <th scope="col" className="py-3 px-3 min-w-[170px]">
+              {/* 2. Business Owner - expanded width */}
+              <th scope="col" className="py-3 px-3 min-w-[160px]">
                 <button
                   type="button"
                   onClick={() => onSort('ownerName')}
@@ -203,7 +163,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
               </th>
 
               {/* 3. Posted Balance */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[130px]">
+              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[125px]">
                 <button
                   type="button"
                   onClick={() => onSort('postedBalance')}
@@ -215,7 +175,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
               </th>
 
               {/* 4. Available Balance */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[130px]">
+              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[125px]">
                 <button
                   type="button"
                   onClick={() => onSort('availableBalance')}
@@ -227,7 +187,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
               </th>
 
               {/* 5. Reserved Funds */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[120px]">
+              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[115px]">
                 <button
                   type="button"
                   onClick={() => onSort('reservedFunds')}
@@ -238,19 +198,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                 </button>
               </th>
 
-              {/* 6. Wallet Health */}
-              <th scope="col" className="py-3 px-3 min-w-[130px]">
-                <button
-                  type="button"
-                  onClick={() => onSort('health')}
-                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                >
-                  <span>Wallet Health</span>
-                  {renderSortIcon('health')}
-                </button>
-              </th>
-
-              {/* 7. Wallet State */}
+              {/* 6. Wallet State */}
               <th scope="col" className="py-3 px-3 min-w-[105px]">
                 <button
                   type="button"
@@ -262,10 +210,10 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                 </button>
               </th>
 
-              {/* 8. Action: Clearly visible, single-line View Details */}
+              {/* 7. Action */}
               <th
                 scope="col"
-                className="py-3 px-4 text-center min-w-[135px] sticky right-0 bg-slate-50/95 backdrop-blur-xs z-10"
+                className="py-3 px-4 text-center min-w-[125px] whitespace-nowrap"
               >
                 Action
               </th>
@@ -329,7 +277,7 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                   </span>
                 </td>
 
-                {/* 5. Reserved Funds */}
+                {/* 5. Reserved Funds (financial amount only) */}
                 <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
                   <span
                     className={`font-semibold font-mono text-xs sm:text-[13px] ${
@@ -340,18 +288,13 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                   </span>
                 </td>
 
-                {/* 6. Wallet Health */}
-                <td className="py-3 px-3 align-middle whitespace-nowrap">
-                  {renderHealthBadge(wallet.health)}
-                </td>
-
-                {/* 7. Wallet State */}
+                {/* 6. Wallet State - Active, Pending, Suspended */}
                 <td className="py-3 px-3 align-middle whitespace-nowrap">
                   {renderStateBadge(wallet.state)}
                 </td>
 
-                {/* 8. Action: Single-line View Details */}
-                <td className="py-3 px-4 align-middle text-center sticky right-0 bg-white/95 group-hover:bg-slate-50/95 transition-colors z-10 whitespace-nowrap">
+                {/* 7. Action: Single-line View Details */}
+                <td className="py-3 px-4 align-middle text-center whitespace-nowrap">
                   <Link
                     to={`/business-global-wallets/${wallet.walletId}`}
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors border border-[#0D93AA]/20 shrink-0 cursor-pointer shadow-2xs whitespace-nowrap"

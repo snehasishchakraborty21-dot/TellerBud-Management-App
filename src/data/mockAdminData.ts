@@ -500,10 +500,10 @@ export const MOCK_NOTIFICATIONS: AdminNotification[] = [
   },
   {
     id: 'notif-4',
-    title: 'Live pickup request awaiting Agent',
+    title: 'Customer pickup request awaiting Agent',
     category: 'Operations',
     timestamp: '22 mins ago',
     read: false,
-    actionUrl: '/super-admin/operations/live',
+    actionUrl: '/super-admin/operations/requests',
   },
 ];

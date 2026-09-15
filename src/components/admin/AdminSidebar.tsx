@@ -4,7 +4,6 @@ import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { getNavigationConfigForRole, NavGroup, NavItem } from '../../config/navigation';
 import { TellerBudLogo } from '../shared/TellerBudLogo';
 import { adminService } from '../../services/mockAdminService';
-import { chatService } from '../../services/chatService';
 import { useAuth } from '../../context/AuthContext';
 
 interface AdminSidebarProps {
@@ -22,7 +21,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const { currentUser } = useAuth();
   const [pendingWithdrawalsBadge, setPendingWithdrawalsBadge] = useState<number>(9);
   const [pendingCashFloatBadge, setPendingCashFloatBadge] = useState<number>(5);
-  const [chatsBadge, setChatsBadge] = useState<number>(() => chatService.getUnreadConversationsCount());
 
   const navigationConfig = getNavigationConfigForRole(currentUser?.role);
 
@@ -80,16 +78,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     return () => unsubscribe();
   }, [currentUser?.role, currentUser?.businessName]);
 
-  // Sync Chats unread badge
-  useEffect(() => {
-    const updateChatBadge = () => {
-      setChatsBadge(chatService.getUnreadConversationsCount());
-    };
-    updateChatBadge();
-    const unsubscribeChat = chatService.subscribe(updateChatBadge);
-    return () => unsubscribeChat();
-  }, []);
-
   // Handle closing drawer on ESC
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,6 +109,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   };
 
   const renderNavGroup = (group: NavGroup, index: number) => {
+    if (!group.items || group.items.length === 0) return null;
     const isExpanded = !!expandedGroups[group.id];
 
     return (
@@ -253,8 +242,40 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                    location.pathname === '/business-owner/people/business-profile')) ||
                 ((item.id === 'agent-cash-float-requests' || item.id === 'cash-float-requests') &&
                   location.pathname.includes('/cash-float-requests')) ||
+                (item.id === 'wallet-ledger' &&
+                  (location.pathname.includes('/wallet-ledger') ||
+                   location.pathname.includes('/wallets/ledger'))) ||
                 ((item.id === 'agent-to-agent-liquidity' || item.id === 'agent-liquidity') &&
-                  location.pathname.includes('/agent-to-agent-liquidity'));
+                  location.pathname.includes('/agent-to-agent-liquidity')) ||
+                (item.id === 'all-transactions' &&
+                  !location.pathname.includes('commissions') &&
+                  !location.pathname.includes('charges') &&
+                  (location.pathname.includes('/transactions/all') ||
+                   location.pathname.startsWith('/transactions/') ||
+                   location.pathname.startsWith('/super-admin/transactions/') ||
+                   location.pathname.startsWith('/business-owner/transactions/all') ||
+                   location.pathname === '/transactions')) ||
+                (item.id === 'charges-commissions' &&
+                  (location.pathname.includes('/commissions') ||
+                   location.pathname.includes('charges-commissions') ||
+                   location.pathname.startsWith('/charges-commissions'))) ||
+                (item.id === 'vendor-eligibility' &&
+                  (location.pathname.includes('/configuration/vendor-eligibility') ||
+                   location.pathname.includes('/vendor-eligibility'))) ||
+                (item.id === 'service-modes' &&
+                  (location.pathname.includes('/configuration/service-modes') ||
+                   location.pathname.includes('/service-modes'))) ||
+                (item.id === 'vendors' &&
+                  !location.pathname.includes('vendor-eligibility') &&
+                  !location.pathname.includes('service-modes') &&
+                  (location.pathname.includes('/configuration/vendors') ||
+                   location.pathname.includes('/vendors'))) ||
+                (item.id === 'system-settings' &&
+                  (location.pathname.includes('/configuration/settings') ||
+                   location.pathname.includes('/settings'))) ||
+                (item.id === 'notifications-config' &&
+                  (location.pathname.includes('/configuration/notifications') ||
+                   location.pathname.includes('/notifications')));
 
               return (
                 <NavLink
@@ -289,8 +310,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     item.badge !== undefined ||
                     item.id === 'customer-withdrawals' ||
                     item.id === 'agent-cash-float-requests' ||
-                    item.id === 'cash-float-requests' ||
-                    (item.id === 'chats' && chatsBadge > 0)
+                    item.id === 'cash-float-requests'
                   ) && (
                     <span
                       className={`ml-auto pl-2.5 min-w-[20px] h-[18px] px-1.5 inline-flex items-center justify-center text-[10px] font-bold rounded-full flex-shrink-0 leading-none ${
@@ -303,8 +323,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                         ? pendingWithdrawalsBadge
                         : item.id === 'agent-cash-float-requests' || item.id === 'cash-float-requests'
                         ? pendingCashFloatBadge
-                        : item.id === 'chats'
-                        ? chatsBadge
                         : item.badge}
                     </span>
                   )}

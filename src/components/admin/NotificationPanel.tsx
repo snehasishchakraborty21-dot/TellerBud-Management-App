@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { boNotificationService } from '../../services/notificationService';
 import { NotificationDetailsModal } from '../notifications/NotificationDetailsModal';
 import { BONotification } from '../../types/notifications';
+import { useAuth } from '../../context/AuthContext';
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -92,8 +93,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }
   };
 
+  const { currentUser } = useAuth();
+
   const handleViewAll = () => {
-    navigate('/business-owner/communication/notifications');
+    if (currentUser?.role === 'business_owner') {
+      navigate('/business-owner/communication/notifications');
+    } else {
+      navigate('/super-admin/configuration/notifications');
+    }
     onClose();
   };
 

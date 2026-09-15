@@ -188,11 +188,6 @@ export function filterAndSortBusinessWallets(
     result = result.filter((w) => w.state === filters.state);
   }
 
-  // Wallet Health filter
-  if (filters.health && filters.health !== 'ALL') {
-    result = result.filter((w) => w.health === filters.health);
-  }
-
   // Balance Range filter
   if (filters.balanceRange && filters.balanceRange !== 'ALL') {
     switch (filters.balanceRange) {

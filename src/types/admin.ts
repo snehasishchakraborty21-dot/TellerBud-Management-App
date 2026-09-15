@@ -627,18 +627,30 @@ export interface GlobalWalletActivity {
 export type BusinessTransactionCategory =
   | 'Walk-In Transaction'
   | 'Customer Pickup Transaction'
+  | 'Cash Pickup'
   | 'Cash / Float Fulfilment'
   | 'Agent-to-Agent Liquidity'
   | 'Global Wallet Transaction'
+  | 'Wallet Funding'
+  | 'Customer Withdrawal'
+  | 'Business Wallet Transaction'
   | 'Charge or Commission'
   | 'Refund or Reversal';
 
 export type BusinessTransactionStatus =
   | 'Completed'
+  | 'Paid'
   | 'Processing'
   | 'Pending'
+  | 'Pending Review'
+  | 'Pending Confirmation'
+  | 'Approved'
+  | 'Finding an Agent'
+  | 'Agent Confirmed'
+  | 'Ready for Pickup'
   | 'Failed'
   | 'Cancelled'
+  | 'Rejected'
   | 'Reversed';
 
 export type GlobalWalletFeeType = 'Reservation Fee' | 'Transaction Fee' | 'Platform Fee';

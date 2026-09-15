@@ -5,11 +5,11 @@ import { adminService } from '../services/mockAdminService';
 import {
   MobileMoneyTransaction,
   MobileMoneyFilters,
-  MobileMoneySummary,
   MobileMoneySortField,
   MobileMoneySortDirection,
   ServiceChannel,
   MobileMoneyStatus,
+  MobileMoneyKPIPeriods,
 } from '../types/mobileMoney';
 import { MobileMoneySummaryCards } from '../components/mobile-money/MobileMoneySummaryCards';
 import { MobileMoneyFilterBar } from '../components/mobile-money/MobileMoneyFilterBar';
@@ -56,17 +56,13 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   const highlightedRef = routeRef || searchParams.get('ref') || undefined;
 
   const [transactions, setTransactions] = useState<MobileMoneyTransaction[]>([]);
-  const [summary, setSummary] = useState<MobileMoneySummary>({
-    totalTransactions: 0,
-    totalAmount: 0,
-    serviceEarnings: 0,
-    total: 0,
-    pickup: 0,
-    walkIn: 0,
-    completed: 0,
-    pendingConfirmation: 0,
-    cancelledFailed: 0,
+  const [kpis, setKpis] = useState<MobileMoneyKPIPeriods>({
+    todayCount: 0,
+    weekToDateCount: 0,
+    monthToDateCount: 0,
+    yearToDateCount: 0,
   });
+  const [isKpiLoading, setIsKpiLoading] = useState<boolean>(true);
 
   const [filters, setFilters] = useState<MobileMoneyFilters>({
     ...DEFAULT_FILTERS,
@@ -86,7 +82,20 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     useState<MobileMoneyTransaction | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
 
-  // Load Data for the selected date and filters
+  // Load KPI periods independently from the selectedDate filter
+  const loadKPIs = useCallback(async () => {
+    try {
+      setIsKpiLoading(true);
+      const kpiData = await adminService.getMobileMoneyKPIs(businessScope);
+      setKpis(kpiData);
+    } catch (err) {
+      console.error('Failed to load mobile money period KPIs:', err);
+    } finally {
+      setIsKpiLoading(false);
+    }
+  }, [businessScope]);
+
+  // Load Data for the selected date and filters (filters the transaction table)
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -100,7 +109,6 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
       );
 
       setTransactions(res.items);
-      setSummary(res.summary);
     } catch (err) {
       console.error('Failed to load mobile money transactions:', err);
     } finally {
@@ -109,18 +117,20 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     }
   }, [filters, selectedDate, sortField, sortDirection, businessScope]);
 
-  // Whenever selectedDate changes, reset pagination to Page 1 and reload data
+  // Whenever selectedDate changes, reset pagination to Page 1 and reload table data
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedDate]);
 
   useEffect(() => {
     loadData();
+    loadKPIs();
     const unsubscribe = adminService.subscribe(() => {
       loadData();
+      loadKPIs();
     });
     return () => unsubscribe();
-  }, [loadData]);
+  }, [loadData, loadKPIs]);
 
   // Open drawer if ref param or route param is present
   useEffect(() => {
@@ -166,29 +176,6 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleSelectSummaryCard = (
-    channel: ServiceChannel | 'ALL',
-    status: MobileMoneyStatus | 'ALL' | 'Cancelled_Failed'
-  ) => {
-    setFilters((prev) => ({
-      ...prev,
-      serviceChannel: channel,
-      status: status,
-    }));
-
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('date', selectedDate);
-
-    if (status === 'ALL') nextParams.delete('status');
-    else nextParams.set('status', status);
-
-    if (channel === 'ALL') nextParams.delete('channel');
-    else nextParams.set('channel', channel);
-
-    setSearchParams(nextParams, { replace: true });
-    setCurrentPage(1);
-  };
-
   // Clear search and dropdown selections, but retain selected date
   const handleClearFilters = () => {
     setFilters(DEFAULT_FILTERS);
@@ -199,10 +186,11 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     setSearchParams(nextParams, { replace: true });
   };
 
-  // Reload data for the currently selected date without resetting to today
+  // Reload data for the currently selected date and update KPIs
   const handleRefresh = () => {
     setIsRefreshing(true);
     loadData();
+    loadKPIs();
   };
 
   const handleSort = (field: MobileMoneySortField) => {
@@ -251,12 +239,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 pb-12">
       {/* Summary Cards */}
-      <MobileMoneySummaryCards
-        summary={summary}
-        selectedChannel={filters.serviceChannel}
-        selectedStatus={filters.status}
-        onSelectFilter={handleSelectSummaryCard}
-      />
+      <MobileMoneySummaryCards kpis={kpis} isLoading={isKpiLoading} />
 
       {/* Filter Bar */}
       <MobileMoneyFilterBar

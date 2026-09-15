@@ -35,11 +35,8 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
 
   // Context-aware drawer title based on originating page
-  const isCustomerPage =
-    sourcePage === 'customer-requests' ||
-    location.pathname.includes('/customer-requests');
   const drawerTitle =
-    title || (isCustomerPage ? 'Customer Request Details' : 'Live Request Details');
+    title || 'Customer Request Details';
 
   // Focus trap, Escape listener, and body scroll prevention
   useEffect(() => {

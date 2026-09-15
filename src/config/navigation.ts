@@ -77,13 +77,6 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
     title: 'Operations',
     items: [
       {
-        id: 'live-operations',
-        label: 'Live Operations',
-        path: '/super-admin/operations/live',
-        icon: Activity,
-        badge: 18,
-      },
-      {
         id: 'customer-requests',
         label: 'Customer Requests',
         path: '/super-admin/operations/requests',
@@ -230,18 +223,6 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
       },
     ],
   },
-  {
-    id: 'communication',
-    title: 'Communication',
-    items: [
-      {
-        id: 'chats',
-        label: 'Chats',
-        path: '/super-admin/communication/chats',
-        icon: MessageSquare,
-      },
-    ],
-  },
 ];
 
 /**
@@ -355,12 +336,6 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
         label: 'Notifications',
         path: '/business-owner/communication/notifications',
         icon: Bell,
-      },
-      {
-        id: 'chats',
-        label: 'Chats',
-        path: '/business-owner/communication/chats',
-        icon: MessageSquare,
       },
     ],
   },

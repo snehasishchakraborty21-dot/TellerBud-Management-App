@@ -10,9 +10,13 @@ import {
 export const CATEGORY_TYPE_MAPPING: Record<BusinessTransactionCategory, string[]> = {
   'Walk-In Transaction': ['Deposit', 'Withdrawal', 'Bill Payment'],
   'Customer Pickup Transaction': ['Cash Withdrawal Pickup', 'Merchant Settlement Pickup'],
+  'Cash Pickup': ['Customer Cash Pickup', 'Cash Fulfilment'],
   'Cash / Float Fulfilment': ['Float Request', 'Cash Request', 'Float Replenishment', 'Cash Fulfilment'],
   'Agent-to-Agent Liquidity': ['Agent Float Transfer', 'Agent Cash Transfer', 'Liquidity Swap'],
   'Global Wallet Transaction': ['Business Wallet Funding', 'Approved Adjustment'],
+  'Wallet Funding': ['Automated API Deposit', 'Mobile Money Funding'],
+  'Customer Withdrawal': ['Wallet Payout', 'Customer Withdrawal'],
+  'Business Wallet Transaction': ['Business Wallet Funding', 'Merchant Payout'],
   'Charge or Commission': ['TellerBud Charge', 'Commission'],
   'Refund or Reversal': ['Refund', 'Reversal'],
 };

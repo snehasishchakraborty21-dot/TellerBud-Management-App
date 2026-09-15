@@ -19,7 +19,7 @@ export const OperationalMetricsGrid: React.FC<OperationalMetricsProps> = ({
       label: 'ACTIVE PICKUP REQUESTS',
       value: metrics.activePickupRequests,
       colorClass: 'text-[#0D93AA]',
-      targetRoute: '/super-admin/operations/live',
+      targetRoute: '/super-admin/operations/requests',
     },
     {
       id: 'pending-withdrawals',

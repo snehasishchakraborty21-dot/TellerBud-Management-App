@@ -75,7 +75,8 @@ export interface IAdminService {
     sort?: { field: import('../types/mobileMoney').MobileMoneySortField; direction: import('../types/mobileMoney').MobileMoneySortDirection },
     businessScope?: string
   ): Promise<{ items: import('../types/mobileMoney').MobileMoneyTransaction[]; total: number; summary: import('../types/mobileMoney').MobileMoneySummary }>;
-  getMobileMoneyTransactionByReference(reference: string): Promise<import('../types/mobileMoney').MobileMoneyTransaction | null>;
+  getMobileMoneyKPIs(businessScope?: string): Promise<import('../types/mobileMoney').MobileMoneyKPIPeriods>;
+  getMobileMoneyTransactionByReference(reference: string, businessScope?: string): Promise<import('../types/mobileMoney').MobileMoneyTransaction | null>;
   getAgents(
     filters?: Partial<import('../types/admin').AgentFilters>,
     sort?: { field: import('../types/admin').AgentSortField; direction: import('../types/admin').AgentSortDirection },

@@ -12,19 +12,19 @@ export interface VendorConfig {
  */
 export const VENDOR_LOGO_MAP: Record<ApprovedVendor, VendorConfig> = {
   MTN: {
-    name: 'MTN',
+    name: 'MTN Mobile Money',
     assetPath: '/assets/vendors/mtn.svg',
-    alt: 'MTN Zambia',
+    alt: 'MTN Mobile Money',
   },
   Airtel: {
-    name: 'Airtel',
+    name: 'Airtel Money',
     assetPath: '/assets/vendors/airtel.svg',
-    alt: 'Airtel Zambia',
+    alt: 'Airtel Money',
   },
   Zamtel: {
-    name: 'Zamtel',
+    name: 'Zamtel Kwacha',
     assetPath: '/assets/vendors/zamtel.svg',
-    alt: 'Zamtel',
+    alt: 'Zamtel Kwacha',
   },
   Zanaco: {
     name: 'Zanaco',
@@ -37,17 +37,17 @@ export const VENDOR_LOGO_MAP: Record<ApprovedVendor, VendorConfig> = {
     alt: 'FNB Zambia',
   },
   INDO: {
-    name: 'INDO',
+    name: 'INDO Zambia Bank',
     assetPath: '/assets/vendors/indo.svg',
     alt: 'Indo Zambia Bank',
   },
   Stanbic: {
-    name: 'Stanbic',
+    name: 'Stanbic Bank',
     assetPath: '/assets/vendors/stanbic.svg',
     alt: 'Stanbic Bank',
   },
   Access: {
-    name: 'Access',
+    name: 'Access Bank',
     assetPath: '/assets/vendors/access.svg',
     alt: 'Access Bank',
   },
