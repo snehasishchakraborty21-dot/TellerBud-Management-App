@@ -53,6 +53,17 @@ export const AdminLayout: React.FC = () => {
   const getCurrentPageTitle = (): string => {
     const pathname = location.pathname;
     if (
+      pathname === '/business-owner/operations/live' ||
+      pathname === '/business-owner/operations/live/' ||
+      pathname === '/business-owner/live' ||
+      pathname === '/business-owner/live/' ||
+      (currentUser?.role === 'business_owner' &&
+        (pathname.endsWith('/operations/live') || pathname.endsWith('/live')))
+    ) {
+      return 'Live Operations - Customer Requests';
+    }
+
+    if (
       pathname === '/business-owner/communication/notifications' ||
       pathname === '/business-owner/notifications' ||
       pathname === '/super-admin/configuration/notifications' ||
@@ -476,7 +487,16 @@ export const AdminLayout: React.FC = () => {
     !location.pathname.includes('/transactions/all/TX-') &&
     !location.pathname.includes('/transactions/TX-');
 
+  const isBOLiveOperationsListing =
+    location.pathname === '/business-owner/operations/live' ||
+    location.pathname === '/business-owner/operations/live/' ||
+    location.pathname === '/business-owner/live' ||
+    location.pathname === '/business-owner/live/' ||
+    (currentUser?.role === 'business_owner' &&
+      location.pathname.endsWith('/operations/live'));
+
   const isFrozenLayout =
+    isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||
     isBOCashFloatListing ||

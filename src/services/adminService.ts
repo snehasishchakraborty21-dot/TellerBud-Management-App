@@ -16,9 +16,31 @@ import {
 export interface IAdminService {
   getOperationalMetrics(): Promise<OperationalMetrics>;
   getRequiresAttentionItems(): Promise<RequiresAttentionItem[]>;
-  getLivePickupOperations(): Promise<PickupRequest[]>;
+  getLivePickupOperations(businessId?: string): Promise<PickupRequest[]>;
+  getLiveRequests(params: {
+    businessId: string;
+    status?: string;
+    transactionType?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    items: PickupRequest[];
+    total: number;
+    summary: {
+      totalLive: number;
+      findingAgent: number;
+      agentConfirmed: number;
+      activeService: number;
+      pendingConfirmation: number;
+    };
+  }>;
+  getLiveRequestById(
+    requestId: string,
+    authenticatedBusinessId: string
+  ): Promise<{ success: boolean; data?: PickupRequest; error?: 'unauthorized' | 'not_found' }>;
   getCustomerRequests(): Promise<PickupRequest[]>;
-  getCustomerRequestByReference(reference: string): Promise<PickupRequest | null>;
+  getCustomerRequestByReference(reference: string, authenticatedBusinessId?: string): Promise<PickupRequest | null>;
   getAgentAvailability(): Promise<AgentAvailabilitySummary>;
   getRecentFinancialActivity(): Promise<FinancialActivityRecord[]>;
   getNotifications(businessName?: string): Promise<AdminNotification[]>;

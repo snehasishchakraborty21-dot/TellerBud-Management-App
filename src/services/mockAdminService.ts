@@ -281,8 +281,102 @@ class MockAdminService implements IAdminService {
     });
   }
 
-  async getLivePickupOperations(): Promise<PickupRequest[]> {
+  async getLivePickupOperations(businessId?: string): Promise<PickupRequest[]> {
+    if (businessId) {
+      return this.pickupRequests.filter((r) => r.businessId === businessId);
+    }
     return [...this.pickupRequests];
+  }
+
+  async getLiveRequests(params: {
+    businessId: string;
+    status?: string;
+    transactionType?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    items: PickupRequest[];
+    total: number;
+    summary: {
+      totalLive: number;
+      findingAgent: number;
+      agentConfirmed: number;
+      activeService: number;
+      pendingConfirmation: number;
+    };
+  }> {
+    if (!params.businessId) {
+      throw new Error('Unauthorized: businessId is required for business isolation');
+    }
+
+    // Server-side query: WHERE business_id = :authenticatedBusinessId
+    const businessRecords = this.pickupRequests.filter(
+      (r) => r.businessId === params.businessId
+    );
+
+    // Calculate isolated KPI totals strictly from the authenticated business's records
+    const summary = {
+      totalLive: businessRecords.length,
+      findingAgent: businessRecords.filter((r) => r.status === 'Finding an Agent').length,
+      agentConfirmed: businessRecords.filter((r) => r.status === 'Agent Confirmed').length,
+      activeService: businessRecords.filter((r) => r.status === 'Active Service').length,
+      pendingConfirmation: businessRecords.filter((r) => r.status === 'Pending Confirmation').length,
+    };
+
+    // Filter by status within this business
+    let filtered = businessRecords;
+    if (params.status && params.status !== 'ALL') {
+      filtered = filtered.filter((r) => r.status === params.status);
+    }
+
+    // Filter by transaction type within this business
+    if (params.transactionType && params.transactionType !== 'ALL') {
+      filtered = filtered.filter((r) => r.type === params.transactionType);
+    }
+
+    // Search within this business only:
+    // Request reference, Customer name, Customer ID, Assigned agent name, Agent ID
+    if (params.search && params.search.trim()) {
+      const q = params.search.trim().toLowerCase();
+      filtered = filtered.filter((r) => {
+        const matchesRef = r.id.toLowerCase().includes(q);
+        const matchesCustomer = r.customerName.toLowerCase().includes(q);
+        const matchesCustId = !!r.customerId && r.customerId.toLowerCase().includes(q);
+        const matchesAgent = !!r.agentName && r.agentName.toLowerCase().includes(q);
+        const matchesAgentId = !!r.agentId && r.agentId.toLowerCase().includes(q);
+        return matchesRef || matchesCustomer || matchesCustId || matchesAgent || matchesAgentId;
+      });
+    }
+
+    const total = filtered.length;
+    const page = Math.max(1, params.page || 1);
+    const pageSize = params.pageSize || 10;
+    const startIndex = (page - 1) * pageSize;
+    const items = filtered.slice(startIndex, startIndex + pageSize);
+
+    return {
+      items,
+      total,
+      summary,
+    };
+  }
+
+  async getLiveRequestById(
+    requestId: string,
+    authenticatedBusinessId: string
+  ): Promise<{ success: boolean; data?: PickupRequest; error?: 'unauthorized' | 'not_found' }> {
+    const record = this.pickupRequests.find(
+      (r) => r.id.toLowerCase() === requestId.toLowerCase()
+    );
+    if (!record) {
+      return { success: false, error: 'not_found' };
+    }
+    // Row-level security: ensure record belongs strictly to authenticated business
+    if (record.businessId !== authenticatedBusinessId) {
+      return { success: false, error: 'unauthorized' };
+    }
+    return { success: true, data: record };
   }
 
   async getCustomerRequests(): Promise<PickupRequest[]> {
@@ -290,9 +384,17 @@ class MockAdminService implements IAdminService {
     return getAllCustomerRequests(this.pickupRequests);
   }
 
-  async getCustomerRequestByReference(reference: string): Promise<PickupRequest | null> {
+  async getCustomerRequestByReference(
+    reference: string,
+    authenticatedBusinessId?: string
+  ): Promise<PickupRequest | null> {
     const all = await this.getCustomerRequests();
-    return all.find((r) => r.id === reference) || null;
+    const found = all.find((r) => r.id === reference) || null;
+    if (found && authenticatedBusinessId && found.businessId && found.businessId !== authenticatedBusinessId) {
+      // Row-level security: prevent accessing other business records
+      return null;
+    }
+    return found;
   }
 
   async getAgentAvailability(): Promise<AgentAvailabilitySummary> {

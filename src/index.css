@@ -36,28 +36,116 @@
 }
 
 /* Subtle yet clearly usable scrollbar for transaction table rows */
-.transaction-table-scroll {
+.transaction-table-scroll,
+.live-operations-table-scroll {
   scrollbar-width: thin;
   scrollbar-color: #CBD5E1 #F8FAFC;
+  scrollbar-gutter: stable;
 }
 
-.transaction-table-scroll::-webkit-scrollbar {
+.transaction-table-scroll::-webkit-scrollbar,
+.live-operations-table-scroll::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
-.transaction-table-scroll::-webkit-scrollbar-track {
+.transaction-table-scroll::-webkit-scrollbar-track,
+.live-operations-table-scroll::-webkit-scrollbar-track {
   background: #F8FAFC;
   border-radius: 4px;
 }
 
-.transaction-table-scroll::-webkit-scrollbar-thumb {
+.transaction-table-scroll::-webkit-scrollbar-thumb,
+.live-operations-table-scroll::-webkit-scrollbar-thumb {
   background-color: #CBD5E1;
   border-radius: 9999px;
   border: 1.5px solid #F8FAFC;
 }
 
-.transaction-table-scroll::-webkit-scrollbar-thumb:hover {
+.transaction-table-scroll::-webkit-scrollbar-thumb:hover,
+.live-operations-table-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #94A3B8;
 }
+
+/* Specific table heading styling for Live Operations & transaction tables */
+.table-heading {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.2;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Live Operations Customer Requests: Single-row Filters layout */
+.live-request-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(320px, 1.8fr)
+    minmax(210px, 1fr)
+    minmax(230px, 1fr)
+    auto
+    auto;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .live-request-filters {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* Live Operations Customer Requests: 5 equal-width horizontal KPI cards */
+.live-operations-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1200px) {
+  .live-operations-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .live-operations-kpi-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+.kpi-card {
+  min-height: 72px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpi-inline-content {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.kpi-value {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.kpi-icon {
+  flex: 0 0 auto;
+}
+
+
 
