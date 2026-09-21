@@ -83,7 +83,8 @@ export function calculateMobileMoneyKPIs(transactions: MobileMoneyTransaction[])
  */
 export function calculateMobileMoneyPeriodKPIs(
   transactions: MobileMoneyTransaction[],
-  businessScope?: string
+  businessScope?: string,
+  targetDate?: string
 ): MobileMoneyKPIPeriods {
   let scoped = transactions;
 
@@ -97,7 +98,7 @@ export function calculateMobileMoneyPeriodKPIs(
   }
 
   const { todayLusaka, mondayLusaka, monthStartLusaka, yearStartLusaka } =
-    getLusakaPeriodBoundaries();
+    getLusakaPeriodBoundaries(targetDate);
 
   let todayCount = 0;
   let weekToDateCount = 0;
@@ -108,22 +109,22 @@ export function calculateMobileMoneyPeriodKPIs(
     const tDate = getLusakaDateString(t.postedAt);
     if (!tDate) continue;
 
-    // Today's Transactions: created today
+    // Today's / Selected Date's Transactions
     if (tDate === todayLusaka) {
       todayCount++;
     }
 
-    // Week to Date: Monday through current day
+    // Week to Date: Monday through selected date
     if (tDate >= mondayLusaka && tDate <= todayLusaka) {
       weekToDateCount++;
     }
 
-    // Month to Date: 1st day of current month through today
+    // Month to Date: 1st day of month through selected date
     if (tDate >= monthStartLusaka && tDate <= todayLusaka) {
       monthToDateCount++;
     }
 
-    // Year to Date: 1 January through today
+    // Year to Date: 1 January through selected date
     if (tDate >= yearStartLusaka && tDate <= todayLusaka) {
       yearToDateCount++;
     }

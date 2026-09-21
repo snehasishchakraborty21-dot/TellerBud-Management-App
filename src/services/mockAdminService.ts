@@ -890,12 +890,29 @@ class MockAdminService implements IAdminService {
   }
 
   async getAgentLiquidityRequestByReference(
-    reference: string
+    reference: string,
+    businessScope?: string
   ): Promise<AgentToAgentRequest | null> {
+    const term = reference.trim().toLowerCase();
     const found = this.agentLiquidityRequests.find(
-      (r) => r.reference.toLowerCase() === reference.toLowerCase()
+      (r) =>
+        r.reference.toLowerCase() === term ||
+        r.id.toLowerCase() === term
     );
-    return found ? { ...found } : null;
+    if (!found) return null;
+
+    if (businessScope && businessScope !== 'ALL') {
+      const bLower = businessScope.toLowerCase().trim();
+      const belongs =
+        found.requestingAgentBusiness.toLowerCase().trim() === bLower ||
+        found.currentOfferedAgent?.business.toLowerCase().trim() === bLower ||
+        found.matchedAgent?.business.toLowerCase().trim() === bLower;
+      if (!belongs) {
+        return null;
+      }
+    }
+
+    return { ...found };
   }
 
   async getAgentLiquidityStatusSummary(businessName?: string): Promise<AgentToAgentStatusSummary> {
@@ -1069,8 +1086,8 @@ class MockAdminService implements IAdminService {
     );
   }
 
-  async getMobileMoneyKPIs(businessScope?: string): Promise<MobileMoneyKPIPeriods> {
-    return calculateMobileMoneyPeriodKPIs(this.mobileMoneyTransactions, businessScope);
+  async getMobileMoneyKPIs(businessScope?: string, targetDate?: string): Promise<MobileMoneyKPIPeriods> {
+    return calculateMobileMoneyPeriodKPIs(this.mobileMoneyTransactions, businessScope, targetDate);
   }
 
   async getMobileMoneyTransactionByReference(

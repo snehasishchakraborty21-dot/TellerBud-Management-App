@@ -38,3 +38,99 @@ export interface ChatConversation {
 }
 
 export type ChatFilterTab = 'all' | 'unread';
+
+// ==========================================
+// CHAT REPORT MODULE TYPES (Read-Only Operational View)
+// ==========================================
+
+export type ChatReportType = 'customer_agent' | 'agent_agent';
+export type ChatReportStatus = 'Active' | 'Closed' | 'Resolved';
+export type ChatRelatedEntityType = 'customer_request' | 'transaction' | 'agent_liquidity';
+export type ChatParticipantRole = 'customer' | 'agent';
+
+export interface ChatParticipant {
+  conversationId: string;
+  userId: string;
+  userRole: ChatParticipantRole;
+  businessId?: string;
+  businessName?: string;
+  name: string;
+  tellerBudId: string;
+  phone?: string;
+  maskedPhone?: string;
+  storeId?: string;
+  storeName?: string;
+  boothId?: string;
+  boothName?: string;
+  isCrossBusiness?: boolean;
+  joinedAt: string;
+}
+
+export interface ChatReportMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderRole: ChatParticipantRole;
+  senderName: string;
+  messageContent: string;
+  attachmentReference?: string;
+  attachmentName?: string;
+  attachmentType?: 'image' | 'document' | 'receipt';
+  deliveryStatus?: 'Sent' | 'Delivered' | 'Read';
+  readAt?: string;
+  createdAt: string; // ISO 8601
+}
+
+export interface ChatReportConversation {
+  id: string;
+  chatReference: string; // e.g. 'TB-CHAT-1001'
+  chatType: ChatReportType; // 'customer_agent' | 'agent_agent'
+  relatedEntityType: ChatRelatedEntityType;
+  relatedEntityId: string; // e.g. 'REQ-2026-0801', 'TB-ATL-7001'
+  relatedEntityTitle?: string;
+  relatedEntityService?: string;
+  relatedEntityStatus?: string;
+  relatedEntityDate?: string;
+  businessIds: string[];
+  status: ChatReportStatus;
+  startedAt: string; // ISO 8601
+  lastActivityAt: string; // ISO 8601
+  storeId?: string;
+  storeName?: string;
+  boothId?: string;
+  boothName?: string;
+  primaryAgentId?: string;
+  primaryAgentName?: string;
+  participants: ChatParticipant[];
+  messages: ChatReportMessage[];
+}
+
+export interface ChatReportAudit {
+  id: string;
+  businessId: string;
+  conversationId?: string;
+  chatReference?: string;
+  action: 'view_conversation' | 'export_report' | 'open_related_record' | 'export_transcript';
+  performedBy: string;
+  performerRole: string;
+  filtersUsed?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface ChatReportFilterState {
+  chatType: 'ALL' | ChatReportType;
+  status: 'ALL' | ChatReportStatus;
+  storeId: string;
+  boothId: string;
+  agentId: string;
+  fromDate?: string;
+  toDate?: string;
+  searchQuery?: string;
+}
+
+export interface ChatReportKPIs {
+  totalConversations: number;
+  customerToAgentChats: number;
+  agentToAgentChats: number;
+  messagesToday: number;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -29,6 +29,7 @@ import { TransactionStatusBadge } from '../components/transactions/TransactionSt
 
 export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Primary Data State
   const [transactions, setTransactions] = useState<AllTransactionRecord[]>(MOCK_ALL_TRANSACTIONS);
@@ -59,6 +60,7 @@ export const AllTransactionsPage: React.FC = () => {
     setFromDate('');
     setToDate('');
     setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0 });
   };
 
   const handleRefresh = async () => {
@@ -66,6 +68,7 @@ export const AllTransactionsPage: React.FC = () => {
     setTimeout(() => {
       setTransactions([...MOCK_ALL_TRANSACTIONS]);
       setIsRefreshing(false);
+      tableContainerRef.current?.scrollTo({ top: 0 });
     }, 350);
   };
 
@@ -234,9 +237,10 @@ export const AllTransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[1720px] mx-auto space-y-4 pb-32 sm:pb-36 px-3 sm:px-6 pt-2">
-      {/* 1. SUMMARY CARDS (5 Compact Cards per specification) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.25fr] gap-3 sm:gap-4">
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-4 max-w-[1720px] w-full mx-auto">
+      {/* 1. SUMMARY CARDS (5 Compact Cards per specification - Frozen upper section) */}
+      <div className="shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.25fr] gap-3 sm:gap-4">
         {/* Card 1: Total Transactions */}
         <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
           <div className="min-w-0 flex-1 pr-2">
@@ -312,9 +316,10 @@ export const AllTransactionsPage: React.FC = () => {
           </div>
         </div>
       </div>
+      </div>
 
-      {/* 2. COMPACT TWO-ROW FILTER AREA */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+      {/* 2. COMPACT TWO-ROW FILTER AREA (Frozen upper section) */}
+      <div className="shrink-0 bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
         {/* Row 1: Search + Source + Service + Transaction Type */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
           {/* Search Box */}
@@ -506,23 +511,40 @@ export const AllTransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. TRANSACTION TABLE */}
-      <div className="bg-white border border-gray-200/90 rounded-xl shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50/90 border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-3.5 sm:px-4 font-semibold whitespace-nowrap">Transaction</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Customer</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Agent / Business</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Service</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">Provider</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold text-right whitespace-nowrap">Amount</th>
-                <th className="py-3 px-3 sm:px-4 font-semibold text-center whitespace-nowrap">Status</th>
-                <th className="py-3 px-3.5 sm:px-4 font-semibold text-right whitespace-nowrap min-w-[110px]">Action</th>
+      {/* 3. TRANSACTION TABLE CARD (Flex-1 min-h-0 container with sticky header, scrollable rows, and fixed pagination) */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200/90 rounded-xl shadow-2xs overflow-hidden">
+        {/* Scrollable Transaction Listing Table Container */}
+        <div
+          ref={tableContainerRef}
+          tabIndex={0}
+          role="region"
+          aria-label="All Transactions List"
+          className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none"
+        >
+          <table className="w-full text-left text-xs border-collapse table-fixed min-w-[960px]">
+            <colgroup>
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '11.5%' }} />
+              <col style={{ width: '17.5%' }} />
+              <col style={{ width: '14.5%' }} />
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '12.5%' }} />
+            </colgroup>
+            <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
+              <tr className="border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] bg-[#F9FAFB]">
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Transaction</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Customer</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Agent / Business</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Service</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-center">Provider</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-right whitespace-nowrap">Amount</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-center whitespace-nowrap">Status</th>
+                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 bg-white">
               {paginatedTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-500">
@@ -537,10 +559,10 @@ export const AllTransactionsPage: React.FC = () => {
                     key={tx.id}
                     className="hover:bg-slate-50/70 transition-colors group"
                   >
-                    {/* 1. TRANSACTION COLUMN */}
-                    <td className="py-3 px-3.5 sm:px-4 align-top">
+                    {/* 1. TRANSACTION COLUMN (12%) */}
+                    <td className="py-3 px-3 align-top text-left">
                       <div className="space-y-1">
-                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors">
+                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors truncate">
                           {tx.reference}
                         </span>
                         <span className="text-[11px] text-slate-600 block whitespace-nowrap font-medium">
@@ -550,13 +572,13 @@ export const AllTransactionsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* 2. CUSTOMER COLUMN - Requirement 3: No Customer ID prefix, displayed directly beneath, whitespace-nowrap */}
-                    <td className="py-3 px-3 sm:px-4 align-top min-w-[130px]">
+                    {/* 2. CUSTOMER COLUMN (11.5%) */}
+                    <td className="py-3 px-3 align-top text-left">
                       {tx.customerName === '—' ? (
                         <div className="text-slate-400 font-medium text-xs">—</div>
                       ) : (
-                        <div className="space-y-0.5">
-                          <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="font-semibold text-slate-900 text-xs truncate" title={tx.customerName}>
                             {tx.customerName}
                           </div>
                           {tx.customerId && tx.customerId !== '—' && (
@@ -568,11 +590,11 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 3. AGENT / BUSINESS COLUMN - Requirement 3 & 7: Agent ID beneath name, whitespace-nowrap, proper Business Wallet display */}
-                    <td className="py-3 px-3 sm:px-4 align-top min-w-[180px]">
+                    {/* 3. AGENT / BUSINESS COLUMN (17.5%) - Balanced spacing, natural wrap without overlapping Service */}
+                    <td className="py-3 px-3 align-top text-left">
                       {tx.service === 'Agent-to-Agent Liquidity' ? (
-                        <div className="space-y-0.5">
-                          <div className="text-xs text-slate-800 whitespace-nowrap">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="text-xs text-slate-800 break-words leading-tight">
                             <span className="text-slate-500 font-medium">From: </span>
                             <span className="font-semibold text-slate-900">{tx.sendingAgent || '—'}</span>
                             {tx.sendingAgentId && (
@@ -581,7 +603,7 @@ export const AllTransactionsPage: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-800 whitespace-nowrap">
+                          <div className="text-xs text-slate-800 break-words leading-tight">
                             <span className="text-slate-500 font-medium">To: </span>
                             <span className="font-semibold text-slate-900">{tx.receivingAgent || '—'}</span>
                             {tx.receivingAgentId && (
@@ -590,31 +612,33 @@ export const AllTransactionsPage: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
-                            {tx.businessName}
-                          </div>
+                          {tx.businessName && tx.businessName !== '—' && (
+                            <div className="text-[11px] text-slate-600 leading-snug break-words mt-0.5" title={tx.businessName}>
+                              {tx.businessName}
+                            </div>
+                          )}
                         </div>
                       ) : tx.agentName === 'Automated Provider API' ? (
-                        <div className="space-y-0.5">
-                          <div className="font-semibold text-slate-800 text-xs whitespace-nowrap">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="font-semibold text-slate-800 text-xs truncate">
                             Automated Provider API
                           </div>
-                          <div className="text-[11px] text-slate-600">
+                          <div className="text-[11px] text-slate-600 truncate">
                             System Integration
                           </div>
                         </div>
                       ) : tx.agentName === '—' ? (
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 min-w-0">
                           <div className="text-xs text-slate-400 font-medium">—</div>
                           {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
+                            <div className="text-[11px] text-slate-600 leading-snug break-words" title={tx.businessName}>
                               {tx.businessName}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="space-y-0.5">
-                          <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="font-semibold text-slate-900 text-xs truncate" title={tx.agentName}>
                             {tx.agentName}
                           </div>
                           {tx.agentId && (
@@ -623,7 +647,7 @@ export const AllTransactionsPage: React.FC = () => {
                             </div>
                           )}
                           {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 truncate max-w-[210px]">
+                            <div className="text-[11px] text-slate-600 leading-snug break-words" title={tx.businessName}>
                               {tx.businessName}
                             </div>
                           )}
@@ -631,10 +655,10 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 4. SERVICE COLUMN */}
-                    <td className="py-3 px-3 sm:px-4 align-top">
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-slate-900 text-xs whitespace-nowrap">
+                    {/* 4. SERVICE COLUMN (14.5%) - Closer to Agent / Business */}
+                    <td className="py-3 px-3 align-top text-left">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-semibold text-slate-900 text-xs truncate" title={tx.service}>
                           {tx.service}
                         </div>
                         <div className="text-[11px] text-slate-600 font-medium whitespace-nowrap">
@@ -643,25 +667,29 @@ export const AllTransactionsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* 5. PROVIDER COLUMN */}
-                    <td className="py-3 px-3 sm:px-4 align-top">
-                      <TransactionProviderLogo provider={tx.provider} size="table" showName={true} />
+                    {/* 5. PROVIDER COLUMN (8%) - Compact centered logo directly beneath heading */}
+                    <td className="py-3 px-3 align-middle text-center">
+                      <div className="flex items-center justify-center">
+                        <TransactionProviderLogo provider={tx.provider} size="table" showName={false} />
+                      </div>
                     </td>
 
-                    {/* 6. AMOUNT COLUMN */}
-                    <td className="py-3 px-3 sm:px-4 align-top text-right">
-                      <span className="font-bold text-slate-900 text-xs sm:text-sm tabular-nums whitespace-nowrap">
+                    {/* 6. AMOUNT COLUMN (11%) - Reduced text size, semibold, single line, right-aligned */}
+                    <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                      <span className="font-semibold text-slate-900 text-xs sm:text-[13px] tabular-nums whitespace-nowrap">
                         ZMW {tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </td>
 
-                    {/* 7. STATUS COLUMN */}
-                    <td className="py-3 px-3 sm:px-4 align-top text-center">
-                      <TransactionStatusBadge status={tx.status} />
+                    {/* 7. STATUS COLUMN (13%) - Centered badge */}
+                    <td className="py-3 px-3 align-middle text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center">
+                        <TransactionStatusBadge status={tx.status} />
+                      </div>
                     </td>
 
-                    {/* 8. ACTION COLUMN - Requirement 8: Single line, visible */}
-                    <td className="py-3 px-3.5 sm:px-4 align-top text-right whitespace-nowrap">
+                    {/* 8. ACTION COLUMN (12.5%) - Completely visible, left-aligned heading & button */}
+                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
                       <button
                         onClick={() => navigate(`/transactions/${tx.reference}`)}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors cursor-pointer whitespace-nowrap"
@@ -678,8 +706,8 @@ export const AllTransactionsPage: React.FC = () => {
           </table>
         </div>
 
-        {/* 4. PAGINATION FOOTER */}
-        <div className="border-t border-gray-100 bg-slate-50/70 px-4 py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+        {/* 4. FIXED PAGINATION FOOTER */}
+        <div className="shrink-0 border-t border-gray-100 bg-slate-50/70 px-4 py-3 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
           <div className="flex items-center gap-4">
             <span className="font-medium text-slate-700">
               Showing <span className="font-bold text-slate-900">{startIndex}</span> to{' '}
@@ -694,6 +722,7 @@ export const AllTransactionsPage: React.FC = () => {
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
+                  tableContainerRef.current?.scrollTo({ top: 0 });
                 }}
                 className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
               >
@@ -713,7 +742,10 @@ export const AllTransactionsPage: React.FC = () => {
 
             <div className="inline-flex items-center gap-1">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  tableContainerRef.current?.scrollTo({ top: 0 });
+                }}
                 disabled={validCurrentPage <= 1}
                 className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Previous Page"
@@ -721,7 +753,10 @@ export const AllTransactionsPage: React.FC = () => {
                 <ChevronLeft size={16} />
               </button>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  tableContainerRef.current?.scrollTo({ top: 0 });
+                }}
                 disabled={validCurrentPage >= totalPages}
                 className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 title="Next Page"

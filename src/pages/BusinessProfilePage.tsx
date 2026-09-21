@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Building2,
   Phone,
@@ -9,8 +9,6 @@ import {
   CheckCircle2,
   Edit3,
   X,
-  Save,
-  AlertCircle,
   ShieldCheck,
   Briefcase,
   FileText,
@@ -21,63 +19,36 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/mockAdminService';
-import {
-  BusinessProfile,
-  EditableBusinessProfileFields,
-  BusinessProfileValidationErrors,
-} from '../types/businessProfile';
-import {
-  isValidZambianPhoneNumber,
-  isValidEmail,
-} from '../data/mockBusinessProfileData';
+import { BusinessProfile } from '../types/businessProfile';
 
 export const BusinessProfilePage: React.FC = () => {
   const { currentUser } = useAuth();
-  const [profile, setProfile] = useState<BusinessProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<BusinessProfileValidationErrors>({});
-
-  // Accessibility refs for Edit Drawer
-  const editButtonRef = useRef<HTMLButtonElement | null>(null);
-  const drawerRef = useRef<HTMLDivElement | null>(null);
-  const firstInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Editable Form State
-  const [formData, setFormData] = useState<EditableBusinessProfileFields>({
-    primaryContactPerson: 'Chileshe Mwamba',
-    businessPhone: '',
-    businessEmail: '',
-    alternativePhone: '',
-    streetAddress: '',
-    area: '',
-    city: '',
-    province: '',
-  });
-
-  // Track pristine copy for detecting changes
-  const [pristineData, setPristineData] = useState<EditableBusinessProfileFields>({
-    primaryContactPerson: 'Chileshe Mwamba',
-    businessPhone: '',
-    businessEmail: '',
-    alternativePhone: '',
-    streetAddress: '',
-    area: '',
-    city: '',
-    province: '',
-  });
-
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: paramId } = useParams<{ id?: string }>();
   const businessId = paramId || currentUser?.businessId || 'BIZ-LUS-001';
+
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Role behaviour check
   // Business Owner: Can view and edit permitted fields for their own business
   // Admin / Super Admin: Can view only
   const isBusinessOwner = currentUser?.role === 'business_owner';
   const canEditProfile = isBusinessOwner && (!paramId || paramId === currentUser?.businessId);
+
+  // Check if returning from edit page with a success message
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      window.history.replaceState({}, document.title);
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     let isMounted = true;
@@ -87,18 +58,6 @@ export const BusinessProfilePage: React.FC = () => {
         const data = await adminService.getBusinessProfile(businessId);
         if (isMounted && data) {
           setProfile(data);
-          const currentFields: EditableBusinessProfileFields = {
-            primaryContactPerson: data.primaryContactPerson || 'Chileshe Mwamba',
-            businessPhone: data.businessPhone,
-            businessEmail: data.businessEmail,
-            alternativePhone: data.alternativePhone || '',
-            streetAddress: data.streetAddress,
-            area: data.area,
-            city: data.city,
-            province: data.province,
-          };
-          setFormData(currentFields);
-          setPristineData(currentFields);
         }
       } catch (err) {
         console.error('Failed to load business profile:', err);
@@ -114,202 +73,6 @@ export const BusinessProfilePage: React.FC = () => {
       unsubscribe();
     };
   }, [businessId]);
-
-  // Trap focus & handle Escape key for Edit Profile Drawer
-  useEffect(() => {
-    if (!isEditing) return;
-
-    // Focus initial input when opened
-    const timer = setTimeout(() => {
-      if (firstInputRef.current) {
-        firstInputRef.current.focus();
-      }
-    }, 50);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        handleCancelEdit();
-        return;
-      }
-
-      if (e.key === 'Tab' && drawerRef.current) {
-        const focusableElements = drawerRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusableElements.length) return;
-
-        const firstEl = focusableElements[0];
-        const lastEl = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstEl) {
-            e.preventDefault();
-            lastEl.focus();
-          }
-        } else {
-          if (document.activeElement === lastEl) {
-            e.preventDefault();
-            firstEl.focus();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-      // Return focus to the Edit Profile trigger button upon closing
-      editButtonRef.current?.focus();
-    };
-  }, [isEditing]);
-
-  const handleStartEdit = () => {
-    if (!profile || !canEditProfile) return;
-    const currentFields: EditableBusinessProfileFields = {
-      primaryContactPerson: profile.primaryContactPerson || 'Chileshe Mwamba',
-      businessPhone: profile.businessPhone,
-      businessEmail: profile.businessEmail,
-      alternativePhone: profile.alternativePhone || '',
-      streetAddress: profile.streetAddress,
-      area: profile.area,
-      city: profile.city,
-      province: profile.province,
-    };
-    setFormData(currentFields);
-    setPristineData(currentFields);
-    setErrors({});
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setFormData(pristineData);
-    setErrors({});
-    setIsEditing(false);
-  };
-
-  const handleInputChange = (field: keyof EditableBusinessProfileFields, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  // Determine if any field has actually changed
-  const hasFormChanged = (): boolean => {
-    return (
-      formData.primaryContactPerson.trim() !== pristineData.primaryContactPerson.trim() ||
-      formData.businessPhone.trim() !== pristineData.businessPhone.trim() ||
-      formData.businessEmail.trim() !== pristineData.businessEmail.trim() ||
-      (formData.alternativePhone || '').trim() !== (pristineData.alternativePhone || '').trim() ||
-      formData.streetAddress.trim() !== pristineData.streetAddress.trim() ||
-      formData.area.trim() !== pristineData.area.trim() ||
-      formData.city.trim() !== pristineData.city.trim() ||
-      formData.province.trim() !== pristineData.province.trim()
-    );
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: BusinessProfileValidationErrors = {};
-
-    // Primary Contact Person (Required)
-    if (!formData.primaryContactPerson.trim()) {
-      newErrors.primaryContactPerson = 'Primary contact person is required.';
-    }
-
-    // Business Phone (Required, Zambian format)
-    if (!formData.businessPhone.trim()) {
-      newErrors.businessPhone = 'Business phone number is required.';
-    } else if (!isValidZambianPhoneNumber(formData.businessPhone)) {
-      newErrors.businessPhone = 'Enter a valid Zambia phone number with +260 (e.g. +260 97 123 4567).';
-    }
-
-    // Business Email (Required, valid email)
-    if (!formData.businessEmail.trim()) {
-      newErrors.businessEmail = 'Business email address is required.';
-    } else if (!isValidEmail(formData.businessEmail)) {
-      newErrors.businessEmail = 'Enter a valid email address.';
-    }
-
-    // Alternative Phone (Optional, but if entered must be valid Zambian phone)
-    if (formData.alternativePhone && formData.alternativePhone.trim()) {
-      if (!isValidZambianPhoneNumber(formData.alternativePhone)) {
-        newErrors.alternativePhone = 'Enter a valid Zambia phone number with +260 (e.g. +260 96 789 0123).';
-      }
-    }
-
-    // Street Address (Required)
-    if (!formData.streetAddress.trim()) {
-      newErrors.streetAddress = 'Street address is required.';
-    }
-
-    // Area or District (Required)
-    if (!formData.area.trim()) {
-      newErrors.area = 'Area or district is required.';
-    }
-
-    // City (Required)
-    if (!formData.city.trim()) {
-      newErrors.city = 'City is required.';
-    }
-
-    // Province (Required)
-    if (!formData.province.trim()) {
-      newErrors.province = 'Province is required.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSaveChanges = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm() || !profile || !canEditProfile || !hasFormChanged()) return;
-
-    setIsSaving(true);
-    try {
-      const res = await adminService.updateBusinessProfile(profile.businessId, {
-        primaryContactPerson: formData.primaryContactPerson.trim(),
-        businessPhone: formData.businessPhone.trim(),
-        businessEmail: formData.businessEmail.trim(),
-        alternativePhone: formData.alternativePhone ? formData.alternativePhone.trim() : '',
-        streetAddress: formData.streetAddress.trim(),
-        area: formData.area.trim(),
-        city: formData.city.trim(),
-        province: formData.province.trim(),
-      });
-      if (res.success && res.profile) {
-        setProfile(res.profile);
-        const updatedFields: EditableBusinessProfileFields = {
-          primaryContactPerson: res.profile.primaryContactPerson,
-          businessPhone: res.profile.businessPhone,
-          businessEmail: res.profile.businessEmail,
-          alternativePhone: res.profile.alternativePhone || '',
-          streetAddress: res.profile.streetAddress,
-          area: res.profile.area,
-          city: res.profile.city,
-          province: res.profile.province,
-        };
-        setFormData(updatedFields);
-        setPristineData(updatedFields);
-        setIsEditing(false);
-        setSuccessMessage('Business profile updated successfully.');
-        setTimeout(() => {
-          setSuccessMessage(null);
-        }, 5000);
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          businessPhone: res.error || 'Failed to update business profile.',
-        }));
-      }
-    } catch (err) {
-      console.error('Error saving business profile:', err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   if (loading || !profile) {
     return (
@@ -365,27 +128,47 @@ export const BusinessProfilePage: React.FC = () => {
       {/* 2. Business Summary Card (Full-width clean card at top) */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#102025] tracking-tight">
-                {profile.businessName}
-              </h2>
-              {/* Green Active status badge */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                {profile.accountStatus}
-              </span>
+          <div className="flex items-center gap-4">
+            {/* Official Business Logo Container */}
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-gray-200 bg-white p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+              {profile.logoUrl ? (
+                <img
+                  src={profile.logoUrl}
+                  alt={`${profile.businessName} logo`}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center"
+                  title={`${profile.businessName} logo placeholder`}
+                >
+                  <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-400 font-medium">Business ID:</span>
-                <span className="font-mono font-bold text-[#102025]">{profile.businessId}</span>
+            <div className="space-y-1 sm:space-y-1.5">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#102025] tracking-tight">
+                  {profile.businessName}
+                </h2>
+                {/* Green Active status badge */}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  {profile.accountStatus}
+                </span>
               </div>
-              <span className="text-gray-300 hidden sm:inline">•</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-gray-400 font-medium">Category:</span>
-                <span className="font-medium text-gray-700">{profile.businessType}</span>
+
+              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400 font-medium">Business ID:</span>
+                  <span className="font-mono font-bold text-[#102025]">{profile.businessId}</span>
+                </div>
+                <span className="text-gray-300 hidden sm:inline">•</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400 font-medium">Category:</span>
+                  <span className="font-medium text-gray-700">{profile.businessType}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -394,14 +177,18 @@ export const BusinessProfilePage: React.FC = () => {
           {canEditProfile ? (
             <div className="shrink-0 pt-2 sm:pt-0">
               <button
-                ref={editButtonRef}
                 type="button"
                 id="btn-edit-business-profile"
-                onClick={handleStartEdit}
+                onClick={() => {
+                  const editPath = location.pathname.includes('/people/business-profile')
+                    ? '/business-owner/people/business-profile/edit'
+                    : '/business-owner/business-profile/edit';
+                  navigate(editPath);
+                }}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D93AA] hover:bg-[#0B8296] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer"
               >
                 <Edit3 className="w-4 h-4" />
-                <span>Edit Profile</span>
+                <span>Edit Business Profile</span>
               </button>
             </div>
           ) : (
@@ -694,307 +481,6 @@ export const BusinessProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* 8. Edit Profile Drawer / Modal */}
-      {isEditing && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-end sm:justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div
-            ref={drawerRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-profile-title"
-            className="w-full sm:max-w-lg lg:max-w-xl h-full bg-white shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
-          >
-            {/* Modal / Drawer Header */}
-            <div className="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-50 text-[#0D93AA] flex items-center justify-center font-bold">
-                  <Edit3 size={18} />
-                </div>
-                <div>
-                  <h3 id="edit-profile-title" className="text-base font-bold text-[#102025]">
-                    Edit Business Profile
-                  </h3>
-                  <p className="text-[11px] text-gray-500">
-                    Update authorized contact and address details
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                id="btn-close-edit-drawer"
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                aria-label="Close edit business profile drawer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Modal / Drawer Form Content */}
-            <form onSubmit={handleSaveChanges} className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Contact Details Fields */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-[#102025] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  Contact Information
-                </h4>
-
-                {/* Primary Contact Person */}
-                <div>
-                  <label htmlFor="edit-primaryContactPerson" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Primary Contact Person <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    ref={firstInputRef}
-                    type="text"
-                    id="edit-primaryContactPerson"
-                    value={formData.primaryContactPerson}
-                    onChange={(e) => handleInputChange('primaryContactPerson', e.target.value)}
-                    placeholder="Chileshe Mwamba"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                      errors.primaryContactPerson
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.primaryContactPerson && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.primaryContactPerson}
-                    </p>
-                  )}
-                </div>
-
-                {/* Business Phone Number */}
-                <div>
-                  <label htmlFor="edit-businessPhone" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Business Phone Number <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-businessPhone"
-                    value={formData.businessPhone}
-                    onChange={(e) => handleInputChange('businessPhone', e.target.value)}
-                    placeholder="+260 97 123 4567"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-xl border ${
-                      errors.businessPhone
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.businessPhone && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.businessPhone}
-                    </p>
-                  )}
-                </div>
-
-                {/* Business Email Address */}
-                <div>
-                  <label htmlFor="edit-businessEmail" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Business Email Address <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="edit-businessEmail"
-                    value={formData.businessEmail}
-                    onChange={(e) => handleInputChange('businessEmail', e.target.value)}
-                    placeholder="info@lusakacentralagency.co.zm"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                      errors.businessEmail
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.businessEmail && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.businessEmail}
-                    </p>
-                  )}
-                </div>
-
-                {/* Alternative Phone Number */}
-                <div>
-                  <label htmlFor="edit-alternativePhone" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Alternative Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-alternativePhone"
-                    value={formData.alternativePhone || ''}
-                    onChange={(e) => handleInputChange('alternativePhone', e.target.value)}
-                    placeholder="+260 96 789 0123"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-xl border ${
-                      errors.alternativePhone
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.alternativePhone && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.alternativePhone}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Address Fields */}
-              <div className="space-y-4 pt-2">
-                <h4 className="text-xs font-bold text-[#102025] uppercase tracking-wider border-b border-gray-100 pb-1.5">
-                  Business Address
-                </h4>
-
-                {/* Street Address */}
-                <div>
-                  <label htmlFor="edit-streetAddress" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Street Address <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-streetAddress"
-                    value={formData.streetAddress}
-                    onChange={(e) => handleInputChange('streetAddress', e.target.value)}
-                    placeholder="Plot 4820, Cairo Road"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                      errors.streetAddress
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.streetAddress && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.streetAddress}
-                    </p>
-                  )}
-                </div>
-
-                {/* Area or District */}
-                <div>
-                  <label htmlFor="edit-area" className="block text-xs font-semibold text-gray-700 mb-1">
-                    Area or District <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="edit-area"
-                    value={formData.area}
-                    onChange={(e) => handleInputChange('area', e.target.value)}
-                    placeholder="Central Business District"
-                    className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                      errors.area
-                        ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                        : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                    } focus:outline-none focus:ring-1 text-[#102025]`}
-                  />
-                  {errors.area && (
-                    <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.area}
-                    </p>
-                  )}
-                </div>
-
-                {/* City & Province in 2 Columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="edit-city" className="block text-xs font-semibold text-gray-700 mb-1">
-                      City <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="edit-city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      placeholder="Lusaka"
-                      className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                        errors.city
-                          ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                          : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                      } focus:outline-none focus:ring-1 text-[#102025]`}
-                    />
-                    {errors.city && (
-                      <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.city}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label htmlFor="edit-province" className="block text-xs font-semibold text-gray-700 mb-1">
-                      Province <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="edit-province"
-                      value={formData.province}
-                      onChange={(e) => handleInputChange('province', e.target.value)}
-                      placeholder="Lusaka Province"
-                      className={`w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border ${
-                        errors.province
-                          ? 'border-rose-300 focus:ring-rose-500 bg-rose-50/20'
-                          : 'border-gray-200 focus:ring-[#0D93AA] focus:border-[#0D93AA] bg-white'
-                      } focus:outline-none focus:ring-1 text-[#102025]`}
-                    />
-                    {errors.province && (
-                      <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.province}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Country (Read-only notice) */}
-                <div className="pt-1">
-                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                    <span className="font-medium">Country</span>
-                    <span className="font-bold text-[#102025]">Zambia (ZM) · Read-only</span>
-                  </div>
-                </div>
-              </div>
-            </form>
-
-            {/* Modal / Drawer Footer Actions */}
-            <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/60 flex items-center justify-end gap-3 shrink-0">
-              <button
-                type="button"
-                id="btn-cancel-drawer"
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="px-4 py-2.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                id="btn-save-profile-drawer"
-                onClick={handleSaveChanges}
-                disabled={isSaving || !hasFormChanged()}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0D93AA] hover:bg-[#0B8296] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

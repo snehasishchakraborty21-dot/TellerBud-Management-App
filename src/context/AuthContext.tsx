@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { AuthenticatedUser, UserRole, AuthContextType } from '../types/auth';
 import { DEMO_ACCOUNTS } from '../config/appConfig';
 import { businessService } from '../services/businessService';
+import { organizationService } from '../services/organizationService';
 
 const AUTH_STORAGE_KEY = 'tellerbud_auth_user';
 
@@ -66,6 +67,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         (normalizedEmail === 'test1@gmail.com' && password === '12345') ||
         (normalizedEmail === 'chileshe.mwamba@lusakaagency.zm' && (password === '12345' || password === 'password123'));
 
+      const isBusinessAdminTest =
+        (normalizedEmail === 'test2@gmail.com' && password === '12345') ||
+        (normalizedEmail === 'mwape.banda@lusakaagency.zm' && (password === '12345' || password === 'password123'));
+
       if (isSuperAdminTest) {
         if (portalRole !== 'super_admin') {
           setIsLoading(false);
@@ -100,6 +105,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           businessId: 'BIZ-LUS-001',
           businessName: 'Lusaka Central Express Agency',
           initials: 'CM',
+          accountStatus: 'Active',
+        };
+      } else if (isBusinessAdminTest) {
+        if (portalRole !== 'business_owner') {
+          setIsLoading(false);
+          return {
+            success: false,
+            error: 'Invalid email, password, or selected portal.',
+          };
+        }
+        authenticatedAccount = {
+          uid: DEMO_ACCOUNTS.businessAdmin.uid,
+          fullName: 'Mwape Banda',
+          email: 'mwape.banda@lusakaagency.zm',
+          role: 'business_admin',
+          roleLabel: 'Business Admin',
+          businessId: 'BIZ-LUS-001',
+          businessName: 'Lusaka Central Express Agency',
+          initials: 'MB',
           accountStatus: 'Active',
         };
       } else if (portalRole === 'business_owner') {
@@ -147,11 +171,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             };
           }
         } else {
-          setIsLoading(false);
-          return {
-            success: false,
-            error: 'Invalid email, password, or selected portal.',
-          };
+          // Check organizationService users
+          const orgUsers = organizationService.getAllUsers();
+          const orgUser = orgUsers.find(
+            (u) =>
+              u.email.toLowerCase() === normalizedEmail ||
+              u.username.toLowerCase() === normalizedEmail ||
+              `${u.firstName} ${u.lastName}`.toLowerCase() === normalizedEmail
+          );
+
+          if (orgUser && (password === '12345' || password === 'password123' || password === 'admin123')) {
+            const fullName = `${orgUser.firstName} ${orgUser.lastName}`.trim();
+            const initials = `${orgUser.firstName[0] || ''}${orgUser.lastName[0] || ''}`.toUpperCase() || 'OU';
+
+            authenticatedAccount = {
+              uid: orgUser.id,
+              fullName,
+              email: orgUser.email,
+              role: orgUser.role as UserRole,
+              roleLabel: orgUser.role === 'business_owner' ? 'Business Owner' : 'Business Admin',
+              businessId: orgUser.businessId,
+              businessName: 'Lusaka Central Express Agency',
+              initials,
+              accountStatus: orgUser.status === 'Active' ? 'Active' : 'Suspended',
+            };
+          } else {
+            setIsLoading(false);
+            return {
+              success: false,
+              error: 'Invalid email, password, or selected portal.',
+            };
+          }
         }
       } else {
         setIsLoading(false);

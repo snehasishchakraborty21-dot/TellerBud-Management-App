@@ -1,114 +1,92 @@
 import React from 'react';
-import {
-  Calendar,
-  CalendarRange,
-  CalendarDays,
-  CalendarCheck,
-  Percent,
-  Clock,
-} from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { MobileMoneyKPIPeriods } from '../../types/mobileMoney';
+import { isToday } from '../../utils/dateUtils';
 
 interface MobileMoneySummaryCardsProps {
   kpis: MobileMoneyKPIPeriods;
   isLoading?: boolean;
+  selectedDate?: string;
 }
 
 export const MobileMoneySummaryCards: React.FC<MobileMoneySummaryCardsProps> = ({
   kpis,
   isLoading = false,
+  selectedDate,
 }) => {
+  const isHistorical = Boolean(selectedDate && !isToday(selectedDate));
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-      {/* 1. TODAY'S TRANSACTIONS */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.15fr] gap-3 sm:gap-3.5 xl:gap-4">
+      {/* 1. TODAY'S / SELECTED DATE'S TRANSACTIONS */}
       <div
         id="kpi-card-todays-transactions"
-        className="bg-white rounded-xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+        className="bg-white rounded-xl border border-gray-200/90 p-[14px] shadow-2xs h-[86px] flex flex-col justify-between"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Today’s Transactions
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-[10.5px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider truncate">
+            {isHistorical ? 'Selected Date Transactions' : 'Today’s Transactions'}
           </span>
-          <div className="w-9 h-9 rounded-lg bg-teal-50 text-[#0D93AA] flex items-center justify-center shrink-0">
-            <Calendar size={18} />
-          </div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-gray-900">
+          <span className="text-[19px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
             {isLoading ? '...' : (kpis?.todayCount ?? 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-gray-500 font-medium mt-1">
-            Created today (CAT)
-          </div>
+          </span>
+        </div>
+        <div className="text-[10px] sm:text-[10.5px] text-gray-500 font-normal leading-tight truncate">
+          {isHistorical ? 'Recorded on selected date (CAT)' : 'Created today (CAT)'}
         </div>
       </div>
 
       {/* 2. WEEK TO DATE */}
       <div
         id="kpi-card-week-to-date"
-        className="bg-white rounded-xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+        className="bg-white rounded-xl border border-gray-200/90 p-[14px] shadow-2xs h-[86px] flex flex-col justify-between"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-[10.5px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider truncate">
             Week to Date
           </span>
-          <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <CalendarRange size={18} />
-          </div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-gray-900">
+          <span className="text-[19px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
             {isLoading ? '...' : (kpis?.weekToDateCount ?? 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-gray-500 font-medium mt-1">
-            Monday through today
-          </div>
+          </span>
+        </div>
+        <div className="text-[10px] sm:text-[10.5px] text-gray-500 font-normal leading-tight truncate">
+          {isHistorical ? 'Monday through selected date' : 'Monday through today'}
         </div>
       </div>
 
       {/* 3. MONTH TO DATE */}
       <div
         id="kpi-card-month-to-date"
-        className="bg-white rounded-xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+        className="bg-white rounded-xl border border-gray-200/90 p-[14px] shadow-2xs h-[86px] flex flex-col justify-between"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-[10.5px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider truncate">
             Month to Date
           </span>
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-            <CalendarDays size={18} />
-          </div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-gray-900">
+          <span className="text-[19px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
             {isLoading ? '...' : (kpis?.monthToDateCount ?? 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-gray-500 font-medium mt-1">
-            1st of month through today
-          </div>
+          </span>
+        </div>
+        <div className="text-[10px] sm:text-[10.5px] text-gray-500 font-normal leading-tight truncate">
+          {isHistorical ? '1st of month through selected date' : '1st of month through today'}
         </div>
       </div>
 
       {/* 4. YEAR TO DATE */}
       <div
         id="kpi-card-year-to-date"
-        className="bg-white rounded-xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+        className="bg-white rounded-xl border border-gray-200/90 p-[14px] shadow-2xs h-[86px] flex flex-col justify-between"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <span className="text-[10.5px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider truncate">
             Year to Date
           </span>
-          <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <CalendarCheck size={18} />
-          </div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-gray-900">
+          <span className="text-[19px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
             {isLoading ? '...' : (kpis?.yearToDateCount ?? 0).toLocaleString()}
-          </div>
-          <div className="text-[11px] text-gray-500 font-medium mt-1">
-            1 Jan through today
-          </div>
+          </span>
+        </div>
+        <div className="text-[10px] sm:text-[10.5px] text-gray-500 font-normal leading-tight truncate">
+          {isHistorical ? '1 Jan through selected date' : '1 Jan through today'}
         </div>
       </div>
 
@@ -116,26 +94,16 @@ export const MobileMoneySummaryCards: React.FC<MobileMoneySummaryCardsProps> = (
       <div
         id="kpi-card-mtd-commission"
         aria-disabled="true"
-        className="bg-amber-50/40 rounded-xl border border-amber-200/80 p-4 sm:p-5 shadow-xs flex flex-col justify-between cursor-not-allowed select-none"
+        className="bg-amber-50/40 rounded-xl border border-amber-200/80 p-[14px] shadow-2xs h-[86px] flex flex-col justify-center items-start cursor-not-allowed select-none"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-xs font-bold text-amber-900/80 uppercase tracking-wider">
-            Month to Date Commission
+        <span className="text-[10px] sm:text-[10.5px] font-semibold text-amber-900/80 uppercase tracking-tight whitespace-nowrap leading-tight">
+          Month to Date Commission
+        </span>
+        <div className="mt-2">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[9.5px] font-semibold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+            <Clock size={10} className="shrink-0 text-amber-700" />
+            Coming Soon
           </span>
-          <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-            <Percent size={18} />
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-              <Clock size={12} className="shrink-0 text-amber-700" />
-              Coming Soon
-            </span>
-          </div>
-          <div className="text-[11px] text-amber-800/80 font-medium mt-2">
-            MNO commissions — Phase 2.
-          </div>
         </div>
       </div>
     </div>

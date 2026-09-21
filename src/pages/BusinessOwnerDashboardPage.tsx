@@ -5,31 +5,20 @@ import {
   Users,
   UserCheck,
   Banknote,
-  Repeat,
   Store,
-  Clock,
   CalendarCheck,
   ChevronRight,
   AlertTriangle,
-  ArrowRight,
-  Eye,
-  CheckCircle2,
-  AlertCircle,
   Activity,
   ArrowUpRight,
   ArrowDownLeft,
-  CircleDot,
-  Radio,
-  Coins,
 } from 'lucide-react';
 import { adminService } from '../services/mockAdminService';
 import { useAuth } from '../context/AuthContext';
-import { formatZMW, formatWithdrawalDate } from '../utils/formatters';
-import { CashFloatRequest, AgentToAgentRequest } from '../types/admin';
+import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
+import { toDisplayDate, getZambiaTodayString } from '../utils/dateUtils';
+import { formatZMW } from '../utils/formatters';
 import { AttendanceRecord } from '../types/attendance';
-import { TODAY_DATE } from '../data/mockAttendanceData';
-import { CashFloatSummaryModal } from '../components/cash-float/CashFloatSummaryModal';
-import { AgentLiquiditySummaryModal } from '../components/agent-liquidity/AgentLiquiditySummaryModal';
 
 interface BusinessMetricCardProps {
   label: string;
@@ -93,38 +82,40 @@ const BusinessMetricCard: React.FC<BusinessMetricCardProps> = ({
 export const BusinessOwnerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { selectedDate } = useBusinessOwnerDate();
 
   const businessName = currentUser?.businessName || 'Lusaka Central Express Agency';
   const businessId = currentUser?.businessId || 'BIZ-LUS-001';
+  const isSelectedToday = selectedDate === getZambiaTodayString();
 
   // Data states
-  const [cashFloatRequests, setCashFloatRequests] = useState<CashFloatRequest[]>([]);
   const [pendingCashFloatCount, setPendingCashFloatCount] = useState<number>(1);
   const [approvedCashFloatCount, setApprovedCashFloatCount] = useState<number>(1);
-  const [liquidityRequests, setLiquidityRequests] = useState<AgentToAgentRequest[]>([]);
   const [notCheckedInAgents, setNotCheckedInAgents] = useState<AttendanceRecord[]>([]);
+  const [mobileMoneyValue, setMobileMoneyValue] = useState<string>('ZMW 18,450.00');
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Modal inspection states
-  const [selectedCashFloat, setSelectedCashFloat] = useState<CashFloatRequest | null>(null);
-  const [selectedLiquidity, setSelectedLiquidity] = useState<AgentToAgentRequest | null>(null);
 
   const loadDashboardData = async () => {
     try {
-      // 1. Scoped Cash / Float requests
+      setLoading(true);
+      // 1. Scoped Cash / Float request status counts
       const cfRes = await adminService.getCashFloatRequests({}, undefined, businessName);
-      setCashFloatRequests(cfRes.items.slice(0, 5));
       setPendingCashFloatCount(cfRes.summary.pendingReview);
       setApprovedCashFloatCount(cfRes.summary.approved);
 
-      // 2. Scoped Agent-to-Agent liquidity requests
-      const atlRes = await adminService.getAgentLiquidityRequests({}, undefined, businessName);
-      setLiquidityRequests(atlRes.items.slice(0, 5));
-
-      // 3. Scoped Attendance data for current date (01-09-2026)
-      const attRes = await adminService.getAttendanceRecords({ date: TODAY_DATE }, businessId);
+      // 2. Scoped Attendance data for selected date (DD-MM-YYYY)
+      const attRes = await adminService.getAttendanceRecords({ date: toDisplayDate(selectedDate) }, businessId);
       const notCheckedIn = attRes.items.filter((rec) => rec.status === 'Not Checked In');
       setNotCheckedInAgents(notCheckedIn);
+
+      // 3. Mobile Money Transactions for selected date
+      const mmRes = await adminService.getMobileMoneyTransactions(
+        { dateFrom: selectedDate, dateTo: selectedDate },
+        undefined,
+        businessName
+      );
+      const totalMM = mmRes.items.reduce((acc, t) => acc + (t.amount || 0), 0);
+      setMobileMoneyValue(formatZMW(totalMM));
     } catch (err) {
       console.error('Failed to load business owner dashboard data:', err);
     } finally {
@@ -136,7 +127,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
     loadDashboardData();
     const unsub = adminService.subscribe(loadDashboardData);
     return () => unsub();
-  }, [businessName, businessId]);
+  }, [businessName, businessId, selectedDate]);
 
   // Scoped Recent Business Activity records (sorted in descending chronological order)
   const recentBusinessActivity = [
@@ -280,8 +271,8 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
           onClick={() => navigate('/business-owner/people/attendance?tab=eod')}
         />
         <BusinessMetricCard
-          label="Today’s Mobile Money Value"
-          value="ZMW 18,450.00"
+          label={isSelectedToday ? "Today’s Mobile Money Value" : "Selected Date Mobile Money Value"}
+          value={mobileMoneyValue}
           icon={Store}
           iconBgColor="bg-cyan-50 text-[#0D93AA]"
           accentColor="text-[#0D93AA]"
@@ -511,183 +502,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Cash / Float Requests Section */}
-      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Banknote className="w-4 h-4 text-[#0D93AA]" />
-            <h3 className="text-sm font-bold text-[#102025]">Cash / Float Requests</h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/business-owner/operations/cash-float-requests')}
-            className="text-xs font-semibold text-[#0D93AA] hover:text-[#0b8296] cursor-pointer flex items-center gap-1 transition-colors"
-          >
-            <span>View All</span>
-            <ChevronRight size={13} />
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 uppercase font-bold text-[10px] tracking-wider">
-                <th className="pb-2.5 font-semibold">Reference</th>
-                <th className="pb-2.5 font-semibold">Agent</th>
-                <th className="pb-2.5 font-semibold">Agent ID</th>
-                <th className="pb-2.5 font-semibold">Request Type</th>
-                <th className="pb-2.5 font-semibold">Amount</th>
-                <th className="pb-2.5 font-semibold">Status</th>
-                <th className="pb-2.5 font-semibold">Requested</th>
-                <th className="pb-2.5 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {cashFloatRequests.map((req) => {
-                const isPending = req.status === 'Pending Review';
-                const isApproved = req.status === 'Approved';
-                const isProcessing = req.status === 'Processing';
-                const isFulfilled = req.status === 'Fulfilled';
-
-                let statusBadge = 'bg-gray-100 text-gray-700 border-gray-200';
-                if (isPending) statusBadge = 'bg-amber-50 text-amber-700 border-amber-200';
-                else if (isApproved) statusBadge = 'bg-blue-50 text-blue-700 border-blue-200';
-                else if (isProcessing) statusBadge = 'bg-purple-50 text-purple-700 border-purple-200';
-                else if (isFulfilled) statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-
-                return (
-                  <tr key={req.id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-3 font-bold font-mono text-gray-900">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/business-owner/operations/cash-float-requests/${req.reference}`)}
-                        className="hover:text-[#0D93AA] hover:underline cursor-pointer text-left"
-                      >
-                        {req.reference}
-                      </button>
-                    </td>
-                    <td className="py-3 text-gray-800 font-semibold">{req.agentName}</td>
-                    <td className="py-3 font-mono text-gray-500 text-[11px]">{req.agentId}</td>
-                    <td className="py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-800 border border-gray-200">
-                        {req.requestType}
-                      </span>
-                    </td>
-                    <td className="py-3 font-bold text-[#102025]">{formatZMW(req.amount)}</td>
-                    <td className="py-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-500 font-mono text-[11px]">
-                      {formatWithdrawalDate(req.requestedAt)}
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCashFloat(req)}
-                        className="px-2.5 py-1 text-xs font-semibold text-[#0D93AA] hover:bg-cyan-50 rounded-md border border-[#0D93AA]/20 hover:border-[#0D93AA] transition-colors cursor-pointer"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 5. Agent-to-Agent Liquidity Section */}
-      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Repeat className="w-4 h-4 text-[#0D93AA]" />
-            <h3 className="text-sm font-bold text-[#102025]">Agent-to-Agent Liquidity</h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate('/business-owner/operations/agent-to-agent-liquidity')}
-            className="text-xs font-semibold text-[#0D93AA] hover:text-[#0b8296] cursor-pointer flex items-center gap-1 transition-colors"
-          >
-            <span>View All</span>
-            <ChevronRight size={13} />
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 uppercase font-bold text-[10px] tracking-wider">
-                <th className="pb-2.5 font-semibold">Reference</th>
-                <th className="pb-2.5 font-semibold">Requesting Agent</th>
-                <th className="pb-2.5 font-semibold">Type</th>
-                <th className="pb-2.5 font-semibold">Amount</th>
-                <th className="pb-2.5 font-semibold">Matched / Offered Agent</th>
-                <th className="pb-2.5 font-semibold">Status</th>
-                <th className="pb-2.5 font-semibold">Requested</th>
-                <th className="pb-2.5 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {liquidityRequests.map((atl) => {
-                const partnerName =
-                  atl.matchedAgent?.name ||
-                  atl.currentOfferedAgent?.name ||
-                  'Matching Engine...';
-
-                let statusBadge = 'bg-gray-100 text-gray-700 border-gray-200';
-                if (atl.status === 'Matching') statusBadge = 'bg-amber-50 text-amber-700 border-amber-200';
-                else if (atl.status === 'Agent Matched') statusBadge = 'bg-blue-50 text-blue-700 border-blue-200';
-                else if (atl.status === 'In Progress') statusBadge = 'bg-purple-50 text-purple-700 border-purple-200';
-                else if (atl.status === 'Completed') statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-
-                return (
-                  <tr key={atl.id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-3 font-bold font-mono text-gray-900">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/business-owner/operations/agent-to-agent-liquidity/${atl.reference}`)}
-                        className="hover:text-[#0D93AA] hover:underline cursor-pointer text-left"
-                      >
-                        {atl.reference}
-                      </button>
-                    </td>
-                    <td className="py-3 text-gray-800 font-semibold">{atl.requestingAgentName}</td>
-                    <td className="py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-800 border border-gray-200">
-                        {atl.requestType}
-                      </span>
-                    </td>
-                    <td className="py-3 font-bold text-[#102025]">{formatZMW(atl.amount)}</td>
-                    <td className="py-3 text-gray-700">{partnerName}</td>
-                    <td className="py-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}>
-                        {atl.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-500 font-mono text-[11px]">
-                      {formatWithdrawalDate(atl.requestedAt)}
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedLiquidity(atl)}
-                        className="px-2.5 py-1 text-xs font-semibold text-[#0D93AA] hover:bg-cyan-50 rounded-md border border-[#0D93AA]/20 hover:border-[#0D93AA] transition-colors cursor-pointer"
-                      >
-                        View Summary
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 6. Recent Business Activity Section */}
+      {/* 4. Recent Business Activity Section */}
       <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -734,23 +549,6 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
           </table>
         </div>
       </div>
-
-      {/* Cash Float Summary Inspection Modal */}
-      {selectedCashFloat && (
-        <CashFloatSummaryModal
-          request={selectedCashFloat}
-          onClose={() => setSelectedCashFloat(null)}
-        />
-      )}
-
-      {/* Agent Liquidity Summary Modal */}
-      {selectedLiquidity && (
-        <AgentLiquiditySummaryModal
-          request={selectedLiquidity}
-          isOpen={Boolean(selectedLiquidity)}
-          onClose={() => setSelectedLiquidity(null)}
-        />
-      )}
     </div>
   );
 };

@@ -63,6 +63,22 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
+      pathname.includes('/communication/chat-report/') ||
+      pathname.includes('/chat-report/')
+    ) {
+      return 'Chat Details';
+    }
+
+    if (
+      pathname === '/business-owner/communication/chat-report' ||
+      pathname === '/business-owner/chat-report' ||
+      pathname.endsWith('/communication/chat-report') ||
+      pathname.endsWith('/chat-report')
+    ) {
+      return 'Chat Report';
+    }
+
+    if (
       pathname === '/super-admin/dashboard' ||
       pathname === '/business-owner/dashboard' ||
       pathname === '/'
@@ -196,10 +212,11 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
-      pathname.includes('/operations/agent-to-agent-liquidity/') &&
+      (pathname.includes('/operations/agent-to-agent-liquidity/') ||
+        pathname.includes('/agent-to-agent-liquidity/')) &&
       !pathname.endsWith('/agent-to-agent-liquidity')
     ) {
-      return 'Agent-to-Agent Liquidity Request Details';
+      return 'Agent-to-Agent Liquidity Details';
     }
 
     if (
@@ -221,6 +238,13 @@ export const AdminLayout: React.FC = () => {
       pathname === '/business-owner/people/attendance'
     ) {
       return 'Attendance & End-of-Day';
+    }
+
+    if (
+      pathname === '/business-owner/business-profile/edit' ||
+      pathname === '/business-owner/people/business-profile/edit'
+    ) {
+      return 'Edit Business Profile';
     }
 
     if (
@@ -414,6 +438,50 @@ export const AdminLayout: React.FC = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  const isBOMobileMoneyListing =
+    location.pathname === '/business-owner/mobile-money-transactions' ||
+    location.pathname === '/business-owner/mobile-money-transactions/' ||
+    (currentUser?.role === 'business_owner' &&
+      location.pathname.endsWith('/mobile-money-transactions'));
+
+  const isBOAgentLiquidityListing =
+    location.pathname === '/business-owner/operations/agent-to-agent-liquidity' ||
+    location.pathname === '/business-owner/operations/agent-to-agent-liquidity/' ||
+    location.pathname === '/business-owner/agent-to-agent-liquidity' ||
+    location.pathname === '/business-owner/agent-to-agent-liquidity/' ||
+    (currentUser?.role === 'business_owner' &&
+      location.pathname.endsWith('/agent-to-agent-liquidity'));
+
+  const isBOCashFloatListing =
+    (location.pathname === '/business-owner/operations/cash-float-requests' ||
+      location.pathname === '/business-owner/operations/cash-float-requests/' ||
+      location.pathname === '/business-owner/cash-float-requests' ||
+      location.pathname === '/business-owner/cash-float-requests/' ||
+      (currentUser?.role === 'business_owner' &&
+        location.pathname.endsWith('/cash-float-requests'))) &&
+    !location.pathname.includes('/cash-float-requests/TB-') &&
+    !location.pathname.includes('/cash-float-requests/CFR-');
+
+  const isBOAllTransactionsListing =
+    (location.pathname === '/business-owner/transactions/all' ||
+      location.pathname === '/business-owner/transactions/all/' ||
+      location.pathname === '/business-owner/all-transactions' ||
+      location.pathname === '/business-owner/all-transactions/' ||
+      location.pathname === '/business-owner/operations/all-transactions' ||
+      location.pathname === '/business-owner/operations/all-transactions/' ||
+      location.pathname === '/transactions/all' ||
+      location.pathname === '/transactions' ||
+      (currentUser?.role === 'business_owner' &&
+        (location.pathname.endsWith('/all-transactions') || location.pathname.endsWith('/transactions/all')))) &&
+    !location.pathname.includes('/transactions/all/TX-') &&
+    !location.pathname.includes('/transactions/TX-');
+
+  const isFrozenLayout =
+    isBOMobileMoneyListing ||
+    isBOAgentLiquidityListing ||
+    isBOCashFloatListing ||
+    isBOAllTransactionsListing;
+
   return (
     <div className="h-screen h-[100dvh] bg-[#FAFAFA] flex flex-row overflow-hidden">
       {/* Sidebar */}
@@ -435,7 +503,13 @@ export const AdminLayout: React.FC = () => {
           onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         />
 
-        <main className="flex-1 overflow-y-auto min-h-0 bg-[#FAFAFA]">
+        <main
+          className={`flex-1 min-h-0 bg-[#FAFAFA] ${
+            isFrozenLayout
+              ? 'flex flex-col overflow-y-auto md:overflow-hidden'
+              : 'overflow-y-auto'
+          }`}
+        >
           <Outlet />
         </main>
       </div>

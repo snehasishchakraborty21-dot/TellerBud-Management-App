@@ -72,5 +72,17 @@ export const DEMO_ACCOUNTS = {
     initials: 'CM',
     accountStatus: 'Active' as const,
   },
+  businessAdmin: {
+    uid: 'USR-BA-001',
+    fullName: 'Mwape Banda',
+    email: 'mwape.banda@lusakaagency.zm',
+    password: 'password123',
+    role: 'business_admin' as const,
+    roleLabel: 'Business Admin',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    initials: 'MB',
+    accountStatus: 'Active' as const,
+  },
 } as const;
 

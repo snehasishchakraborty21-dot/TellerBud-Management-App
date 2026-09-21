@@ -1,4 +1,9 @@
-export type UserRole = 'super_admin' | 'business_owner';
+export type UserRole =
+  | 'super_admin'
+  | 'business_owner'
+  | 'business_admin'
+  | 'agent'
+  | 'auditor';
 
 export interface AuthenticatedUser {
   uid: string;

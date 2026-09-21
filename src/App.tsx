@@ -23,6 +23,7 @@ import { AttendanceEndOfDayPage } from './pages/AttendanceEndOfDayPage';
 import { AttendanceDetailPage } from './pages/AttendanceDetailPage';
 import { EndOfDayDetailPage } from './pages/EndOfDayDetailPage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
+import { EditBusinessProfilePage } from './pages/EditBusinessProfilePage';
 import { GlobalWalletPage } from './pages/GlobalWalletPage';
 import { WalletLedgerPage } from './pages/WalletLedgerPage';
 import { LedgerEntryDetailPage } from './pages/LedgerEntryDetailPage';
@@ -33,6 +34,8 @@ import { ChargeCommissionDetailPage } from './pages/ChargeCommissionDetailPage';
 import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificationsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { NotificationDetailsPage } from './pages/NotificationDetailsPage';
+import { ChatReportPage } from './pages/communication/ChatReportPage';
+import { ChatDetailPage } from './pages/communication/ChatDetailPage';
 import { LiveOperationsPage } from './pages/LiveOperationsPage';
 import { CustomerRequestsPage } from './pages/CustomerRequestsPage';
 import { CustomersPage } from './pages/CustomersPage';
@@ -55,7 +58,14 @@ import { VendorEligibilityPage } from './pages/VendorEligibilityPage';
 import { ServiceModesPage } from './pages/ServiceModesPage';
 import { ServiceModeDetailPage } from './pages/ServiceModeDetailPage';
 import { SystemSettingsPage } from './pages/SystemSettingsPage';
+import { StoresBoothsPage } from './pages/organization/StoresBoothsPage';
+import { UsersRolesPage } from './pages/organization/UsersRolesPage';
+import { BalanceAdjustmentsPage } from './pages/organization/BalanceAdjustmentsPage';
+import { DeviceManagementPage } from './pages/organization/DeviceManagementPage';
+import { OrganizationAuditTrailPage } from './pages/organization/OrganizationAuditTrailPage';
+import { AdminDeviceAllocationPage } from './pages/organization/AdminDeviceAllocationPage';
 import { VendorProvider } from './context/VendorContext';
+import { BusinessOwnerDateProvider } from './context/BusinessOwnerDateContext';
 import {
   SUPER_ADMIN_NAVIGATION_CONFIG,
   BUSINESS_OWNER_NAVIGATION_CONFIG,
@@ -190,6 +200,8 @@ function AppRoutes() {
     '/configuration/settings',
     '/super-admin/settings',
     '/settings',
+    '/super-admin/configuration/devices',
+    '/configuration/devices',
   ];
 
   const superAdminScaffolds = SUPER_ADMIN_NAVIGATION_CONFIG.flatMap((g) =>
@@ -211,7 +223,14 @@ function AppRoutes() {
     '/business-owner/attendance-end-of-day',
     '/business-owner/people/attendance',
     '/business-owner/business-profile',
+    '/business-owner/business-profile/edit',
     '/business-owner/people/business-profile',
+    '/business-owner/people/business-profile/edit',
+    '/business-owner/organization/stores',
+    '/business-owner/organization/users',
+    '/business-owner/organization/balance-adjustments',
+    '/business-owner/organization/devices',
+    '/business-owner/organization/audit-trail',
     '/business-owner/wallets/global-wallet',
     '/business-owner/wallets/ledger',
     '/business-owner/wallets/business-agent',
@@ -385,6 +404,10 @@ function AppRoutes() {
         <Route path="configuration/settings" element={<SystemSettingsPage />} />
         <Route path="settings" element={<Navigate to="/super-admin/configuration/settings" replace />} />
 
+        {/* Configuration: Device Allocation */}
+        <Route path="configuration/devices" element={<AdminDeviceAllocationPage />} />
+        <Route path="devices" element={<Navigate to="/super-admin/configuration/devices" replace />} />
+
         {/* TellerBud Admin Scaffold Modules */}
         {superAdminScaffolds.map((item) => {
           const subPath = item.path.replace('/super-admin/', '');
@@ -399,11 +422,11 @@ function AppRoutes() {
         })}
       </Route>
 
-      {/* Business Owner Protected Portal */}
+      {/* Business Owner & Business Admin Protected Portal */}
       <Route
         path="/business-owner"
         element={
-          <ProtectedRoute allowedRoles={['business_owner']}>
+          <ProtectedRoute allowedRoles={['business_owner', 'business_admin']}>
             <AdminLayout />
           </ProtectedRoute>
         }
@@ -450,7 +473,16 @@ function AppRoutes() {
 
         {/* Business Profile (Scoped to Business) */}
         <Route path="people/business-profile" element={<BusinessProfilePage />} />
+        <Route path="people/business-profile/edit" element={<EditBusinessProfilePage />} />
         <Route path="business-profile" element={<BusinessProfilePage />} />
+        <Route path="business-profile/edit" element={<EditBusinessProfilePage />} />
+
+        {/* Organization Management */}
+        <Route path="organization/stores" element={<StoresBoothsPage />} />
+        <Route path="organization/users" element={<UsersRolesPage />} />
+        <Route path="organization/balance-adjustments" element={<BalanceAdjustmentsPage />} />
+        <Route path="organization/devices" element={<DeviceManagementPage />} />
+        <Route path="organization/audit-trail" element={<OrganizationAuditTrailPage />} />
 
         {/* Global Wallet (Lusaka Central Express Agency Shared Wallet) */}
         <Route path="wallets/global-wallet" element={<GlobalWalletPage />} />
@@ -482,6 +514,12 @@ function AppRoutes() {
         {/* Notifications (Scoped to Business) */}
         <Route path="communication/notifications" element={<BusinessOwnerNotificationsPage />} />
         <Route path="notifications" element={<Navigate to="/business-owner/communication/notifications" replace />} />
+
+        {/* Chat Report (Scoped strictly to Business Owner) */}
+        <Route path="communication/chat-report" element={<ChatReportPage />} />
+        <Route path="communication/chat-report/:chatReference" element={<ChatDetailPage />} />
+        <Route path="chat-report" element={<Navigate to="/business-owner/communication/chat-report" replace />} />
+        <Route path="chat-report/:chatReference" element={<ChatDetailPage />} />
 
         {/* Business Owner Scaffold Modules */}
         {businessOwnerScaffolds.map((item) => {
@@ -842,6 +880,26 @@ function AppRoutes() {
         <Route path=":notificationId" element={<NotificationDetailsPage />} />
       </Route>
 
+      {/* Direct /chat-report and /chat-report/:chatReference routes */}
+      <Route
+        path="/chat-report"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <Navigate to="/business-owner/communication/chat-report" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat-report/:chatReference"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ChatDetailPage />} />
+      </Route>
+
       {/* Direct /configuration/settings and /settings routes */}
       <Route
         path="/configuration/settings"
@@ -865,11 +923,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <VendorProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </VendorProvider>
+        <BusinessOwnerDateProvider>
+          <VendorProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </VendorProvider>
+        </BusinessOwnerDateProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

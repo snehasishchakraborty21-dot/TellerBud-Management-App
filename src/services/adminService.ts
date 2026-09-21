@@ -61,7 +61,10 @@ export interface IAdminService {
     sort?: { field: import('../types/admin').AgentToAgentSortField; direction: import('../types/admin').AgentToAgentSortDirection },
     businessName?: string
   ): Promise<{ items: import('../types/admin').AgentToAgentRequest[]; total: number; summary: import('../types/admin').AgentToAgentStatusSummary }>;
-  getAgentLiquidityRequestByReference(reference: string): Promise<import('../types/admin').AgentToAgentRequest | null>;
+  getAgentLiquidityRequestByReference(
+    reference: string,
+    businessScope?: string
+  ): Promise<import('../types/admin').AgentToAgentRequest | null>;
   getAgentLiquidityStatusSummary(businessName?: string): Promise<import('../types/admin').AgentToAgentStatusSummary>;
   getWalkInTransactions(
     filters?: Partial<import('../types/admin').WalkInFilters>,
@@ -75,7 +78,7 @@ export interface IAdminService {
     sort?: { field: import('../types/mobileMoney').MobileMoneySortField; direction: import('../types/mobileMoney').MobileMoneySortDirection },
     businessScope?: string
   ): Promise<{ items: import('../types/mobileMoney').MobileMoneyTransaction[]; total: number; summary: import('../types/mobileMoney').MobileMoneySummary }>;
-  getMobileMoneyKPIs(businessScope?: string): Promise<import('../types/mobileMoney').MobileMoneyKPIPeriods>;
+  getMobileMoneyKPIs(businessScope?: string, targetDate?: string): Promise<import('../types/mobileMoney').MobileMoneyKPIPeriods>;
   getMobileMoneyTransactionByReference(reference: string, businessScope?: string): Promise<import('../types/mobileMoney').MobileMoneyTransaction | null>;
   getAgents(
     filters?: Partial<import('../types/admin').AgentFilters>,

@@ -15,7 +15,7 @@ import {
   toISODate,
 } from '../../utils/dateUtils';
 
-interface AgentLiquidityFilterBarProps {
+interface CashFloatFilterBarProps {
   dateFrom?: string; // ISO YYYY-MM-DD
   dateTo?: string; // ISO YYYY-MM-DD
   onDateRangeChange: (dateFrom?: string, dateTo?: string) => void;
@@ -42,7 +42,7 @@ const MONTH_NAMES = [
 
 const WEEKDAY_NAMES = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
-export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = ({
+export const CashFloatFilterBar: React.FC<CashFloatFilterBarProps> = ({
   dateFrom,
   dateTo,
   onDateRangeChange,
@@ -218,6 +218,7 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
     }
   };
 
+  // Clear Date Range handler
   const handleClear = () => {
     setRawFrom('');
     setRawTo('');
@@ -227,72 +228,119 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
     onDateRangeChange(undefined, undefined);
   };
 
-  // Month navigation in calendar
-  const handlePrevMonth = (field: 'from' | 'to', e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Month navigation helpers
+  const handlePrevMonth = (field: 'from' | 'to') => {
     if (field === 'from') {
       if (fromViewMonth === 0) {
         setFromViewMonth(11);
-        setFromViewYear((prev) => prev - 1);
+        setFromViewYear((y) => y - 1);
       } else {
-        setFromViewMonth((prev) => prev - 1);
+        setFromViewMonth((m) => m - 1);
       }
     } else {
       if (toViewMonth === 0) {
         setToViewMonth(11);
-        setToViewYear((prev) => prev - 1);
+        setToViewYear((y) => y - 1);
       } else {
-        setToViewMonth((prev) => prev - 1);
+        setToViewMonth((m) => m - 1);
       }
     }
   };
 
-  const handleNextMonth = (field: 'from' | 'to', e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleNextMonth = (field: 'from' | 'to') => {
     if (field === 'from') {
+      if (
+        fromViewYear > todayYear ||
+        (fromViewYear === todayYear && fromViewMonth >= todayMonth - 1)
+      ) {
+        return;
+      }
       if (fromViewMonth === 11) {
         setFromViewMonth(0);
-        setFromViewYear((prev) => prev + 1);
+        setFromViewYear((y) => y + 1);
       } else {
-        setFromViewMonth((prev) => prev + 1);
+        setFromViewMonth((m) => m + 1);
       }
     } else {
+      if (
+        toViewYear > todayYear ||
+        (toViewYear === todayYear && toViewMonth >= todayMonth - 1)
+      ) {
+        return;
+      }
       if (toViewMonth === 11) {
         setToViewMonth(0);
-        setToViewYear((prev) => prev + 1);
+        setToViewYear((y) => y + 1);
       } else {
-        setToViewMonth((prev) => prev + 1);
+        setToViewMonth((m) => m + 1);
       }
     }
   };
 
-  // Helper to render calendar popover grid
+  const hasAnyDate = Boolean(rawFrom.trim() || rawTo.trim());
+  const isRangeValid = !validationError;
+
+  // Calendar popover renderer
   const renderCalendar = (field: 'from' | 'to') => {
     const viewYear = field === 'from' ? fromViewYear : toViewYear;
     const viewMonth = field === 'from' ? fromViewMonth : toViewMonth;
+    const currentIsoVal = field === 'from' ? dateFrom : dateTo;
+    const minIsoVal = field === 'to' ? dateFrom : undefined;
 
-    const firstDayIndex = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // Monday = 0
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-
-    const selectedIso = field === 'from' ? dateFrom : dateTo;
-    const oppositeIso = field === 'from' ? dateTo : dateFrom;
+    const daysInMonth = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
+    const firstDayOfWeek = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay(); // 0 = Sunday
+    // Convert to Monday = 0
+    const startCol = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
     const isNextDisabled =
       viewYear > todayYear || (viewYear === todayYear && viewMonth >= todayMonth - 1);
 
+    const cells: React.ReactNode[] = [];
+
+    // Empty offset cells before 1st day of month
+    for (let i = 0; i < startCol; i++) {
+      cells.push(<div key={`empty-${i}`} className="h-7 w-7" />);
+    }
+
+    // Days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayIso = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isFuture = dayIso > todayStr;
+      const isBeforeMin = Boolean(minIsoVal && isValidDateString(minIsoVal) && dayIso < minIsoVal);
+      const isDisabled = isFuture || isBeforeMin;
+      const isSelected = dayIso === currentIsoVal;
+      const isTodayCell = dayIso === todayStr;
+
+      cells.push(
+        <button
+          key={dayIso}
+          type="button"
+          disabled={isDisabled}
+          onClick={() => handleSelectDay(viewYear, viewMonth, day, field)}
+          className={`h-7 w-7 text-xs rounded-md flex items-center justify-center transition-all ${
+            isSelected
+              ? 'bg-[#0D93AA] text-white font-bold shadow-2xs'
+              : isTodayCell && !isDisabled
+              ? 'border border-[#0D93AA] text-[#0D93AA] font-bold hover:bg-cyan-50'
+              : isDisabled
+              ? 'text-gray-300 cursor-not-allowed bg-gray-50/60'
+              : 'text-gray-700 hover:bg-gray-100 font-medium cursor-pointer'
+          }`}
+          aria-label={`Select ${dayIso}`}
+        >
+          {day}
+        </button>
+      );
+    }
+
     return (
-      <div
-        className="absolute z-50 mt-1 bg-white rounded-xl shadow-xl border border-gray-200 p-3 w-[280px] select-none animate-in fade-in zoom-in-95 duration-150"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={`${field === 'from' ? 'From' : 'To'} Date calendar`}
-      >
-        {/* Calendar Header: Month + Navigation */}
+      <div className="absolute top-full left-0 mt-1.5 z-50 bg-white rounded-xl border border-gray-200 shadow-xl p-3 w-64 text-left">
+        {/* Calendar Header */}
         <div className="flex items-center justify-between mb-2">
           <button
             type="button"
-            onClick={(e) => handlePrevMonth(field, e)}
-            className="p-1 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer"
+            onClick={() => handlePrevMonth(field)}
+            className="p-1 rounded-md text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             aria-label="Previous month"
           >
             <ChevronLeft size={16} />
@@ -302,12 +350,12 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
           </span>
           <button
             type="button"
-            onClick={(e) => handleNextMonth(field, e)}
+            onClick={() => handleNextMonth(field)}
             disabled={isNextDisabled}
             className={`p-1 rounded-md transition-colors ${
               isNextDisabled
                 ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
+                : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
             }`}
             aria-label="Next month"
           >
@@ -315,102 +363,49 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
           </button>
         </div>
 
-        {/* Weekday Row */}
-        <div className="grid grid-cols-7 gap-1 mb-1 text-center">
-          {WEEKDAY_NAMES.map((d) => (
-            <span
-              key={d}
-              className="text-[10px] font-bold text-gray-400 uppercase tracking-wider py-0.5"
-            >
-              {d}
-            </span>
+        {/* Days of week */}
+        <div className="grid grid-cols-7 gap-1 text-center mb-1 text-[10.5px] font-bold text-gray-400">
+          {WEEKDAY_NAMES.map((w) => (
+            <div key={w} className="h-6 flex items-center justify-center">
+              {w}
+            </div>
           ))}
         </div>
 
-        {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {Array.from({ length: firstDayIndex }).map((_, i) => (
-            <div key={`empty-${i}`} className="h-7 w-7" />
-          ))}
+        {/* Day numbers */}
+        <div className="grid grid-cols-7 gap-1 text-center">{cells}</div>
 
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const dayNum = i + 1;
-            const dayIso = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-
-            const isFuture = dayIso > todayStr;
-            const isSelected = selectedIso === dayIso;
-            const isToday = dayIso === todayStr;
-
-            const isBeforeFrom = field === 'to' && oppositeIso && dayIso < oppositeIso;
-            const isAfterTo = field === 'from' && oppositeIso && dayIso > oppositeIso;
-
-            const isDisabled = isFuture || isBeforeFrom || isAfterTo;
-
-            return (
-              <button
-                key={dayNum}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => handleSelectDay(viewYear, viewMonth, dayNum, field)}
-                className={`h-7 w-7 rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
-                  isSelected
-                    ? 'bg-[#0D93AA] text-white font-bold shadow-2xs'
-                    : isToday
-                    ? 'border border-[#0D93AA] text-[#0D93AA] font-bold hover:bg-cyan-50'
-                    : isDisabled
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
-                }`}
-                aria-label={`Select ${dayNum} ${MONTH_NAMES[viewMonth]} ${viewYear}`}
-              >
-                {dayNum}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Calendar Footer shortcut */}
-        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px]">
+        {/* Footer info */}
+        <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
+          <span>Africa/Lusaka (CAT)</span>
           <button
             type="button"
             onClick={() => {
-              handleSelectDay(todayYear, todayMonth - 1, todayDay, field);
+              const [ty, tm, td] = todayStr.split('-').map(Number);
+              handleSelectDay(ty, tm - 1, td, field);
             }}
-            className="text-[#0D93AA] font-semibold hover:underline cursor-pointer"
+            className="font-semibold text-[#0D93AA] hover:underline cursor-pointer"
           >
-            Select Today
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (field === 'from') setIsFromOpen(false);
-              else setIsToOpen(false);
-            }}
-            className="text-gray-500 hover:text-gray-700 cursor-pointer"
-          >
-            Close
+            Today
           </button>
         </div>
       </div>
     );
   };
 
-  const hasAnyDate = Boolean(dateFrom || dateTo || rawFrom || rawTo);
-  const isCompleteRange = Boolean(dateFrom && dateTo && dateFrom <= dateTo);
-  const isRangeValid = !validationError && (isCompleteRange || (!dateFrom && !dateTo));
-
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-2xs">
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4">
-        {/* Left: From Date and To Date Inputs */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 max-w-xl">
-          {/* From Date Input */}
+    <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-3 sm:p-3.5">
+      {/* Controls arranged in one horizontal desktop row: [From Date] [To Date] [Export] [Clear Date Range] [Refresh] */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+        {/* Left: Date inputs */}
+        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 max-w-2xl lg:max-w-3xl">
+          {/* 1. From Date */}
           <div
             ref={fromContainerRef}
             className="flex-1 flex items-center gap-2.5 min-w-0"
           >
             <label
-              htmlFor="atl-date-from-input"
+              htmlFor="cf-date-from-input"
               className="text-xs font-bold text-gray-700 whitespace-nowrap min-w-[64px]"
             >
               From Date
@@ -418,7 +413,7 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
-                id="atl-date-from-input"
+                id="cf-date-from-input"
                 value={rawFrom}
                 onChange={(e) => handleDateInputChange(e.target.value, 'from')}
                 placeholder="dd-mm-yyyy"
@@ -428,7 +423,7 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
               />
               <button
                 type="button"
-                id="atl-date-from-calendar-btn"
+                id="cf-date-from-calendar-btn"
                 onClick={() => {
                   setIsFromOpen((prev) => !prev);
                   setIsToOpen(false);
@@ -444,13 +439,13 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
             </div>
           </div>
 
-          {/* To Date Input */}
+          {/* 2. To Date */}
           <div
             ref={toContainerRef}
             className="flex-1 flex items-center gap-2.5 min-w-0"
           >
             <label
-              htmlFor="atl-date-to-input"
+              htmlFor="cf-date-to-input"
               className="text-xs font-bold text-gray-700 whitespace-nowrap min-w-[52px]"
             >
               To Date
@@ -458,7 +453,7 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
             <div className="relative flex-1 min-w-0">
               <input
                 type="text"
-                id="atl-date-to-input"
+                id="cf-date-to-input"
                 value={rawTo}
                 onChange={(e) => handleDateInputChange(e.target.value, 'to')}
                 placeholder="dd-mm-yyyy"
@@ -468,7 +463,7 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
               />
               <button
                 type="button"
-                id="atl-date-to-calendar-btn"
+                id="cf-date-to-calendar-btn"
                 onClick={() => {
                   setIsToOpen((prev) => !prev);
                   setIsFromOpen(false);
@@ -485,12 +480,12 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
           </div>
         </div>
 
-        {/* Right: Action Buttons: Export, Clear Date Range, Refresh */}
+        {/* Right: Action Buttons aligned towards the right */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 self-end lg:self-center ml-auto">
-          {/* Export Button (Oceanic Blue #0D93AA) */}
+          {/* 3. Export Button (Oceanic-green #0D93AA) */}
           <button
             type="button"
-            id="atl-export-btn"
+            id="cf-export-btn"
             onClick={onExport}
             disabled={!isRangeValid || isExporting}
             className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3.5 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
@@ -498,21 +493,17 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
                 ? 'bg-[#0D93AA] hover:bg-[#0B7A8D] active:bg-[#096677] text-white border-[#0D93AA] shadow-2xs cursor-pointer'
                 : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none'
             } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1`}
-            aria-label="Export liquidity requests to Excel"
-            title={
-              !isRangeValid
-                ? 'Select a valid date range to enable Export'
-                : 'Download Agent-to-Agent Liquidity requests matching current filters'
-            }
+            aria-label="Export Cash/Float requests to Excel"
+            title="Download Cash/Float requests matching filters to Excel"
           >
             <Download size={15} className="flex-shrink-0" />
             <span>{isExporting ? 'Exporting...' : 'Export'}</span>
           </button>
 
-          {/* Clear Date Range Button */}
+          {/* 4. Clear Date Range Button */}
           <button
             type="button"
-            id="atl-clear-date-range-btn"
+            id="cf-clear-date-range-btn"
             onClick={handleClear}
             disabled={!hasAnyDate}
             className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
@@ -521,22 +512,22 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
                 : 'border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed shadow-none'
             } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1`}
             aria-label="Clear Date Range"
-            title="Clear Date Range and restore latest liquidity requests"
+            title="Clear Date Range"
           >
             <RotateCcw size={14} className="flex-shrink-0" />
             <span className="hidden sm:inline">Clear Date Range</span>
             <span className="sm:hidden">Clear</span>
           </button>
 
-          {/* Refresh Button */}
+          {/* 5. Refresh Button */}
           <button
             type="button"
-            id="atl-refresh-btn"
+            id="cf-refresh-btn"
             onClick={onRefresh}
             disabled={isRefreshing}
             className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer shadow-2xs disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1"
-            aria-label="Refresh liquidity requests"
-            title="Reload Agent-to-Agent Liquidity records"
+            aria-label="Refresh Cash/Float requests"
+            title="Refresh request records"
           >
             <RefreshCw
               size={14}
@@ -550,9 +541,9 @@ export const AgentLiquidityFilterBar: React.FC<AgentLiquidityFilterBarProps> = (
       {/* Inline validation message */}
       {validationError && (
         <div
-          id="atl-date-range-validation-error"
+          id="cf-date-range-validation-error"
           role="alert"
-          className="mt-2.5 pt-2 border-t border-rose-100 flex items-center gap-1.5 text-xs text-rose-600 font-medium animate-fadeIn"
+          className="mt-2.5 pt-2 border-t border-rose-100 flex items-center gap-1.5 text-xs text-rose-600 font-medium"
         >
           <AlertCircle size={14} className="flex-shrink-0" />
           <span>{validationError}</span>

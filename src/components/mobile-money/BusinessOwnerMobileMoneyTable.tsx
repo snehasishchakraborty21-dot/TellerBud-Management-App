@@ -15,7 +15,7 @@ import {
   MobileMoneyTransactionType,
 } from '../../types/mobileMoney';
 import { formatZMW } from '../../utils/formatters';
-import { maskZambianPhone } from '../../utils/customerUtils';
+import { formatZambianPhone } from '../../utils/customerUtils';
 import { VENDOR_LOGO_MAP } from '../walk-in/VendorLogo';
 
 interface BusinessOwnerMobileMoneyTableProps {
@@ -26,6 +26,7 @@ interface BusinessOwnerMobileMoneyTableProps {
   onSort: (field: MobileMoneySortField) => void;
   onRowClick: (transaction: MobileMoneyTransaction) => void;
   highlightedReference?: string;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 // 2. Service Channel Badge (11px, compact, semibold)
@@ -86,7 +87,30 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
   onSort,
   onRowClick,
   highlightedReference,
+  containerRef,
 }) => {
+  const localRef = React.useRef<HTMLDivElement>(null);
+  const activeRef = containerRef || localRef;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const el = activeRef.current;
+    if (!el) return;
+    const pageJump = el.clientHeight * 0.8;
+    if (e.key === 'PageDown') {
+      e.preventDefault();
+      el.scrollBy({ top: pageJump, behavior: 'smooth' });
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      el.scrollBy({ top: -pageJump, behavior: 'smooth' });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      el.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
   const renderSortIcon = (field: MobileMoneySortField) => {
     if (sortField !== field) {
       return <ArrowUpDown size={11} className="text-gray-400 group-hover:text-gray-600 shrink-0" />;
@@ -100,7 +124,7 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <div className="flex-1 min-h-[300px] flex flex-col items-center justify-center p-12 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#0D93AA] mb-4" />
         <p className="text-xs sm:text-sm text-gray-600 font-medium">Loading transactions...</p>
       </div>
@@ -109,7 +133,7 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center space-y-3">
+      <div className="flex-1 min-h-[300px] flex flex-col items-center justify-center p-12 text-center space-y-3">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto text-gray-400">
           <Store size={22} />
         </div>
@@ -124,13 +148,20 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-2xs">
-      <table className="w-full text-left border-collapse">
-        {/* Table Header: Exactly 9 columns in strict order, 11px font size, compact horizontal padding */}
-        <thead>
-          <tr className="bg-gray-50/90 border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none">
+    <div
+      ref={activeRef}
+      tabIndex={0}
+      role="region"
+      aria-label="Mobile Money Transactions List"
+      onKeyDown={handleKeyDown}
+      className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA]"
+    >
+      <table className="w-full text-left border-collapse min-w-[920px]">
+        {/* Table Header: Exactly 9 columns in strict order, 11px font size, sticky top-0, opaque snow-white/light-grey background */}
+        <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
+          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none bg-[#F9FAFB]">
             {/* 1. Ref/Date */}
-            <th scope="col" className="py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[125px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[125px]">
               <button
                 type="button"
                 id="btn-sort-ref"
@@ -143,32 +174,32 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
             </th>
 
             {/* 2. Service Channel */}
-            <th scope="col" className="py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[95px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[95px]">
               Service Channel
             </th>
 
             {/* 3. Transaction Type */}
-            <th scope="col" className="py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[115px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[115px]">
               Transaction Type
             </th>
 
             {/* 4. Cust/TB ID */}
-            <th scope="col" className="py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[130px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[125px]">
               Cust/TB ID
             </th>
 
             {/* 5. Customer # */}
-            <th scope="col" className="py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[110px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[140px]">
               Customer #
             </th>
 
             {/* 6. Vendor (Narrow, Logo only, centered) */}
-            <th scope="col" className="py-2.5 px-1.5 sm:px-2 whitespace-nowrap text-center w-[54px] min-w-[50px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-1.5 sm:px-2 whitespace-nowrap text-center w-[54px] min-w-[50px]">
               Vendor
             </th>
 
             {/* 7. Amount */}
-            <th scope="col" className="py-2.5 px-2.5 sm:px-3 whitespace-nowrap text-right min-w-[105px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap text-right min-w-[105px]">
               <button
                 type="button"
                 id="btn-sort-amount"
@@ -181,7 +212,7 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
             </th>
 
             {/* 8. Commission */}
-            <th scope="col" className="py-2.5 px-2 sm:px-2.5 whitespace-nowrap text-right min-w-[95px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap text-right min-w-[95px]">
               <div className="inline-flex items-center gap-1 justify-end ml-auto">
                 <span>Commission</span>
                 <div className="relative group/help inline-flex items-center">
@@ -197,7 +228,7 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
             </th>
 
             {/* 9. Balance */}
-            <th scope="col" className="py-2.5 pl-2.5 pr-3 sm:pl-3 sm:pr-4 whitespace-nowrap text-right min-w-[105px]">
+            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 pl-2.5 pr-3 sm:pl-3 sm:pr-4 whitespace-nowrap text-right min-w-[105px]">
               <button
                 type="button"
                 id="btn-sort-balance"
@@ -278,8 +309,8 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
                 </td>
 
                 {/* 5. Customer # */}
-                <td className="py-2.5 sm:py-3 px-2 sm:px-2.5 whitespace-nowrap font-mono text-xs font-medium text-gray-700 leading-tight">
-                  {maskZambianPhone(tx.customerPhone)}
+                <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 whitespace-nowrap font-mono text-xs font-medium text-gray-700 leading-tight">
+                  {formatZambianPhone(tx.customerPhone)}
                 </td>
 
                 {/* 6. Vendor: Only official logo (28-32px), centered, scaled without stretch/crop, tooltip on hover */}

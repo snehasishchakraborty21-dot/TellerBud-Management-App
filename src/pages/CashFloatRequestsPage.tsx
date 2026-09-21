@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   CashFloatRequest,
   CashFloatFilters,
   CashFloatStatus,
-  CashFloatRequestType,
   CashFloatStatusSummary,
   CashFloatSortField,
   CashFloatSortDirection,
 } from '../types/admin';
 import { adminService } from '../services/mockAdminService';
 import { CashFloatStatusStrip } from '../components/cash-float/CashFloatStatusStrip';
-import { CashFloatFilterToolbar } from '../components/cash-float/CashFloatFilterToolbar';
+import { CashFloatFilterBar } from '../components/cash-float/CashFloatFilterBar';
 import { CashFloatTable } from '../components/cash-float/CashFloatTable';
 import { CashFloatPagination } from '../components/cash-float/CashFloatPagination';
 import { CashFloatSummaryModal } from '../components/cash-float/CashFloatSummaryModal';
+import { exportCashFloatRequestsToExcel } from '../utils/cashFloatExport';
 import { useAuth } from '../context/AuthContext';
 
 const INITIAL_FILTERS: CashFloatFilters = {
@@ -28,6 +28,7 @@ const INITIAL_FILTERS: CashFloatFilters = {
 export const CashFloatRequestsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Primary State
   const [allRequests, setAllRequests] = useState<CashFloatRequest[]>([]);
@@ -41,21 +42,30 @@ export const CashFloatRequestsPage: React.FC = () => {
     cancelled: 1,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // Filters State
   const [filters, setFilters] = useState<CashFloatFilters>(() => {
     const statusParam = searchParams.get('status') as CashFloatStatus | null;
-    const searchParam = searchParams.get('search') || '';
-    const typeParam = searchParams.get('type') as CashFloatRequestType | null;
     const fromDateParam = searchParams.get('from') || '';
     const toDateParam = searchParams.get('to') || '';
 
     return {
-      search: searchParam,
-      status: statusParam && ['Pending Review', 'Approved', 'Processing', 'Fulfilled', 'Rejected', 'Cancelled'].includes(statusParam)
-        ? statusParam
-        : 'ALL',
-      requestType: typeParam && ['Cash', 'Float'].includes(typeParam) ? typeParam : 'ALL',
+      search: '',
+      status:
+        statusParam &&
+        [
+          'Pending Review',
+          'Approved',
+          'Processing',
+          'Fulfilled',
+          'Rejected',
+          'Cancelled',
+        ].includes(statusParam)
+          ? statusParam
+          : 'ALL',
+      requestType: 'ALL',
       fromDate: fromDateParam,
       toDate: toDateParam,
     };
@@ -75,7 +85,7 @@ export const CashFloatRequestsPage: React.FC = () => {
   // Highlighted reference from URL if present
   const highlightedRef = searchParams.get('reference');
 
-  // Load data from adminService
+  // Load data from adminService with business-level scoping
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -111,9 +121,7 @@ export const CashFloatRequestsPage: React.FC = () => {
   const updateUrlParams = useCallback(
     (newFilters: CashFloatFilters) => {
       const params = new URLSearchParams();
-      if (newFilters.search) params.set('search', newFilters.search);
       if (newFilters.status !== 'ALL') params.set('status', newFilters.status);
-      if (newFilters.requestType !== 'ALL') params.set('type', newFilters.requestType);
       if (newFilters.fromDate) params.set('from', newFilters.fromDate);
       if (newFilters.toDate) params.set('to', newFilters.toDate);
       if (highlightedRef) params.set('reference', highlightedRef);
@@ -122,36 +130,66 @@ export const CashFloatRequestsPage: React.FC = () => {
     [setSearchParams, highlightedRef]
   );
 
-  // Filter change handlers
-  const handleFilterChange = <K extends keyof CashFloatFilters>(
-    key: K,
-    value: CashFloatFilters[K]
-  ) => {
-    const updated = { ...filters, [key]: value };
+  // Status tab select handler
+  const handleStatusTabSelect = (status: CashFloatStatus | 'ALL') => {
+    const updated: CashFloatFilters = { ...filters, status };
     setFilters(updated);
     setCurrentPage(1);
     updateUrlParams(updated);
   };
 
-  const handleStatusTabSelect = (status: CashFloatStatus | 'ALL') => {
-    handleFilterChange('status', status);
-  };
-
-  const handleClearFilters = () => {
-    setFilters(INITIAL_FILTERS);
+  // Date range change handler
+  const handleDateRangeChange = (from?: string, to?: string) => {
+    const updated: CashFloatFilters = {
+      ...filters,
+      fromDate: from || '',
+      toDate: to || '',
+    };
+    setFilters(updated);
     setCurrentPage(1);
-    updateUrlParams(INITIAL_FILTERS);
+    updateUrlParams(updated);
   };
 
-  const isFiltered = useMemo(() => {
-    return (
-      filters.search !== '' ||
-      filters.status !== 'ALL' ||
-      filters.requestType !== 'ALL' ||
-      filters.fromDate !== '' ||
-      filters.toDate !== ''
-    );
-  }, [filters]);
+  // Clear date range handler
+  const handleClearDateRange = () => {
+    handleDateRangeChange(undefined, undefined);
+  };
+
+  // Refresh handler
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await loadData();
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 400);
+    }
+  };
+
+  // Export handler
+  const handleExport = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const businessScope =
+        currentUser?.role === 'business_owner' ? currentUser.businessName : undefined;
+      exportCashFloatRequestsToExcel(
+        allRequests,
+        filters.status,
+        filters.fromDate,
+        filters.toDate,
+        businessScope
+      );
+    } catch (err) {
+      console.error('Failed to export Cash/Float requests:', err);
+    } finally {
+      setTimeout(() => {
+        setIsExporting(false);
+      }, 500);
+    }
+  };
 
   // Sorting handler
   const handleSort = (field: CashFloatSortField) => {
@@ -172,45 +210,64 @@ export const CashFloatRequestsPage: React.FC = () => {
   }, [allRequests, currentPage, pageSize]);
 
   return (
-    <div className="space-y-5">
-      {/* Status Summary Tabs */}
-      <CashFloatStatusStrip
-        activeStatus={filters.status}
-        onSelectStatus={handleStatusTabSelect}
-        summary={summary}
-      />
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-4">
+      {/* 1. Status Summary Tabs */}
+      <div className="shrink-0">
+        <CashFloatStatusStrip
+          activeStatus={filters.status}
+          onSelectStatus={handleStatusTabSelect}
+          summary={summary}
+        />
+      </div>
 
-      {/* Filter Toolbar */}
-      <CashFloatFilterToolbar
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-        isFiltered={isFiltered}
-      />
+      {/* 2. Filter Bar: From Date, To Date, Export, Clear Date Range, Refresh */}
+      <div className="shrink-0">
+        <CashFloatFilterBar
+          dateFrom={filters.fromDate}
+          dateTo={filters.toDate}
+          onDateRangeChange={handleDateRangeChange}
+          onExport={handleExport}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing || isLoading}
+          isExporting={isExporting}
+        />
+      </div>
 
-      {/* Main Table */}
-      <CashFloatTable
-        requests={paginatedRequests}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        onView={(req) => setSelectedRequest(req)}
-        highlightedReference={highlightedRef}
-        showBusinessColumn={currentUser?.role !== 'business_owner'}
-      />
+      {/* 3. Table Card: Flexible container with Sticky Header, Scrollable Rows, and Fixed Pagination */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+        {/* Scrollable Request Listing Table Container */}
+        <div
+          ref={tableContainerRef}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-auto relative"
+        >
+          <CashFloatTable
+            requests={paginatedRequests}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            onView={(req) => setSelectedRequest(req)}
+            highlightedReference={highlightedRef}
+            isLoading={isLoading}
+            isFilteredByDate={Boolean(filters.fromDate || filters.toDate)}
+            onClearDateRange={handleClearDateRange}
+          />
+        </div>
 
-      {/* Pagination Bar */}
-      <CashFloatPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={allRequests.length}
-        pageSize={pageSize}
-        onPageChange={(page) => setCurrentPage(page)}
-        onPageSizeChange={(size) => {
-          setPageSize(size);
-          setCurrentPage(1);
-        }}
-      />
+        {/* 4. Fixed Pagination Area at Bottom */}
+        <div className="shrink-0 border-t border-gray-100 bg-white">
+          <CashFloatPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={allRequests.length}
+            pageSize={pageSize}
+            onPageChange={(page) => setCurrentPage(page)}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      </div>
 
       {/* Summary / Detail Modal */}
       <CashFloatSummaryModal

@@ -27,9 +27,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
     // Redirect to user's assigned dashboard
     const fallbackPath =
-      currentUser.role === 'business_owner'
-        ? '/business-owner/dashboard'
-        : '/super-admin/dashboard';
+      currentUser.role === 'super_admin'
+        ? '/super-admin/dashboard'
+        : '/business-owner/dashboard';
     return <Navigate to={fallbackPath} replace />;
   }
 

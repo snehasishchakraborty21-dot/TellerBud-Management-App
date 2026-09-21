@@ -114,7 +114,12 @@ export const TransactionProviderLogo: React.FC<TransactionProviderLogoProps> = (
   };
 
   return (
-    <div className={`inline-flex items-center gap-2 ${className}`}>
+    <div
+      className={`inline-flex items-center ${showName ? 'gap-2' : ''} ${className}`}
+      role="img"
+      aria-label={provider}
+      title={provider}
+    >
       {renderLogo()}
       {showName && (
         <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">

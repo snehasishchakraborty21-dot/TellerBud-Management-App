@@ -30,6 +30,9 @@ import {
   Compass,
   Bell,
   User,
+  Scale,
+  Smartphone,
+  MessageSquareText,
 } from 'lucide-react';
 import React from 'react';
 import { UserRole } from '../types/auth';
@@ -221,6 +224,12 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/super-admin/configuration/settings',
         icon: Settings,
       },
+      {
+        id: 'device-allocation',
+        label: 'Device Allocation',
+        path: '/super-admin/configuration/devices',
+        icon: Smartphone,
+      },
     ],
   },
 ];
@@ -271,6 +280,12 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/business-owner/mobile-money-transactions',
         icon: ArrowLeftRight,
       },
+      {
+        id: 'all-transactions',
+        label: 'All Transactions',
+        path: '/business-owner/transactions/all',
+        icon: Receipt,
+      },
     ],
   },
   {
@@ -298,6 +313,42 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
     ],
   },
   {
+    id: 'organization-management',
+    title: 'Organization Management',
+    items: [
+      {
+        id: 'stores-booths',
+        label: 'Stores & Booths',
+        path: '/business-owner/organization/stores',
+        icon: Store,
+      },
+      {
+        id: 'users-roles',
+        label: 'Users & Roles',
+        path: '/business-owner/organization/users',
+        icon: UserCog,
+      },
+      {
+        id: 'balance-adjustments',
+        label: 'Balance Adjustments',
+        path: '/business-owner/organization/balance-adjustments',
+        icon: Scale,
+      },
+      {
+        id: 'device-management',
+        label: 'Device Management',
+        path: '/business-owner/organization/devices',
+        icon: Smartphone,
+      },
+      {
+        id: 'organization-audit-trail',
+        label: 'Organization Audit Trail',
+        path: '/business-owner/organization/audit-trail',
+        icon: History,
+      },
+    ],
+  },
+  {
     id: 'wallets-transactions',
     title: 'Wallets & Transactions',
     items: [
@@ -312,12 +363,6 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
         label: 'Wallet Ledger',
         path: '/business-owner/wallets/ledger',
         icon: BookOpen,
-      },
-      {
-        id: 'all-transactions',
-        label: 'All Transactions',
-        path: '/business-owner/transactions/all',
-        icon: Receipt,
       },
       {
         id: 'charges-commissions',
@@ -337,6 +382,12 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/business-owner/communication/notifications',
         icon: Bell,
       },
+      {
+        id: 'chat-report',
+        label: 'Chat Report',
+        path: '/business-owner/communication/chat-report',
+        icon: MessageSquareText,
+      },
     ],
   },
 ];
@@ -344,6 +395,24 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
 export function getNavigationConfigForRole(role?: UserRole | null): NavGroup[] {
   if (role === 'business_owner') {
     return BUSINESS_OWNER_NAVIGATION_CONFIG;
+  }
+  if (role === 'business_admin') {
+    // Business Admin cannot perform balance adjustments and chat-report is restricted to Business Owners
+    return BUSINESS_OWNER_NAVIGATION_CONFIG.map((group) => {
+      if (group.id === 'organization-management') {
+        return {
+          ...group,
+          items: group.items.filter((item) => item.id !== 'balance-adjustments'),
+        };
+      }
+      if (group.id === 'communication') {
+        return {
+          ...group,
+          items: group.items.filter((item) => item.id !== 'chat-report'),
+        };
+      }
+      return group;
+    });
   }
   return SUPER_ADMIN_NAVIGATION_CONFIG;
 }

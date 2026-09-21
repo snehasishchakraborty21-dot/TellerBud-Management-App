@@ -8,6 +8,8 @@ interface MobileMoneyPaginationProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  className?: string;
+  hideBorder?: boolean;
 }
 
 export const MobileMoneyPagination: React.FC<MobileMoneyPaginationProps> = ({
@@ -17,6 +19,8 @@ export const MobileMoneyPagination: React.FC<MobileMoneyPaginationProps> = ({
   pageSize,
   onPageChange,
   onPageSizeChange,
+  className = '',
+  hideBorder = false,
 }) => {
   if (totalItems === 0) return null;
 
@@ -24,7 +28,11 @@ export const MobileMoneyPagination: React.FC<MobileMoneyPaginationProps> = ({
   const endIdx = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-gray-100 text-xs text-gray-600">
+    <div
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 ${
+        hideBorder ? '' : 'pt-3 border-t border-gray-100'
+      } ${className}`}
+    >
       {/* Items count & page size selector */}
       <div className="flex items-center gap-3">
         <span>

@@ -238,8 +238,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   (location.pathname.includes('/wallets/add-funds') ||
                    location.pathname.includes('/wallets/funding'))) ||
                 (item.id === 'business-profile' &&
-                  (location.pathname === '/business-owner/business-profile' ||
-                   location.pathname === '/business-owner/people/business-profile')) ||
+                  location.pathname.includes('/business-profile')) ||
                 ((item.id === 'agent-cash-float-requests' || item.id === 'cash-float-requests') &&
                   location.pathname.includes('/cash-float-requests')) ||
                 (item.id === 'wallet-ledger' &&

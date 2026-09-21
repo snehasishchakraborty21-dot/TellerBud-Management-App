@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
+import { toDisplayDate } from '../utils/dateUtils';
 import { adminService } from '../services/mockAdminService';
 import {
   AttendanceRecord,
@@ -24,6 +26,7 @@ import { ChevronLeft, ChevronRight, CalendarCheck, FileCheck2 } from 'lucide-rea
 export const AttendanceEndOfDayPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { selectedDate } = useBusinessOwnerDate();
 
   // Business Owner Scoping Rule
   const businessIdScope = currentUser?.businessId || 'BIZ-LUS-001';
@@ -78,6 +81,13 @@ export const AttendanceEndOfDayPage: React.FC = () => {
   const [attendancePageSize, setAttendancePageSize] = useState<number>(10);
   const [selectedAttendance, setSelectedAttendance] = useState<AttendanceRecord | null>(null);
   const [isAttendanceSummaryOpen, setIsAttendanceSummaryOpen] = useState<boolean>(false);
+
+  // Synchronize date filters when header selectedDate changes
+  useEffect(() => {
+    const displayDate = toDisplayDate(selectedDate);
+    setAttendanceFilters((prev) => ({ ...prev, date: displayDate }));
+    setEodFilters((prev) => ({ ...prev, businessDate: displayDate }));
+  }, [selectedDate]);
 
   // Load Attendance Data
   const loadAttendance = async () => {

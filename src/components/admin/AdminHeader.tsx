@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Menu,
   Bell,
   Search,
   X,
+  Building2,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -15,7 +17,15 @@ import {
   BUSINESS_OWNER_NAVIGATION_CONFIG,
 } from '../../config/navigation';
 import { MobileMoneyDatePicker } from '../mobile-money/MobileMoneyDatePicker';
-import { sanitizeDateParam } from '../../utils/dateUtils';
+import { BusinessOwnerDatePicker } from './BusinessOwnerDatePicker';
+import {
+  sanitizeDateParam,
+  getZambiaTodayString,
+  formatHeaderDate,
+  isBusinessOwnerDatePage,
+} from '../../utils/dateUtils';
+import { adminService } from '../../services/mockAdminService';
+import { BusinessProfile } from '../../types/businessProfile';
 
 interface AdminHeaderProps {
   pageTitle: string;
@@ -41,6 +51,47 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useAuth();
+  const isBusinessOwner = currentUser?.role === 'business_owner';
+
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (!isBusinessOwner) return;
+    const businessId = currentUser?.businessId || 'BIZ-LUS-001';
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const p = await adminService.getBusinessProfile(businessId);
+        if (isMounted && p) {
+          setBusinessProfile(p);
+          setLogoLoadFailed(false);
+        }
+      } catch (e) {
+        console.error('Failed to load business profile for header:', e);
+      }
+    };
+
+    loadProfile();
+    const unsubscribe = adminService.subscribe(loadProfile);
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [isBusinessOwner, currentUser?.businessId]);
+
+  const businessName =
+    businessProfile?.businessName ||
+    currentUser?.businessName ||
+    'Lusaka Central Express Agency';
+
+  const ownerName =
+    currentUser?.fullName ||
+    businessProfile?.ownerName ||
+    'Chileshe Mwamba';
+
+  const logoUrl = businessProfile?.logoUrl;
 
   const isMobileMoneyPage =
     location.pathname.includes('/mobile-money-transactions') ||
@@ -125,140 +176,243 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </h1>
         </div>
 
-        {/* Top-Centre: Compact Date Selector strictly on Mobile Money Transactions & Walk-In pages */}
-        {isMobileMoneyPage && (
-          <div className="flex items-center justify-center flex-1 px-2 sm:px-4 text-center">
+        {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, or MobileMoneyDatePicker on admin mobile-money pages) */}
+        <div className="flex items-center justify-center flex-1 px-2 sm:px-4 text-center min-w-0">
+          {isBusinessOwner ? (
+            isBusinessOwnerDatePage(location.pathname) ? (
+              <div className="hidden md:inline-flex">
+                <BusinessOwnerDatePicker />
+              </div>
+            ) : null
+          ) : isMobileMoneyPage ? (
             <MobileMoneyDatePicker
               selectedDate={validDate}
               onDateChange={handleDateChange}
             />
-          </div>
-        )}
+          ) : null}
+        </div>
 
-        {/* Right Side: Global Search, Notifications, Profile */}
-        <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${!isMobileMoneyPage ? 'ml-auto' : ''}`}>
-          {/* Global Search Pill Input */}
-          <div
-            className={`relative hidden md:block transition-all duration-150 ${
-              isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
-            }`}
-          >
-            <Search
-              size={15}
-              className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onFocus={() => setIsSearchDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-              placeholder="Search operations..."
-              className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
-            />
-            {searchQuery && (
+        {/* Right Side: Identity, Notifications, Search */}
+        {isBusinessOwner ? (
+          /* Business Owner Portal Header (No Global Search, Bell on left of identity with divider, Business Name & Owner Name, Business Logo) */
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
+            {/* Notifications Trigger */}
+            <div className="relative">
+              <button
+                id="header-notifications-bell"
+                onClick={() => {
+                  setIsNotificationsOpen((prev) => !prev);
+                  setIsProfileOpen(false);
+                }}
+                className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] cursor-pointer"
+                aria-label={`Notifications, ${unreadNotificationsCount} unread`}
+                aria-expanded={isNotificationsOpen}
+              >
+                <Bell size={20} />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm leading-none">
+                    {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+
+              <NotificationPanel
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                notifications={notifications}
+                onMarkAsRead={onMarkNotificationRead}
+                onMarkAllAsRead={onMarkAllNotificationsRead}
+              />
+            </div>
+
+            {/* Subtle Vertical Divider between notifications and business identity */}
+            <div className="h-7 w-px bg-gray-200 mx-0.5 sm:mx-1 shrink-0" aria-hidden="true" />
+
+            {/* Business Identity Area (240–300px, Right-aligned before Logo) */}
+            <div className="relative flex items-center">
+              <button
+                ref={accountTriggerRef}
+                id="header-business-identity-trigger"
+                onClick={() => {
+                  setIsProfileOpen((prev) => !prev);
+                  setIsNotificationsOpen(false);
+                }}
+                className="flex items-center gap-2.5 sm:gap-3 p-1 rounded-xl text-right cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] hover:bg-gray-50/80 transition-all w-auto sm:w-[240px] md:w-[270px] lg:w-[290px] max-w-[300px]"
+                aria-expanded={isProfileOpen}
+                aria-haspopup="true"
+                aria-label={`Business profile for ${businessName}, Owner ${ownerName}`}
+              >
+                {/* Text Area: Business Name (bold primary) & Owner Name (secondary) */}
+                <div className="flex-1 min-w-0 text-right">
+                  <div
+                    className="text-xs sm:text-sm font-bold text-[#102025] leading-snug truncate"
+                    title={businessName}
+                  >
+                    {businessName}
+                  </div>
+                  <div
+                    className="text-[11px] sm:text-xs text-gray-500 font-normal leading-tight mt-0.5 truncate"
+                    title={ownerName}
+                  >
+                    {ownerName}
+                  </div>
+                </div>
+
+                {/* Business Logo Container: approximately 38–44px, object-fit: contain */}
+                <div className="w-10 h-10 rounded-lg border border-gray-200/90 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs group-hover:border-[#0D93AA]/40 transition-colors">
+                  {logoUrl && !logoLoadFailed ? (
+                    <img
+                      src={logoUrl}
+                      alt={`${businessName} logo`}
+                      className="w-full h-full object-contain"
+                      referrerPolicy="no-referrer"
+                      onError={() => setLogoLoadFailed(true)}
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-full rounded bg-gray-100 text-gray-400 flex items-center justify-center"
+                      title={`${businessName} placeholder logo`}
+                    >
+                      <Building2 className="w-5 h-5 text-gray-500" aria-hidden="true" />
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              <ProfileDropdown
+                isOpen={isProfileOpen}
+                onClose={() => setIsProfileOpen(false)}
+                onSelectAction={handleProfileDropdownAction}
+                triggerRef={accountTriggerRef}
+              />
+            </div>
+          </div>
+        ) : (
+          /* TellerBud Admin Header (Retaining Global Search, Notifications, Admin Profile) */
+          <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${!isMobileMoneyPage ? 'ml-auto' : ''}`}>
+            {/* Global Search Pill Input */}
+            <div
+              className={`relative hidden md:block transition-all duration-150 ${
+                isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
+              }`}
+            >
+              <Search
+                size={15}
+                className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => setIsSearchDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
+                placeholder="Search operations..."
+                className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setIsSearchDropdownOpen(false);
+                    if (onGlobalSearch) onGlobalSearch('');
+                  }}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+
+              {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((res) => (
+                      <button
+                        key={res.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate(res.path);
+                          setIsSearchDropdownOpen(false);
+                          setSearchQuery('');
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                      >
+                        <span className="font-semibold text-gray-900">{res.label}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">{res.groupTitle}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3.5 py-2.5 text-xs text-gray-500 text-center">
+                      No matching sections found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Notifications Trigger */}
+            <div className="relative">
               <button
                 onClick={() => {
-                  setSearchQuery('');
-                  setIsSearchDropdownOpen(false);
-                  if (onGlobalSearch) onGlobalSearch('');
+                  setIsNotificationsOpen((prev) => !prev);
+                  setIsProfileOpen(false);
                 }}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer"
+                aria-label={`Notifications, ${unreadNotificationsCount} unread`}
+                aria-expanded={isNotificationsOpen}
               >
-                <X size={14} />
-              </button>
-            )}
-
-            {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
-                {searchResults.length > 0 ? (
-                  searchResults.map((res) => (
-                    <button
-                      key={res.id}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        navigate(res.path);
-                        setIsSearchDropdownOpen(false);
-                        setSearchQuery('');
-                      }}
-                      className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center justify-between text-xs transition-colors cursor-pointer"
-                    >
-                      <span className="font-semibold text-gray-900">{res.label}</span>
-                      <span className="text-[10px] text-gray-400 font-medium">{res.groupTitle}</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3.5 py-2.5 text-xs text-gray-500 text-center">
-                    No matching sections found
-                  </div>
+                <Bell size={20} />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm leading-none">
+                    {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                  </span>
                 )}
-              </div>
-            )}
-          </div>
+              </button>
 
-          {/* Notifications Trigger */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setIsNotificationsOpen((prev) => !prev);
-                setIsProfileOpen(false);
-              }}
-              className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer"
-              aria-label="Notifications"
-              aria-expanded={isNotificationsOpen}
-            >
-              <Bell size={20} />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-600 rounded-full flex items-center justify-center border-2 border-white shadow-sm leading-none">
-                  {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
-                </span>
-              )}
-            </button>
+              <NotificationPanel
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                notifications={notifications}
+                onMarkAsRead={onMarkNotificationRead}
+                onMarkAllAsRead={onMarkAllNotificationsRead}
+              />
+            </div>
 
-            <NotificationPanel
-              isOpen={isNotificationsOpen}
-              onClose={() => setIsNotificationsOpen(false)}
-              notifications={notifications}
-              onMarkAsRead={onMarkNotificationRead}
-              onMarkAllAsRead={onMarkAllNotificationsRead}
-            />
-          </div>
-
-          {/* User Profile Area with Left Divider */}
-          <div className="relative flex items-center border-l pl-3 sm:pl-6 border-gray-200">
-            <button
-              ref={accountTriggerRef}
-              onClick={() => {
-                setIsProfileOpen((prev) => !prev);
-                setIsNotificationsOpen(false);
-              }}
-              className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] rounded-xl p-1 cursor-pointer transition-all"
-              aria-expanded={isProfileOpen}
-              aria-haspopup="true"
-              aria-label="User account menu"
-            >
-              <div className="text-right hidden sm:block">
-                <div className="text-sm font-bold text-[#102025] leading-none">
-                  {currentUser?.fullName || 'Sililo Lubinda'}
+            {/* User Profile Area with Left Divider */}
+            <div className="relative flex items-center border-l pl-3 sm:pl-6 border-gray-200">
+              <button
+                ref={accountTriggerRef}
+                onClick={() => {
+                  setIsProfileOpen((prev) => !prev);
+                  setIsNotificationsOpen(false);
+                }}
+                className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] rounded-xl p-1 cursor-pointer transition-all"
+                aria-expanded={isProfileOpen}
+                aria-haspopup="true"
+                aria-label="User account menu"
+              >
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-bold text-[#102025] leading-none">
+                    {currentUser?.fullName || 'Sililo Lubinda'}
+                  </div>
+                  <div className="text-[10px] text-[#0D93AA] font-semibold mt-1 leading-none flex items-center justify-end gap-1">
+                    <span>{currentUser?.roleLabel || 'TellerBud Admin'}</span>
+                  </div>
                 </div>
-                <div className="text-[10px] text-[#0D93AA] font-semibold mt-1 leading-none flex items-center justify-end gap-1">
-                  <span>{currentUser?.roleLabel || (currentUser?.role === 'super_admin' ? 'TellerBud Admin' : 'Business Owner')}</span>
+                <div className="w-9 h-9 rounded-full bg-[#0D93AA]/10 border border-[#0D93AA]/20 text-[#0D93AA] font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:bg-[#0D93AA]/20 transition-colors">
+                  {currentUser?.initials || 'SL'}
                 </div>
-              </div>
-              <div className="w-9 h-9 rounded-full bg-[#0D93AA]/10 border border-[#0D93AA]/20 text-[#0D93AA] font-bold flex items-center justify-center text-xs flex-shrink-0 group-hover:bg-[#0D93AA]/20 transition-colors">
-                {currentUser?.initials || 'SL'}
-              </div>
-            </button>
+              </button>
 
-            <ProfileDropdown
-              isOpen={isProfileOpen}
-              onClose={() => setIsProfileOpen(false)}
-              onSelectAction={handleProfileDropdownAction}
-              triggerRef={accountTriggerRef}
-            />
+              <ProfileDropdown
+                isOpen={isProfileOpen}
+                onClose={() => setIsProfileOpen(false)}
+                onSelectAction={handleProfileDropdownAction}
+                triggerRef={accountTriggerRef}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Action modal feedback (client review) */}

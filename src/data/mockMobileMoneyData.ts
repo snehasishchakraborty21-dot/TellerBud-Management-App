@@ -1198,18 +1198,22 @@ export function queryMobileMoneyTransactions(
     );
   }
 
-  // 2. Strict Date isolation: filter exclusively by selectedDate
-  if (filters.selectedDate) {
-    result = result.filter((t) => t.postedAt.startsWith(filters.selectedDate!));
-  } else if (filters.dateFrom || filters.dateTo) {
+  // 2. Strict Date isolation: filter by dateFrom/dateTo (Africa/Lusaka CAT) or selectedDate
+  if (filters.dateFrom || filters.dateTo) {
     if (filters.dateFrom) {
-      const from = new Date(filters.dateFrom).getTime();
-      result = result.filter((t) => new Date(t.postedAt).getTime() >= from);
+      result = result.filter((t) => {
+        const txDate = getLusakaDateString(t.postedAt);
+        return txDate >= filters.dateFrom!;
+      });
     }
     if (filters.dateTo) {
-      const to = new Date(filters.dateTo).getTime() + 86400000;
-      result = result.filter((t) => new Date(t.postedAt).getTime() <= to);
+      result = result.filter((t) => {
+        const txDate = getLusakaDateString(t.postedAt);
+        return txDate <= filters.dateTo!;
+      });
     }
+  } else if (filters.selectedDate) {
+    result = result.filter((t) => t.postedAt.startsWith(filters.selectedDate!));
   }
 
   // 3. Apply business filter (Admin portal dropdown)
