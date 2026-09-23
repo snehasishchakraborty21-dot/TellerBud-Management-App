@@ -39,6 +39,9 @@ export function formatZMW(amount: number): string {
   return `ZMW ${formattedNumber}`;
 }
 
+export { formatZmwListingAmount } from '../utils/formatters';
+
+
 export const SUPER_ADMIN_PROFILE = {
   id: 'USR-ADM-001',
   name: 'Sililo Lubinda',

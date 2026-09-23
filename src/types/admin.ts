@@ -89,8 +89,7 @@ export type FinancialActivityStatus =
   | 'Processing'
   | 'Failed'
   | 'Cancelled'
-  | 'Expired'
-  | 'Reversed';
+  | 'Expired';
 
 export interface FinancialActivityRecord {
   id: string;
@@ -537,8 +536,7 @@ export type WalletLedgerTransactionType =
   | 'Business Wallet Funding'
   | 'TellerBud Charge'
   | 'Approved Adjustment'
-  | 'Refund'
-  | 'Reversal';
+  | 'Refund';
 
 export interface GlobalWalletLedgerRecord {
   id: string;
@@ -561,7 +559,7 @@ export interface GlobalWalletLedgerRecord {
   credit: number | null;
   balanceBefore: number;
   balanceAfter: number;
-  status: 'Completed' | 'Settled' | 'Reversed' | 'Posted' | 'Approved' | 'Pending' | 'Processing';
+  status: 'Completed' | 'Settled' | 'Posted' | 'Approved' | 'Pending' | 'Processing';
   description: string;
   relatedReference?: string;
   relatedPath?: string;
@@ -615,7 +613,7 @@ export interface GlobalWalletActivity {
   credit: number | null;
   balanceBefore: number;
   balanceAfter: number;
-  status: 'Completed' | 'Pending' | 'Processing' | 'Reversed';
+  status: 'Completed' | 'Pending' | 'Processing';
   externalProvider?: string;
   providerReference?: string;
   mobileMoneyNumber?: string;
@@ -634,8 +632,7 @@ export type BusinessTransactionCategory =
   | 'Wallet Funding'
   | 'Customer Withdrawal'
   | 'Business Wallet Transaction'
-  | 'Charge or Commission'
-  | 'Refund or Reversal';
+  | 'Charge or Commission';
 
 export type BusinessTransactionStatus =
   | 'Completed'
@@ -650,8 +647,7 @@ export type BusinessTransactionStatus =
   | 'Ready for Pickup'
   | 'Failed'
   | 'Cancelled'
-  | 'Rejected'
-  | 'Reversed';
+  | 'Rejected';
 
 export type GlobalWalletFeeType = 'Reservation Fee' | 'Transaction Fee' | 'Platform Fee';
 
@@ -722,7 +718,6 @@ export interface BusinessTransactionStatusCounts {
   pending: number;
   failed: number;
   cancelled: number;
-  reversed: number;
 }
 
 export * from './mobileMoney';

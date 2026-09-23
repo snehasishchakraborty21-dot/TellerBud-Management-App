@@ -21,7 +21,7 @@ import {
 import { PickupRequest } from '../types/admin';
 import { adminService } from '../services/mockAdminService';
 import { useAuth } from '../context/AuthContext';
-import { formatZMW } from '../config/appConfig';
+import { formatZMW, formatZmwListingAmount } from '../config/appConfig';
 import { StatusChip } from '../components/shared/StatusChip';
 import { LiveRequestDetailsDrawer } from '../components/admin/LiveRequestDetailsDrawer';
 
@@ -470,112 +470,77 @@ export const LiveOperationsPage: React.FC = () => {
           tabIndex={0}
           role="region"
           aria-label="Live Operations Customer Requests List"
-          className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto live-operations-table-scroll focus:outline-none [scrollbar-gutter:stable]"
+          className="flex-1 min-h-0 w-full live-requests-table-scroll live-operations-table-scroll focus:outline-none"
         >
-          <table className="w-full text-left text-xs border-collapse table-fixed min-w-[1050px]">
-            <colgroup>
-              <col style={{ width: '11.29%', minWidth: '125px' }} />
-              <col style={{ width: '10.22%', minWidth: '115px' }} />
-              <col style={{ width: '10.75%', minWidth: '125px' }} />
-              <col style={{ width: '8.60%', minWidth: '95px' }} />
-              <col style={{ width: '11.29%', minWidth: '135px' }} />
-              <col style={{ width: '13.44%', minWidth: '155px' }} />
-              <col style={{ width: '16.67%', minWidth: '190px' }} />
-              <col style={{ width: '10.75%', minWidth: '130px' }} />
-              <col style={{ width: '6.99%', minWidth: '80px' }} />
-            </colgroup>
-            <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
-              <tr className="border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[11px] leading-[1.2] bg-[#F9FAFB] select-none">
+          <div className="live-requests-table" role="table" aria-label="Customer Requests">
+            {/* Header Row */}
+            <div className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
+              <div
+                role="row"
+                className="live-requests-header border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[11px] leading-[1.2] bg-[#F9FAFB] select-none"
+              >
                 {/* 1. Reference / Created (two lines) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[125px]"
-                >
+                <div role="columnheader" className="reference-cell">
                   <div>REFERENCE /</div>
                   <div>CREATED</div>
-                </th>
+                </div>
 
                 {/* 2. Customer (one line) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[115px]"
-                >
+                <div role="columnheader" className="customer-cell">
                   <span className="whitespace-nowrap">CUSTOMER</span>
-                </th>
+                </div>
 
                 {/* 3. Transaction / Vendor (two lines) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[125px]"
-                >
+                <div role="columnheader" className="transaction-cell">
                   <div>TRANSACTION /</div>
                   <div>VENDOR</div>
-                </th>
+                </div>
 
                 {/* 4. Amount (one line) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-right min-w-[95px]"
-                >
-                  <span className="whitespace-nowrap">AMOUNT</span>
-                </th>
+                <div role="columnheader" className="amount-heading">
+                  <span className="whitespace-nowrap">AMOUNT (ZMW)</span>
+                </div>
 
                 {/* 5. Requested Service Time (two lines) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[135px]"
-                >
+                <div role="columnheader" className="service-time-cell">
                   <div>REQUESTED SERVICE</div>
                   <div>TIME</div>
-                </th>
+                </div>
 
                 {/* 6. Pickup Location (one line) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[155px]"
-                >
+                <div role="columnheader" className="pickup-location-cell">
                   <span className="whitespace-nowrap">PICKUP LOCATION</span>
-                </th>
+                </div>
 
                 {/* 7. Auto-Matched Agent / Business (two lines) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-left min-w-[190px]"
-                >
+                <div role="columnheader" className="agent-business-cell">
                   <div>AUTO-MATCHED AGENT /</div>
                   <div>BUSINESS</div>
-                </th>
+                </div>
 
                 {/* 8. Status (one line) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 text-left min-w-[130px]"
-                >
+                <div role="columnheader" className="status-cell">
                   <span className="whitespace-nowrap">STATUS</span>
-                </th>
+                </div>
 
                 {/* 9. Action (one line) */}
-                <th
-                  scope="col"
-                  className="table-heading sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 text-center min-w-[80px]"
-                >
+                <div role="columnheader" className="action-cell">
                   <span className="whitespace-nowrap">ACTION</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={9} className="py-12 text-center text-gray-500">
+                </div>
+              </div>
+            </div>
+
+            {/* Rows Container */}
+            <div role="rowgroup">
+              {isLoading ? (
+                <div className="py-12 text-center text-gray-500">
                   <div className="inline-flex items-center gap-2 text-xs font-medium">
                     <RefreshCw size={14} className="animate-spin text-[#0D93AA]" />
                     <span>Loading live operations...</span>
                   </div>
-                </td>
-              </tr>
-            ) : paginatedRequests.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="py-14 text-center">
+                </div>
+              ) : paginatedRequests.length === 0 ? (
+                <div className="py-14 text-center">
                   <div className="max-w-md mx-auto space-y-2">
                     <Radio size={22} className="text-gray-400 mx-auto" />
                     <div className="text-xs font-bold text-gray-800">
@@ -599,177 +564,177 @@ export const LiveOperationsPage: React.FC = () => {
                       </button>
                     )}
                   </div>
-                </td>
-              </tr>
-            ) : (
-              paginatedRequests.map((req) => (
-                <tr
-                  key={req.id}
-                  className="hover:bg-gray-50/70 transition-colors"
-                >
-                  {/* 1. REFERENCE / CREATED */}
-                  <td className="py-2.5 px-2 align-middle">
-                    <div className="font-mono font-bold text-gray-900 text-xs truncate" title={req.id}>
-                      {req.id}
-                    </div>
-                    <div className="text-[11px] text-gray-500 font-medium truncate" title={req.createdAt}>
-                      {req.createdAt}
-                    </div>
-                  </td>
-
-                  {/* 2. CUSTOMER */}
-                  <td className="py-2.5 px-2 align-middle">
-                    <div
-                      className="font-semibold text-gray-900 text-xs truncate"
-                      title={req.customerName}
-                    >
-                      {req.customerName}
-                    </div>
-                    <div
-                      className="text-[11px] font-mono text-gray-500 truncate"
-                      title={req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
-                    >
-                      {req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
-                    </div>
-                  </td>
-
-                  {/* 3. TRANSACTION / VENDOR */}
-                  <td className="py-2.5 px-2 align-middle">
-                    <div className="font-semibold text-gray-900 text-xs truncate" title={req.type}>
-                      {req.type}
-                    </div>
-                    <div className="text-[11px] text-gray-600 font-medium truncate" title={req.vendor}>
-                      {req.vendor}
-                    </div>
-                  </td>
-
-                  {/* 4. AMOUNT: ZMW only, bold dark typography, single line */}
-                  <td className="py-2.5 px-2 text-right align-middle whitespace-nowrap">
-                    <div className="font-mono font-bold text-gray-900 text-xs whitespace-nowrap">
-                      {formatZMW(req.amount)}
-                    </div>
-                  </td>
-
-                  {/* 5. REQUESTED SERVICE TIME */}
-                  <td className="py-2.5 px-2 align-middle">
-                    {req.serviceTime === 'Now' || (!req.isScheduled && !req.serviceTime?.includes(':')) ? (
-                      <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 text-xs whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                        Now
-                      </span>
-                    ) : (
-                      <div className="flex items-center gap-1 text-gray-700 text-xs min-w-0" title={req.serviceTime}>
-                        <Clock size={12} className="text-gray-400 shrink-0" />
-                        <span className="font-medium truncate">{req.serviceTime}</span>
+                </div>
+              ) : (
+                paginatedRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    role="row"
+                    className="live-requests-row border-b border-gray-100 hover:bg-gray-50/70 transition-colors"
+                  >
+                    {/* 1. REFERENCE / CREATED */}
+                    <div role="cell" className="reference-cell">
+                      <div className="cell-primary font-mono font-bold text-gray-900 text-xs" title={req.id}>
+                        {req.id}
                       </div>
-                    )}
-                  </td>
-
-                  {/* 6. PICKUP LOCATION: Concise, truncated with tooltip */}
-                  <td className="py-2.5 px-2 align-middle">
-                    <div
-                      className="relative group/loc flex items-center gap-1 text-xs text-gray-700 min-w-0"
-                      title={req.pickupLocation}
-                    >
-                      <MapPin size={12} className="text-gray-400 shrink-0" />
-                      <span className="truncate block flex-1">{req.pickupLocation}</span>
-                      <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/loc:block z-30 pointer-events-none">
-                        <div className="bg-gray-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-md shadow-lg whitespace-nowrap max-w-xs border border-gray-700">
-                          {req.pickupLocation}
-                        </div>
+                      <div className="cell-secondary text-[11px] text-gray-500 font-medium" title={req.createdAt}>
+                        {req.createdAt}
                       </div>
                     </div>
-                  </td>
 
-                  {/* 7. AUTO-MATCHED AGENT / BUSINESS */}
-                  <td className="py-2.5 px-2 align-middle">
-                    {req.agentName ? (
-                      <div className="space-y-0.5 min-w-0">
-                        {/* Line 1: Agent name and ID */}
-                        <div className="flex items-center gap-1 text-xs min-w-0" title={`${req.agentName} (${req.agentId})`}>
-                          <span className="font-semibold text-gray-900 truncate">{req.agentName}</span>
-                          {req.agentId && (
-                            <span className="text-[10px] font-mono text-gray-500 shrink-0 font-medium">
-                              ({req.agentId})
-                            </span>
-                          )}
+                    {/* 2. CUSTOMER */}
+                    <div role="cell" className="customer-cell">
+                      <div
+                        className="cell-primary font-semibold text-gray-900 text-xs"
+                        title={req.customerName}
+                      >
+                        {req.customerName}
+                      </div>
+                      <div
+                        className="cell-secondary text-[11px] font-mono text-gray-500"
+                        title={req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
+                      >
+                        {req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
+                      </div>
+                    </div>
+
+                    {/* 3. TRANSACTION / VENDOR */}
+                    <div role="cell" className="transaction-cell">
+                      <div className="cell-primary font-semibold text-gray-900 text-xs" title={req.type}>
+                        {req.type}
+                      </div>
+                      <div className="cell-secondary text-[11px] text-gray-600 font-medium" title={req.vendor}>
+                        {req.vendor}
+                      </div>
+                    </div>
+
+                    {/* 4. AMOUNT (ZMW) */}
+                    <div role="cell" className="amount-cell">
+                      <div className="font-mono font-bold text-gray-900 text-xs whitespace-nowrap">
+                        {formatZmwListingAmount(req.amount)}
+                      </div>
+                    </div>
+
+                    {/* 5. REQUESTED SERVICE TIME */}
+                    <div role="cell" className="service-time-cell">
+                      {req.serviceTime === 'Now' || (!req.isScheduled && !req.serviceTime?.includes(':')) ? (
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 text-xs whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          Now
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-1 text-gray-700 text-xs min-w-0" title={req.serviceTime}>
+                          <Clock size={12} className="text-gray-400 shrink-0" />
+                          <span className="font-medium truncate">{req.serviceTime}</span>
                         </div>
+                      )}
+                    </div>
 
-                        {/* Line 2: Auto-Matched compact badge */}
-                        <div>
-                          <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-                            Auto-Matched
-                          </span>
-                        </div>
-
-                        {/* Line 3: Business name with tooltip */}
-                        <div
-                          className="relative group/biz text-[11px] text-gray-500 min-w-0"
-                          title={authenticatedBusinessName}
-                        >
-                          <span className="truncate block font-normal">
-                            {authenticatedBusinessName}
-                          </span>
-                          <div className="absolute left-0 bottom-full mb-1 hidden group-hover/biz:block z-30 pointer-events-none">
-                            <div className="bg-gray-900 text-white text-[11px] font-medium py-1 px-2 rounded shadow-md whitespace-nowrap max-w-xs border border-gray-700">
-                              {authenticatedBusinessName}
-                            </div>
+                    {/* 6. PICKUP LOCATION: Concise, truncated with tooltip */}
+                    <div role="cell" className="pickup-location-cell">
+                      <div
+                        className="relative group/loc flex items-center gap-1 text-xs text-gray-700 min-w-0"
+                        title={req.pickupLocation}
+                      >
+                        <MapPin size={12} className="text-gray-400 shrink-0" />
+                        <span className="truncate block flex-1">{req.pickupLocation}</span>
+                        <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/loc:block z-30 pointer-events-none">
+                          <div className="bg-gray-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-md shadow-lg whitespace-nowrap max-w-xs border border-gray-700">
+                            {req.pickupLocation}
                           </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="text-xs text-gray-400 font-medium whitespace-nowrap">
-                        Not yet matched
-                      </div>
-                    )}
-                  </td>
+                    </div>
 
-                  {/* 8. STATUS: Specific text and colour badges (Single line, separated column) */}
-                  <td className="py-2.5 px-2.5 align-middle whitespace-nowrap">
-                    {req.status === 'Finding an Agent' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        Finding an Agent
-                      </span>
-                    ) : req.status === 'Agent Confirmed' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
-                        Agent Confirmed
-                      </span>
-                    ) : req.status === 'Active Service' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
-                        Active Service
-                      </span>
-                    ) : req.status === 'Pending Confirmation' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200 whitespace-nowrap">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
-                        Pending Confirmation
-                      </span>
-                    ) : (
-                      <span className="inline-block whitespace-nowrap">
-                        <StatusChip status={req.status} size="sm" />
-                      </span>
-                    )}
-                  </td>
+                    {/* 7. AUTO-MATCHED AGENT / BUSINESS */}
+                    <div role="cell" className="agent-business-cell">
+                      {req.agentName ? (
+                        <div className="space-y-0.5 min-w-0">
+                          {/* Line 1: Agent name and ID */}
+                          <div className="agent-line flex items-center gap-1 text-xs min-w-0" title={`${req.agentName} (${req.agentId})`}>
+                            <span className="font-semibold text-gray-900 truncate">{req.agentName}</span>
+                            {req.agentId && (
+                              <span className="text-[10px] font-mono text-gray-500 shrink-0 font-medium whitespace-nowrap">
+                                ({req.agentId})
+                              </span>
+                            )}
+                          </div>
 
-                  {/* 9. ACTION: View button only (Single line, fully visible) */}
-                  <td className="py-2.5 px-2 text-center align-middle whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRequest(req)}
-                      className="inline-flex items-center justify-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-cyan-50/80 hover:bg-cyan-100 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                      title="View request details"
-                    >
-                      <Eye size={12} className="shrink-0" />
-                      <span>View</span>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                          {/* Line 2: Auto-Matched compact badge */}
+                          <div>
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
+                              Auto-Matched
+                            </span>
+                          </div>
+
+                          {/* Line 3: Business name with tooltip */}
+                          <div
+                            className="business-line relative group/biz text-[11px] text-gray-500 min-w-0"
+                            title={authenticatedBusinessName}
+                          >
+                            <span className="truncate block font-normal">
+                              {authenticatedBusinessName}
+                            </span>
+                            <div className="absolute left-0 bottom-full mb-1 hidden group-hover/biz:block z-30 pointer-events-none">
+                              <div className="bg-gray-900 text-white text-[11px] font-medium py-1 px-2 rounded shadow-md whitespace-nowrap max-w-xs border border-gray-700">
+                                {authenticatedBusinessName}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400 font-medium whitespace-nowrap">
+                          Not yet matched
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 8. STATUS: Specific text and colour badges (Single line, separated column) */}
+                    <div role="cell" className="status-cell">
+                      {req.status === 'Finding an Agent' ? (
+                        <span className="status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                          Finding an Agent
+                        </span>
+                      ) : req.status === 'Agent Confirmed' ? (
+                        <span className="status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-50 text-cyan-800 border border-cyan-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 shrink-0" />
+                          Agent Confirmed
+                        </span>
+                      ) : req.status === 'Active Service' ? (
+                        <span className="status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
+                          Active Service
+                        </span>
+                      ) : req.status === 'Pending Confirmation' ? (
+                        <span className="status-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
+                          Pending Confirmation
+                        </span>
+                      ) : (
+                        <span className="status-badge inline-block whitespace-nowrap">
+                          <StatusChip status={req.status} size="sm" />
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 9. ACTION: View button only (Single line, fully visible) */}
+                    <div role="cell" className="action-cell">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRequest(req)}
+                        className="view-button inline-flex items-center justify-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-cyan-50/80 hover:bg-cyan-100 border border-cyan-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                        title="View request details"
+                      >
+                        <Eye size={12} className="shrink-0" />
+                        <span>View</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         {/* 4. Fixed Pagination Area at Bottom */}

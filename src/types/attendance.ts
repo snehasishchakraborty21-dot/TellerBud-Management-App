@@ -40,8 +40,9 @@ export interface AttendanceMetrics {
 }
 
 export interface AttendanceFilters {
-  search: string;
-  date: string; // 'dd-mm-yyyy'
+  dateFrom?: string; // 'dd-mm-yyyy'
+  dateTo?: string; // 'dd-mm-yyyy'
+  date?: string; // legacy support e.g. '01-09-2026'
   status: AttendanceStatusType | 'ALL';
   assignment: AssignmentType | 'ALL';
 }
@@ -75,8 +76,9 @@ export interface EndOfDayMetrics {
 }
 
 export interface EndOfDayFilters {
-  search: string;
-  businessDate: string; // 'dd-mm-yyyy'
+  dateFrom?: string; // 'dd-mm-yyyy'
+  dateTo?: string; // 'dd-mm-yyyy'
+  businessDate?: string; // legacy support e.g. '01-09-2026'
   status: EndOfDayStatusType | 'ALL';
   availability: AgentAvailabilityType | 'ALL';
 }

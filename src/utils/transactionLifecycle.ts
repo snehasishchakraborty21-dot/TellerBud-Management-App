@@ -78,11 +78,10 @@ export function buildNormalizedLifecycleTimeline(tx: {
     ];
   }
 
-  // Terminal status (Completed, Failed, Cancelled, Reversed)
+  // Terminal status (Completed, Failed, Cancelled)
   let terminalStatus = 'Transaction Completed';
   if (tx.status === 'Failed') terminalStatus = 'Transaction Failed';
   else if (tx.status === 'Cancelled') terminalStatus = 'Transaction Cancelled';
-  else if (tx.status === 'Reversed') terminalStatus = 'Transaction Reversed';
 
   return [
     {
@@ -177,7 +176,7 @@ export function buildNormalizedWalletImpact(tx: {
     walletBalanceBefore: baseBefore,
     walletBalanceAfter: baseAfter,
     ledgerReference: tx.relatedLedgerEntry || `BWL-${tx.reference.replace(/[^0-9]/g, '').slice(-3).padStart(3, '0') || '001'}`,
-    deductionStatus: tx.status === 'Completed' || tx.status === 'Reversed' ? 'Debited' : 'Pending',
+    deductionStatus: tx.status === 'Completed' ? 'Debited' : 'Pending',
     deductionTimestamp: tx.dateTime,
   };
 }

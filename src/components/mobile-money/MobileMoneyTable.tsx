@@ -13,7 +13,7 @@ import {
   MobileMoneySortDirection,
   ServiceChannel,
 } from '../../types/mobileMoney';
-import { formatZMW } from '../../utils/formatters';
+import { formatZMW, formatZmwListingAmount } from '../../utils/formatters';
 
 interface MobileMoneyTableProps {
   transactions: MobileMoneyTransaction[];
@@ -121,26 +121,26 @@ export const MobileMoneyTable: React.FC<MobileMoneyTableProps> = ({
               Customer
             </th>
 
-            {/* 5. AMOUNT */}
-            <th scope="col" className="py-3.5 px-4 whitespace-nowrap text-right min-w-[130px]">
+            {/* 5. AMOUNT (ZMW) */}
+            <th scope="col" className="py-3.5 px-4 whitespace-nowrap text-left min-w-[130px] amount-heading">
               <button
                 type="button"
                 onClick={() => onSort('amount')}
-                className="flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer ml-auto"
+                className="flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer"
               >
-                <span>Amount</span>
+                <span>Amount (ZMW)</span>
                 {renderSortIcon('amount')}
               </button>
             </th>
 
-            {/* 6. CHARGES */}
-            <th scope="col" className="py-3.5 px-4 whitespace-nowrap text-right min-w-[110px]">
-              Charges
+            {/* 6. CHARGES (ZMW) */}
+            <th scope="col" className="py-3.5 px-4 whitespace-nowrap text-left min-w-[110px] amount-heading">
+              Charges (ZMW)
             </th>
 
-            {/* 7. CUSTOMER TOTAL */}
-            <th scope="col" className="py-3.5 pl-4 pr-6 whitespace-nowrap text-right min-w-[160px]">
-              Customer Total
+            {/* 7. CUSTOMER TOTAL (ZMW) */}
+            <th scope="col" className="py-3.5 pl-4 pr-6 whitespace-nowrap text-left min-w-[160px] amount-heading">
+              Customer Total (ZMW)
             </th>
 
             {/* 8. ACTION (Sticky right, opaque white background, no clipping) */}
@@ -196,23 +196,19 @@ export const MobileMoneyTable: React.FC<MobileMoneyTableProps> = ({
                   </div>
                 </td>
 
-                {/* 5. AMOUNT */}
-                <td className="py-3.5 px-4 whitespace-nowrap text-right font-mono font-bold text-gray-900">
-                  {formatZMW(tx.amount)}
+                {/* 5. AMOUNT (ZMW) */}
+                <td className="py-3.5 px-4 whitespace-nowrap text-left font-mono font-bold text-gray-900 amount-cell">
+                  {formatZmwListingAmount(tx.amount)}
                 </td>
 
-                {/* 6. CHARGES */}
-                <td className="py-3.5 px-4 whitespace-nowrap text-right font-mono text-gray-600">
-                  {tx.reservationCharge > 0 ? (
-                    <span>{formatZMW(tx.reservationCharge)}</span>
-                  ) : (
-                    <span className="text-gray-400">ZMW 0.00</span>
-                  )}
+                {/* 6. CHARGES (ZMW) */}
+                <td className="py-3.5 px-4 whitespace-nowrap text-left font-mono text-gray-600 amount-cell">
+                  {formatZmwListingAmount(tx.reservationCharge || 0)}
                 </td>
 
-                {/* 7. CUSTOMER TOTAL */}
-                <td className="py-3.5 pl-4 pr-6 whitespace-nowrap text-right font-mono font-bold text-[#0D93AA]">
-                  {formatZMW(tx.customerTotal)}
+                {/* 7. CUSTOMER TOTAL (ZMW) */}
+                <td className="py-3.5 pl-4 pr-6 whitespace-nowrap text-left font-mono font-bold text-[#0D93AA] amount-cell">
+                  {formatZmwListingAmount(tx.customerTotal)}
                 </td>
 
                 {/* 8. ACTION (Sticky right, opaque white background, no clipping) */}

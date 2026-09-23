@@ -51,9 +51,9 @@ export function exportMobileMoneyTransactionsToExcel(
       'Cust/TB ID': custTbId,
       'Customer #': maskZambianPhone(tx.customerPhone),
       'Vendor': vendorFullName,
-      'Amount': formatZMW(tx.amount),
+      'Amount (ZMW)': tx.amount,
       'Commission': 'Coming Soon — Phase 2',
-      'Balance': formatZMW(tx.balanceAfter),
+      'Balance (ZMW)': 'Coming Soon',
     };
   });
 

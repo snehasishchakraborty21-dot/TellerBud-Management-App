@@ -53,7 +53,7 @@ export function exportAgentLiquidityRequestsToExcel(
       'Business Agency': req.requestingAgentBusiness,
       'Requested From': req.requestedFrom,
       'Type': req.requestType,
-      'Amount': formatZMW(req.amount),
+      'Amount (ZMW)': req.amount,
       'Offered / Matched Agent': offeredOrMatched,
       'Requested Date & Time': formatWithdrawalDate(req.requestedAt),
       'Status': req.status,

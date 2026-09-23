@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { PickupRequest } from '../types/admin';
 import { adminService } from '../services/mockAdminService';
-import { formatZMW } from '../config/appConfig';
+import { formatZMW, formatZmwListingAmount } from '../config/appConfig';
 import { getCustomerRequestsSummary } from '../data/mockCustomerRequestsData';
 import { LiveRequestDetailsDrawer } from '../components/admin/LiveRequestDetailsDrawer';
 import { CompletedRequestDetailsDrawer } from '../components/admin/CompletedRequestDetailsDrawer';
@@ -589,7 +589,7 @@ export const CustomerRequestsPage: React.FC = () => {
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">REFERENCE / CREATED</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">CUSTOMER</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">TRANSACTION / VENDOR</th>
-                <th className="py-2.5 px-2 font-bold text-right bg-white leading-tight">AMOUNT</th>
+                <th className="py-2.5 px-2 font-bold text-left bg-white leading-tight amount-heading whitespace-nowrap">AMOUNT (ZMW)</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">REQUESTED SERVICE TIME</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">PICKUP LOCATION</th>
                 <th className="py-2.5 px-2 font-bold bg-white leading-tight">MATCHED AGENT / BUSINESS</th>
@@ -661,10 +661,10 @@ export const CustomerRequestsPage: React.FC = () => {
                       <div className="text-[11px] text-gray-600 font-medium truncate">{req.vendor}</div>
                     </td>
 
-                    {/* 4. AMOUNT: ZMW only, bold dark typography */}
-                    <td className="py-2.5 px-2 text-right align-middle overflow-hidden">
+                    {/* 4. AMOUNT (ZMW) */}
+                    <td className="py-2.5 px-2 text-left align-middle overflow-hidden amount-cell">
                       <div className="font-mono font-bold text-gray-900 text-xs whitespace-nowrap">
-                        {formatZMW(req.amount)}
+                        {formatZmwListingAmount(req.amount)}
                       </div>
                     </td>
 

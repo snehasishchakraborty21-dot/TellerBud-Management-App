@@ -14,7 +14,7 @@ import {
   CashFloatSortDirection,
 } from '../../types/admin';
 import { StatusChip } from '../shared/StatusChip';
-import { formatZMW, getWithdrawalDateParts } from '../../utils/formatters';
+import { formatZMW, formatZmwListingAmount, getWithdrawalDateParts } from '../../utils/formatters';
 import { formatZambianPhone } from '../../utils/customerUtils';
 
 interface CashFloatTableProps {
@@ -46,26 +46,26 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
   };
 
   const formatAmount = (amount: number) => {
-    return formatZMW(amount);
+    return formatZmwListingAmount(amount);
   };
 
   const renderSortIcon = (field: CashFloatSortField) => {
     if (sortField !== field) {
       return (
-        <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 opacity-60 ml-1 inline shrink-0" />
+        <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 opacity-60 shrink-0" />
       );
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="w-3.5 h-3.5 text-[#0D93AA] ml-1 inline shrink-0" />
+      <ArrowUp className="w-3.5 h-3.5 text-[#0D93AA] shrink-0" />
     ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-[#0D93AA] ml-1 inline shrink-0" />
+      <ArrowDown className="w-3.5 h-3.5 text-[#0D93AA] shrink-0" />
     );
   };
 
   return (
     <>
       {/* Desktop Table View - table-fixed with revised 100% shared colgroup */}
-      <table className="hidden md:table w-full table-fixed text-left border-collapse min-w-[960px]">
+      <table className="cash-float-table hidden md:table w-full table-fixed text-left border-collapse min-w-[960px]">
         <colgroup>
           <col style={{ width: '10%' }} />
           <col style={{ width: '11%' }} />
@@ -83,7 +83,7 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
             <th
               scope="col"
               style={{ width: '10%' }}
-              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle reference-heading"
             >
               Reference
             </th>
@@ -92,7 +92,7 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
             <th
               scope="col"
               style={{ width: '11%' }}
-              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle agent-heading"
             >
               Agent
             </th>
@@ -101,7 +101,7 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
             <th
               scope="col"
               style={{ width: '17%' }}
-              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle agent-number-heading"
             >
               Agent Number
             </th>
@@ -110,30 +110,30 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
             <th
               scope="col"
               style={{ width: '13%' }}
-              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle agent-id-heading"
             >
               Agent ID
             </th>
 
-            {/* 5. Type (9%, Centred) */}
+            {/* 5. Type (9%, Left) */}
             <th
               scope="col"
               style={{ width: '9%' }}
-              className="h-[44px] px-3 py-2.5 text-center whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle type-heading"
             >
               Type
             </th>
 
-            {/* 6. Amount (10%, Right, Sortable) */}
+            {/* 6. Amount (ZMW) (10%, Left, Sortable) */}
             <th
               scope="col"
               style={{ width: '10%' }}
-              className="h-[44px] px-3 py-2.5 text-right cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle amount-heading"
               onClick={() => onSort('amount')}
-              title="Sort by Amount"
+              title="Sort by Amount (ZMW)"
             >
-              <div className="inline-flex items-center justify-end gap-1">
-                <span>Amount</span>
+              <div className="sortable-heading">
+                <span>Amount (ZMW)</span>
                 {renderSortIcon('amount')}
               </div>
             </th>
@@ -142,35 +142,35 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
             <th
               scope="col"
               style={{ width: '13%' }}
-              className="h-[44px] px-3 py-2.5 text-left cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle requested-heading"
               onClick={() => onSort('requestedAt')}
               title="Sort by Requested Date"
             >
-              <div className="inline-flex items-center justify-start gap-1">
+              <div className="sortable-heading">
                 <span>Requested</span>
                 {renderSortIcon('requestedAt')}
               </div>
             </th>
 
-            {/* 8. Status (10%, Centred, Sortable) */}
+            {/* 8. Status (10%, Left, Sortable) */}
             <th
               scope="col"
               style={{ width: '10%' }}
-              className="h-[44px] px-3 py-2.5 text-center cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left cursor-pointer select-none hover:text-[#0D93AA] transition-colors whitespace-nowrap align-middle status-heading"
               onClick={() => onSort('status')}
               title="Sort by Status"
             >
-              <div className="inline-flex items-center justify-center gap-1">
+              <div className="sortable-heading">
                 <span>Status</span>
                 {renderSortIcon('status')}
               </div>
             </th>
 
-            {/* 9. Action (7%, Centred) */}
+            {/* 9. Action (7%, Left) */}
             <th
               scope="col"
               style={{ width: '7%' }}
-              className="h-[44px] px-3 py-2.5 text-center whitespace-nowrap align-middle"
+              className="h-[44px] px-3 py-2.5 text-left whitespace-nowrap align-middle action-heading"
             >
               Action
             </th>
@@ -233,17 +233,17 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
                   }`}
                 >
                   {/* 1. Reference (10%, Left) */}
-                  <td className="px-3 py-2.5 font-mono font-bold text-gray-900 whitespace-nowrap align-middle text-left">
+                  <td className="px-3 py-2.5 font-mono font-bold text-gray-900 whitespace-nowrap align-middle text-left reference-cell">
                     {item.reference}
                   </td>
 
                   {/* 2. Agent (11%, Left) */}
-                  <td className="px-3 py-2.5 text-left align-middle whitespace-nowrap">
+                  <td className="px-3 py-2.5 text-left align-middle whitespace-nowrap agent-cell">
                     <span className="font-semibold text-gray-900">{item.agentName}</span>
                   </td>
 
                   {/* 3. Agent Number (17%, Left) */}
-                  <td className="px-3 py-2.5 text-left align-middle whitespace-nowrap">
+                  <td className="px-3 py-2.5 text-left align-middle whitespace-nowrap agent-number-cell">
                     {formattedPhone !== '—' ? (
                       <div className="flex items-center justify-start gap-[6px] text-gray-700">
                         <Phone className="w-[13px] h-[13px] text-gray-400 shrink-0" />
@@ -255,15 +255,15 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
                   </td>
 
                   {/* 4. Agent ID (13%, Left) */}
-                  <td className="px-3 py-2.5 font-mono text-gray-700 whitespace-nowrap align-middle text-left">
+                  <td className="px-3 py-2.5 font-mono text-gray-700 whitespace-nowrap align-middle text-left agent-id-cell">
                     {item.agentId}
                   </td>
 
-                  {/* 5. Type (9%, Centred) */}
-                  <td className="px-3 py-2.5 whitespace-nowrap align-middle text-center">
-                    <div className="flex items-center justify-center">
+                  {/* 5. Type (9%, Left) */}
+                  <td className="px-3 py-2.5 whitespace-nowrap align-middle text-left type-cell">
+                    <div className="table-cell-content">
                       <span
-                        className={`inline-flex items-center justify-center gap-1 min-w-[68px] px-2 py-0.5 rounded text-xs font-semibold ${
+                        className={`inline-flex items-center justify-start gap-1 px-2.5 py-0.5 rounded text-xs font-semibold ${
                           item.requestType === 'Cash'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
                             : 'bg-indigo-50 text-indigo-700 border border-indigo-200/60'
@@ -279,35 +279,35 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 6. Amount (10%, Right) */}
-                  <td className="px-3 py-2.5 font-mono tabular-nums font-bold text-gray-900 whitespace-nowrap align-middle text-right">
+                  {/* 6. Amount (ZMW) (10%, Left) */}
+                  <td className="px-3 py-2.5 font-mono tabular-nums font-bold text-gray-900 whitespace-nowrap align-middle text-left amount-cell">
                     {formatAmount(item.amount)}
                   </td>
 
                   {/* 7. Requested (13%, Left) */}
-                  <td className="px-3 py-2.5 text-gray-700 whitespace-nowrap align-middle text-left">
-                    <div className="flex flex-col justify-center">
+                  <td className="px-3 py-2.5 text-gray-700 whitespace-nowrap align-middle text-left requested-cell">
+                    <div className="requested-content">
                       <div className="font-medium text-gray-900 leading-tight">{datePart}</div>
-                      <div className="text-[11px] text-gray-400 font-mono mt-0.5 leading-tight">{timePart}</div>
+                      <div className="text-[11px] text-gray-400 font-mono leading-tight">{timePart}</div>
                     </div>
                   </td>
 
-                  {/* 8. Status (10%, Centred) */}
-                  <td className="px-3 py-2.5 whitespace-nowrap align-middle text-center">
-                    <div className="flex items-center justify-center">
+                  {/* 8. Status (10%, Left) */}
+                  <td className="px-3 py-2.5 whitespace-nowrap align-middle text-left status-cell">
+                    <div className="table-cell-content">
                       <StatusChip status={item.status} size="sm" />
                     </div>
                   </td>
 
-                  {/* 9. Action (7%, Centred) */}
-                  <td className="px-3 py-2.5 text-center whitespace-nowrap align-middle">
-                    <div className="flex items-center justify-center">
+                  {/* 9. Action (7%, Left) */}
+                  <td className="px-3 py-2.5 whitespace-nowrap align-middle text-left action-cell">
+                    <div className="table-cell-content">
                       <button
                         type="button"
                         id={`btn-view-${item.reference.toLowerCase()}`}
                         onClick={() => onView(item)}
                         aria-label={`View request ${item.reference}`}
-                        className="inline-flex items-center justify-center gap-1 min-w-[64px] h-[32px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer shadow-2xs whitespace-nowrap"
+                        className="inline-flex items-center justify-start gap-1 h-[32px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer shadow-2xs whitespace-nowrap"
                       >
                         <Eye className="w-3.5 h-3.5 shrink-0" />
                         <span>View</span>
@@ -395,7 +395,7 @@ export const CashFloatTable: React.FC<CashFloatTableProps> = ({
                     <div className="text-gray-700 font-mono text-[11px]">{formattedPhone}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] uppercase font-bold text-gray-400">Type & Amount</div>
+                    <div className="text-[10px] uppercase font-bold text-gray-400">Type & Amount (ZMW)</div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span
                         className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-semibold ${

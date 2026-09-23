@@ -49,6 +49,12 @@ export const AdminLayout: React.FC = () => {
     return () => unsubscribeTB();
   }, [currentUser]);
 
+  // Sync document title with current page title
+  useEffect(() => {
+    const title = getCurrentPageTitle();
+    document.title = `${title} | TellerBud`;
+  }, [location.pathname, currentUser]);
+
   // Determine current page title based on active path
   const getCurrentPageTitle = (): string => {
     const pathname = location.pathname;
@@ -246,7 +252,11 @@ export const AdminLayout: React.FC = () => {
 
     if (
       pathname === '/business-owner/attendance-end-of-day' ||
-      pathname === '/business-owner/people/attendance'
+      pathname === '/business-owner/people/attendance' ||
+      pathname === '/attendance-end-of-day' ||
+      pathname === '/people/attendance' ||
+      pathname.endsWith('/attendance-end-of-day') ||
+      pathname.endsWith('/people/attendance')
     ) {
       return 'Attendance & End-of-Day';
     }
@@ -334,14 +344,19 @@ export const AdminLayout: React.FC = () => {
       pathname === '/business-owner/transactions/commissions' ||
       pathname === '/charges-commissions' ||
       pathname.endsWith('/transactions/commissions') ||
-      pathname.endsWith('/transactions/charges-commissions')
+      pathname.endsWith('/transactions/charges-commissions') ||
+      pathname.endsWith('/charges-commissions') ||
+      pathname.endsWith('/charges-revenue') ||
+      pathname.endsWith('/transactions/charges-revenue')
     ) {
-      return 'Charges & Commissions';
+      return 'Charges & Revenue';
     }
 
     if (
       pathname.startsWith('/charges-commissions/') ||
-      pathname.includes('/transactions/commissions/')
+      pathname.startsWith('/charges-revenue/') ||
+      pathname.includes('/transactions/commissions/') ||
+      pathname.includes('/transactions/charges-revenue/')
     ) {
       const seg = pathname.split('/').filter(Boolean).pop() || '';
       if (seg.toUpperCase().includes('COM')) {
@@ -495,12 +510,28 @@ export const AdminLayout: React.FC = () => {
     (currentUser?.role === 'business_owner' &&
       location.pathname.endsWith('/operations/live'));
 
+  const isBOAttendanceListing =
+    (location.pathname === '/business-owner/attendance-end-of-day' ||
+      location.pathname === '/business-owner/attendance-end-of-day/' ||
+      location.pathname === '/business-owner/people/attendance' ||
+      location.pathname === '/business-owner/people/attendance/' ||
+      location.pathname === '/attendance-end-of-day' ||
+      location.pathname === '/people/attendance' ||
+      (currentUser?.role === 'business_owner' &&
+        (location.pathname.endsWith('/attendance-end-of-day') ||
+          location.pathname.endsWith('/people/attendance')))) &&
+    !location.pathname.includes('/attendance-end-of-day/attendance/') &&
+    !location.pathname.includes('/attendance-end-of-day/end-of-day/') &&
+    !location.pathname.includes('/people/attendance/attendance/') &&
+    !location.pathname.includes('/people/attendance/end-of-day/');
+
   const isFrozenLayout =
     isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||
     isBOCashFloatListing ||
-    isBOAllTransactionsListing;
+    isBOAllTransactionsListing ||
+    isBOAttendanceListing;
 
   return (
     <div className="h-screen h-[100dvh] bg-[#FAFAFA] flex flex-row overflow-hidden">

@@ -29,7 +29,7 @@ export interface WalletLedgerEntry {
   transactionType: string; // e.g. 'Customer Withdrawal Settlement', 'Wallet Float Top-up', 'Cash Liquidity Inbound'
   amount: number; // positive or negative
   runningBalance: number;
-  status: 'Completed' | 'Pending' | 'Reversed';
+  status: 'Completed' | 'Pending';
 }
 
 export interface BusinessActivityLog {

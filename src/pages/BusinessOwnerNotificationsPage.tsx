@@ -88,8 +88,14 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
       if (activeTab === 'Action Required' && !item.actionRequired) return false;
 
       // Category filter
-      if (selectedCategory !== 'All' && item.category !== selectedCategory) {
-        return false;
+      if (selectedCategory !== 'All') {
+        if (selectedCategory === 'Charges & Revenue' || selectedCategory === 'Charges & Commissions') {
+          if (item.category !== 'Charges & Revenue' && item.category !== 'Charges & Commissions') {
+            return false;
+          }
+        } else if (item.category !== selectedCategory) {
+          return false;
+        }
       }
 
       // Read status filter
@@ -211,6 +217,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         return <FileCheck2 size={16} className="text-emerald-700" />;
       case 'Global Wallet':
         return <Wallet size={16} className="text-sky-800" />;
+      case 'Charges & Revenue':
       case 'Charges & Commissions':
         return <Percent size={16} className="text-purple-700" />;
       case 'System':
@@ -382,7 +389,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
               <option value="Attendance">Attendance</option>
               <option value="End-of-Day">End-of-Day</option>
               <option value="Global Wallet">Global Wallet</option>
-              <option value="Charges & Commissions">Charges & Commissions</option>
+              <option value="Charges & Revenue">Charges & Revenue</option>
               <option value="System">System</option>
             </select>
           </div>

@@ -14,14 +14,13 @@ export type ChargeCommissionStatus = 'Completed' | 'Pending';
 
 export type WalletDirection = 'Debit' | 'Credit';
 
-export type ChargeStatus = 'Pending' | 'Posted' | 'Cancelled' | 'Refunded' | 'Reversed';
+export type ChargeStatus = 'Pending' | 'Posted' | 'Completed' | 'Cancelled' | 'Failed';
 
 export type CommissionSettlementStatus =
   | 'Accrued'
   | 'Pending Settlement'
   | 'Settled'
-  | 'Cancelled'
-  | 'Reversed';
+  | 'Cancelled';
 
 export type RecipientType = 'Agent' | 'Business Owner' | 'TellerBud Platform';
 
@@ -93,11 +92,82 @@ export interface CommissionRecord {
 }
 
 export interface ChargesCommissionsKpiData {
-  reservationChargesCollected: number; // 18450.00
-  agentCommissions: number; // 10250.00
-  businessCommissions: number; // 4900.00
-  tellerBudRevenue: number; // 3300.00
-  pendingSettlements: number; // 1200.00
+  reservationCharges: number;
+  tellerBudCharges: number;
+  businessRevenue: number;
+  // Backward-compatibility aliases
+  reservationChargesCollected?: number;
+  tellerBudRevenue?: number;
+  agentRevenue?: number;
+  pendingSettlements?: number;
+  agentCommissions?: number;
+  businessCommissions?: number;
+}
+
+export interface RevenueSharingRule {
+  ruleId: string;
+  ruleName: string;
+  version: string;
+  service: string;
+  agentRevenueShareRate: number;
+  businessRevenueShareRate: number;
+  tellerBudPlatformShareRate: number;
+  description: string;
+}
+
+export interface AgentRevenueBreakdownRecord {
+  agentId: string;
+  agentName: string;
+  avatarInitials: string;
+  avatarUrl?: string;
+  businessId: string;
+  businessName: string;
+  storeId: string;
+  storeName: string;
+  boothId: string;
+  boothName: string;
+  completedTransactions: number;
+  reservationCharges: number; // Reservation Charges (ZMW)
+  tellerBudCharges: number;   // TellerBud Charges (ZMW)
+  revenueGenerated: number;   // Revenue Generated (ZMW) = Reservation Charges - TellerBud Charges
+  status: 'Active' | 'Inactive' | 'Suspended';
+}
+
+export interface AgentTransactionRevenueRecord {
+  id: string;
+  chargeRecord: string;
+  transactionReference: string;
+  customer: string;
+  customerId: string;
+  service: string;
+  transactionType: string;
+  provider: string;
+  transactionAmount: number; // Principal (informational, excluded from revenue)
+  reservationCharge: number; // Reservation Charge (ZMW)
+  tellerBudCharge: number;   // TellerBud Charge (ZMW)
+  revenueGenerated: number;  // Revenue Generated (ZMW) = reservationCharge - tellerBudCharge
+  dateTime: string;
+  rawDate: string;           // YYYY-MM-DD
+  timestamp: number;
+  settlementStatus?: CommissionSettlementStatus;
+  status: ChargeStatus;
+  storeId: string;
+  storeName: string;
+  boothId: string;
+  boothName: string;
+  agentId: string;
+  agentName: string;
+  businessId: string;
+  businessName: string;
+}
+
+export interface AgentRevenueFilters {
+  fromDate: string;
+  toDate: string;
+  storeId: string;
+  boothId: string;
+  agentId: string;
+  settlementStatus?: string;
 }
 
 export interface ChargesCommissionsFilters {

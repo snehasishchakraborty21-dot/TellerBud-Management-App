@@ -14,7 +14,7 @@ import {
   Phone,
 } from 'lucide-react';
 import { PickupRequest } from '../../types/admin';
-import { formatZMW } from '../../config/appConfig';
+import { formatZMW, formatZmwListingAmount } from '../../config/appConfig';
 import { StatusChip } from '../shared/StatusChip';
 
 interface LivePickupOperationsTableProps {
@@ -242,7 +242,7 @@ export const LivePickupOperationsTable: React.FC<LivePickupOperationsTableProps>
               <th className="py-3 px-3.5 font-bold">Created</th>
               <th className="py-3 px-3.5 font-bold">Transaction Type</th>
               <th className="py-3 px-3.5 font-bold">Vendor</th>
-              <th className="py-3 px-3.5 font-bold text-right">Amount</th>
+              <th className="py-3 px-3.5 font-bold text-left amount-heading whitespace-nowrap">Amount (ZMW)</th>
               <th className="py-3 px-3.5 font-bold">Requested Service Time</th>
               <th className="py-3 px-3.5 font-bold">Pickup Location</th>
               <th className="py-3 px-3.5 font-bold">Automatically Matched Agent</th>
@@ -292,9 +292,9 @@ export const LivePickupOperationsTable: React.FC<LivePickupOperationsTableProps>
                     {req.vendor}
                   </td>
 
-                  {/* Amount */}
-                  <td className="py-3 px-3.5 text-right font-mono font-bold text-gray-900 whitespace-nowrap">
-                    {formatZMW(req.amount)}
+                  {/* Amount (ZMW) */}
+                  <td className="py-3 px-3.5 text-left font-mono font-bold text-gray-900 whitespace-nowrap amount-cell">
+                    {formatZmwListingAmount(req.amount)}
                   </td>
 
                   {/* Requested Service Time */}

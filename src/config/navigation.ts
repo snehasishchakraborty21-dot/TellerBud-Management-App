@@ -184,7 +184,7 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
       },
       {
         id: 'charges-commissions',
-        label: 'Charges & Commissions',
+        label: 'Charges & Revenue',
         path: '/super-admin/transactions/commissions',
         icon: Percent,
       },
@@ -366,7 +366,7 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
       },
       {
         id: 'charges-commissions',
-        label: 'Charges & Commissions',
+        label: 'Charges & Revenue',
         path: '/business-owner/transactions/commissions',
         icon: Percent,
       },

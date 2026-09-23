@@ -17,6 +17,7 @@ import {
 } from '../../types/reconciliation';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 import { formatZMW } from '../../data/mockBusinessWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface ReconciliationTableProps {
   records: ReconciliationRecord[];
@@ -102,7 +103,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
               <th className="py-3 px-4 whitespace-nowrap w-[16%]">Transaction</th>
               <th className="py-3 px-4 whitespace-nowrap w-[24%]">Wallet Holder</th>
               <th className="py-3 px-4 whitespace-nowrap w-[15%]">Provider</th>
-              <th className="py-3 px-4 whitespace-nowrap text-right w-[11%]">Amount</th>
+              <th className="py-3 px-4 whitespace-nowrap text-left w-[11%] amount-heading">Amount (ZMW)</th>
               <th className="py-3 px-4 whitespace-nowrap text-center w-[14%]">Provider Response</th>
               <th className="py-3 px-4 whitespace-nowrap text-right w-[12%]">Action</th>
             </tr>
@@ -187,9 +188,9 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 5. Amount */}
-                  <td className="py-3 px-4 whitespace-nowrap text-right font-mono font-bold text-[#102025]">
-                    {formatZMW(item.amount)}
+                  {/* 5. Amount (ZMW) */}
+                  <td className="py-3 px-4 whitespace-nowrap text-left font-mono font-bold text-[#102025] amount-cell">
+                    {formatZmwListingAmount(item.amount)}
                   </td>
 
                   {/* 6. Provider Response */}

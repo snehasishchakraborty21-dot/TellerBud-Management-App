@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { BusinessWalletReservation } from '../../types/businessWallet';
 import { formatZMW } from '../../data/mockBusinessWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface BusinessWalletReservationsTabProps {
   reservations: BusinessWalletReservation[];
@@ -102,7 +103,7 @@ export const BusinessWalletReservationsTab: React.FC<BusinessWalletReservationsT
               <th className="py-2.5 px-3.5 whitespace-nowrap">Reservation Reference</th>
               <th className="py-2.5 px-3.5">Purpose & Allocation</th>
               <th className="py-2.5 px-3.5 whitespace-nowrap">Allocated Target</th>
-              <th className="py-2.5 px-3.5 whitespace-nowrap text-right">Reserved Amount</th>
+              <th className="py-2.5 px-3.5 whitespace-nowrap text-left amount-heading">Reserved Amount (ZMW)</th>
               <th className="py-2.5 px-3.5 whitespace-nowrap">Created Date</th>
               <th className="py-2.5 px-3.5 whitespace-nowrap">Status</th>
             </tr>
@@ -131,8 +132,8 @@ export const BusinessWalletReservationsTab: React.FC<BusinessWalletReservationsT
                     <td className="py-3 px-3.5 text-slate-600 whitespace-nowrap">
                       {res.allocatedTo}
                     </td>
-                    <td className="py-3 px-3.5 text-right font-mono font-bold whitespace-nowrap text-amber-700">
-                      {formatZMW(res.amount)}
+                    <td className="py-3 px-3.5 text-left font-mono font-bold whitespace-nowrap text-amber-700 amount-cell">
+                      {formatZmwListingAmount(res.amount)}
                     </td>
                     <td className="py-3 px-3.5 text-slate-500 whitespace-nowrap">
                       {res.createdAt}

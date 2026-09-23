@@ -6,6 +6,7 @@ import {
   MapPin,
   Store,
   HelpCircle,
+  Eye,
 } from 'lucide-react';
 import {
   MobileMoneyTransaction,
@@ -14,7 +15,7 @@ import {
   ServiceChannel,
   MobileMoneyTransactionType,
 } from '../../types/mobileMoney';
-import { formatZMW } from '../../utils/formatters';
+import { formatZmwListingAmount } from '../../utils/formatters';
 import { formatZambianPhone } from '../../utils/customerUtils';
 import { VENDOR_LOGO_MAP } from '../walk-in/VendorLogo';
 
@@ -25,6 +26,7 @@ interface BusinessOwnerMobileMoneyTableProps {
   sortDirection: MobileMoneySortDirection;
   onSort: (field: MobileMoneySortField) => void;
   onRowClick: (transaction: MobileMoneyTransaction) => void;
+  onView?: (transaction: MobileMoneyTransaction) => void;
   highlightedReference?: string;
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -79,6 +81,25 @@ const TransactionTypeBadge: React.FC<{ type: MobileMoneyTransactionType }> = ({ 
   }
 };
 
+// 4. Reusable Coming Soon Badge with identical styling and optional hover tooltip
+const ComingSoonBadge: React.FC<{ tooltip?: string }> = ({ tooltip }) => {
+  return (
+    <div className="relative group/cs inline-flex justify-start">
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap select-none">
+        Coming Soon
+      </span>
+      {tooltip && (
+        <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/cs:flex flex-col items-start z-30 pointer-events-none">
+          <div className="bg-gray-900 text-white text-[11px] rounded px-2.5 py-1 whitespace-nowrap shadow-lg font-normal normal-case">
+            {tooltip}
+          </div>
+          <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 ml-2" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTableProps> = ({
   transactions,
   isLoading,
@@ -86,6 +107,7 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
   sortDirection,
   onSort,
   onRowClick,
+  onView,
   highlightedReference,
   containerRef,
 }) => {
@@ -156,93 +178,155 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
       onKeyDown={handleKeyDown}
       className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA]"
     >
-      <table className="w-full text-left border-collapse min-w-[920px]">
-        {/* Table Header: Exactly 9 columns in strict order, 11px font size, sticky top-0, opaque snow-white/light-grey background */}
+      <table className="business-mobile-money-table w-full table-fixed text-left border-collapse min-w-[960px]">
+        {/* Single shared column definition with recommended proportional widths totaling 100% */}
+        <colgroup>
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '12%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '8%' }} />
+        </colgroup>
+
+        {/* Table Header: Exactly 10 columns in strict order, 11px font size, sticky top-0 */}
         <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
-          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none bg-[#F9FAFB]">
-            {/* 1. Ref/Date */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[125px]">
+          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none bg-[#F9FAFB] h-[44px]">
+            {/* 1. Ref/Date (10%) */}
+            <th
+              scope="col"
+              style={{ width: '10%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
               <button
                 type="button"
                 id="btn-sort-ref"
                 onClick={() => onSort('reference')}
-                className="flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer focus:outline-none"
+                className="inline-flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer focus:outline-none"
               >
                 <span>Ref/Date</span>
                 {renderSortIcon('reference')}
               </button>
             </th>
 
-            {/* 2. Service Channel */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[95px]">
+            {/* 2. Service Channel (10%) */}
+            <th
+              scope="col"
+              style={{ width: '10%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
               Service Channel
             </th>
 
-            {/* 3. Transaction Type */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap min-w-[115px]">
+            {/* 3. Transaction Type (11%) */}
+            <th
+              scope="col"
+              style={{ width: '11%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
               Transaction Type
             </th>
 
-            {/* 4. Cust/TB ID */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[125px]">
-              Cust/TB ID
+            {/* 4. CUST/TB ID (12%) */}
+            <th
+              scope="col"
+              style={{ width: '12%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
+              CUST/TB ID
             </th>
 
-            {/* 5. Customer # */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap min-w-[140px]">
+            {/* 5. Customer # (11%) */}
+            <th
+              scope="col"
+              style={{ width: '11%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
               Customer #
             </th>
 
-            {/* 6. Vendor (Narrow, Logo only, centered) */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-1.5 sm:px-2 whitespace-nowrap text-center w-[54px] min-w-[50px]">
+            {/* 6. Vendor (6%) */}
+            <th
+              scope="col"
+              style={{ width: '6%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
               Vendor
             </th>
 
-            {/* 7. Amount */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 sm:px-3 whitespace-nowrap text-right min-w-[105px]">
+            {/* 7. Amount (ZMW) (11%) */}
+            <th
+              scope="col"
+              style={{ width: '11%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle amount-heading"
+            >
               <button
                 type="button"
                 id="btn-sort-amount"
                 onClick={() => onSort('amount')}
-                className="flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer ml-auto focus:outline-none"
+                className="inline-flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer focus:outline-none"
               >
-                <span>Amount</span>
+                <span>Amount (ZMW)</span>
                 {renderSortIcon('amount')}
               </button>
             </th>
 
-            {/* 8. Commission */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2 sm:px-2.5 whitespace-nowrap text-right min-w-[95px]">
-              <div className="inline-flex items-center gap-1 justify-end ml-auto">
+            {/* 8. Commission (10%) */}
+            <th
+              scope="col"
+              style={{ width: '10%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
+              <div className="inline-flex items-center gap-1 justify-start">
                 <span>Commission</span>
                 <div className="relative group/help inline-flex items-center">
                   <HelpCircle size={11} className="text-gray-400 hover:text-gray-600 cursor-help" />
-                  <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover/help:flex flex-col items-center z-30 pointer-events-none">
+                  <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/help:flex flex-col items-start z-30 pointer-events-none">
                     <div className="bg-gray-900 text-white text-[11px] rounded px-2.5 py-1 whitespace-nowrap shadow-lg font-normal normal-case">
                       MNO commission will be available in Phase 2.
                     </div>
-                    <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 mr-1.5" />
+                    <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 ml-1.5" />
                   </div>
                 </div>
               </div>
             </th>
 
-            {/* 9. Balance */}
-            <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 pl-2.5 pr-3 sm:pl-3 sm:pr-4 whitespace-nowrap text-right min-w-[105px]">
-              <button
-                type="button"
-                id="btn-sort-balance"
-                onClick={() => onSort('balanceAfter')}
-                className="flex items-center gap-1 font-bold text-gray-700 hover:text-gray-900 group cursor-pointer ml-auto focus:outline-none"
-              >
-                <span>Balance</span>
-                {renderSortIcon('balanceAfter')}
-              </button>
+            {/* 9. Balance (ZMW) (11%) */}
+            <th
+              scope="col"
+              style={{ width: '11%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+            >
+              <div className="inline-flex items-center gap-1 justify-start">
+                <span>Balance (ZMW)</span>
+                <div className="relative group/balance-help inline-flex items-center">
+                  <HelpCircle size={11} className="text-gray-400 hover:text-gray-600 cursor-help" />
+                  <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/balance-help:flex flex-col items-start z-30 pointer-events-none">
+                    <div className="bg-gray-900 text-white text-[11px] rounded px-2.5 py-1 whitespace-nowrap shadow-lg font-normal normal-case">
+                      Balance information will be available in a future release.
+                    </div>
+                    <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 ml-1.5" />
+                  </div>
+                </div>
+              </div>
+            </th>
+
+            {/* 10. Action (8%) */}
+            <th
+              scope="col"
+              style={{ width: '8%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle action-heading"
+            >
+              Action
             </th>
           </tr>
         </thead>
 
-        {/* Table Body: 12-13px primary, 10-11px secondary, clean vertical spacing, tight horizontal padding */}
+        {/* Table Body: 10 columns, left-aligned, vertical centering, clean padding */}
         <tbody className="divide-y divide-gray-100">
           {transactions.map((tx) => {
             const isHighlighted = highlightedReference === tx.reference;
@@ -274,95 +358,108 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
                 }`}
               >
                 {/* 1. Ref/Date */}
-                <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 whitespace-nowrap">
-                  <div className="font-mono text-xs font-bold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-tight">
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                  <div className="font-mono text-xs font-bold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-tight truncate">
                     {tx.reference}
                   </div>
-                  <div className="text-[10.5px] text-gray-500 mt-0.5 leading-tight">
+                  <div className="text-[10.5px] text-gray-500 mt-0.5 leading-tight truncate">
                     {tx.formattedDate}
                   </div>
                 </td>
 
                 {/* 2. Service Channel */}
-                <td className="py-2.5 sm:py-3 px-2 sm:px-2.5 whitespace-nowrap">
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
                   <ChannelBadge channel={tx.serviceChannel} />
                 </td>
 
                 {/* 3. Transaction Type */}
-                <td className="py-2.5 sm:py-3 px-2 sm:px-2.5 whitespace-nowrap">
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
                   <TransactionTypeBadge type={tx.transactionType} />
                 </td>
 
-                {/* 4. Cust/TB ID */}
-                <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 whitespace-nowrap">
+                {/* 4. CUST/TB ID */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
                   {isUnregistered ? (
-                    <div>
-                      <div className="text-xs font-semibold text-gray-900 leading-tight">Walk-In Customer</div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-gray-900 leading-tight truncate">Walk-In Customer</div>
                       <div className="text-[10.5px] text-gray-400 mt-0.5 leading-tight">No TB ID</div>
                     </div>
                   ) : (
-                    <div>
-                      <div className="text-xs font-semibold text-gray-900 leading-tight">{tx.customerName}</div>
-                      <div className="font-mono text-[10.5px] text-gray-500 mt-0.5 leading-tight">{tx.customerId}</div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-gray-900 leading-tight truncate">{tx.customerName}</div>
+                      <div className="font-mono text-[10.5px] text-gray-500 mt-0.5 leading-tight truncate">{tx.customerId}</div>
                     </div>
                   )}
                 </td>
 
                 {/* 5. Customer # */}
-                <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 whitespace-nowrap font-mono text-xs font-medium text-gray-700 leading-tight">
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle font-mono text-xs font-medium text-gray-700 leading-tight">
                   {formatZambianPhone(tx.customerPhone)}
                 </td>
 
-                {/* 6. Vendor: Only official logo (28-32px), centered, scaled without stretch/crop, tooltip on hover */}
-                <td className="py-2.5 sm:py-3 px-1.5 sm:px-2 text-center whitespace-nowrap">
-                  <div className="inline-flex justify-center items-center">
-                    <div className="relative group/vendor inline-flex items-center justify-center">
+                {/* 6. Vendor */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                  <div className="flex items-center justify-start">
+                    <div className="relative group/vendor inline-flex items-center justify-start">
                       <div
-                        className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center p-0.5 rounded transition-transform group-hover/vendor:scale-105"
+                        className="w-7 h-7 flex items-center justify-center p-0.5 rounded transition-transform group-hover/vendor:scale-105"
                         role="img"
                         aria-label={vendorConfig.name}
                       >
                         <img
                           src={vendorConfig.assetPath}
                           alt={vendorConfig.alt || vendorConfig.name}
-                          className="max-h-full max-w-full object-contain object-center select-none"
+                          className="max-h-full max-w-full object-contain select-none"
                           loading="lazy"
                         />
                       </div>
                       {/* Accessible Hover Tooltip */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/vendor:flex flex-col items-center z-30 pointer-events-none">
+                      <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/vendor:flex flex-col items-start z-30 pointer-events-none">
                         <div className="bg-gray-900 text-white text-[11px] font-medium rounded px-2.5 py-1 whitespace-nowrap shadow-lg">
                           {vendorConfig.name}
                         </div>
-                        <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900" />
+                        <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 ml-2.5" />
                       </div>
                     </div>
                   </div>
                 </td>
 
-                {/* 7. Amount */}
-                <td className="py-2.5 sm:py-3 px-2.5 sm:px-3 whitespace-nowrap text-right font-mono text-xs font-bold text-gray-900 leading-tight">
-                  {formatZMW(tx.amount)}
+                {/* 7. Amount (ZMW) */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left font-mono text-xs font-bold text-gray-900 leading-tight align-middle amount-cell">
+                  {formatZmwListingAmount(tx.amount)}
                 </td>
 
-                {/* 8. Commission: Compact Coming Soon badge with explanation tooltip */}
-                <td className="py-2.5 sm:py-3 px-2 sm:px-2.5 whitespace-nowrap text-right">
-                  <div className="relative group/comm inline-flex justify-end">
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
-                      Coming Soon
-                    </span>
-                    <div className="absolute bottom-full right-0 mb-1.5 hidden group-hover/comm:flex flex-col items-center z-30 pointer-events-none">
-                      <div className="bg-gray-900 text-white text-[11px] rounded px-2.5 py-1 whitespace-nowrap shadow-lg font-normal normal-case">
-                        MNO commission will be available in Phase 2.
-                      </div>
-                      <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 mr-2" />
-                    </div>
+                {/* 8. Commission */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                  <ComingSoonBadge tooltip="MNO commission will be available in Phase 2." />
+                </td>
+
+                {/* 9. Balance (ZMW) */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                  <ComingSoonBadge tooltip="Balance information will be available in a future release." />
+                </td>
+
+                {/* 10. Action */}
+                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle action-cell">
+                  <div className="flex items-center justify-start">
+                    <button
+                      type="button"
+                      id={`btn-view-${tx.reference.toLowerCase()}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onView) {
+                          onView(tx);
+                        } else {
+                          onRowClick(tx);
+                        }
+                      }}
+                      className="inline-flex items-center justify-start gap-1 h-[32px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer shadow-2xs whitespace-nowrap"
+                      aria-label={`View transaction ${tx.reference}`}
+                    >
+                      <Eye size={13} className="shrink-0" />
+                      <span>View</span>
+                    </button>
                   </div>
-                </td>
-
-                {/* 9. Balance: Read-only balanceAfter, right-aligned, bold/semibold */}
-                <td className="py-2.5 sm:py-3 pl-2.5 pr-3 sm:pl-3 sm:pr-4 whitespace-nowrap text-right font-mono text-xs font-semibold text-gray-900 leading-tight">
-                  {tx.balanceAfter !== undefined ? formatZMW(tx.balanceAfter) : '—'}
                 </td>
               </tr>
             );

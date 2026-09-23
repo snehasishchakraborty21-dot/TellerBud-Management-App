@@ -17,7 +17,7 @@ import { adminService } from '../services/mockAdminService';
 import { useAuth } from '../context/AuthContext';
 import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
 import { toDisplayDate, getZambiaTodayString } from '../utils/dateUtils';
-import { formatZMW } from '../utils/formatters';
+import { formatZMW, formatZmwListingAmount } from '../utils/formatters';
 import { AttendanceRecord } from '../types/attendance';
 
 interface BusinessMetricCardProps {
@@ -519,7 +519,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
                 <th className="pb-2.5 font-semibold">Activity Type</th>
                 <th className="pb-2.5 font-semibold">Account / Agent</th>
                 <th className="pb-2.5 font-semibold">Timestamp</th>
-                <th className="pb-2.5 font-semibold">Amount</th>
+                <th className="pb-2.5 font-semibold amount-heading whitespace-nowrap text-left">Amount (ZMW)</th>
                 <th className="pb-2.5 font-semibold text-right">Status</th>
               </tr>
             </thead>
@@ -537,7 +537,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
                   </td>
                   <td className="py-3 text-gray-700">{act.actor}</td>
                   <td className="py-3 text-gray-500 font-mono text-[11px]">{act.timestamp}</td>
-                  <td className="py-3 font-bold text-[#102025]">{formatZMW(act.amount)}</td>
+                  <td className="py-3 font-bold font-mono text-[#102025] text-left amount-cell whitespace-nowrap">{formatZmwListingAmount(act.amount)}</td>
                   <td className="py-3 text-right">
                     <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       {act.status}

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CustomerWalletWithdrawalRecord } from '../../types/customerWallet';
 import { formatZMW } from '../../data/mockCustomerWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 
 interface CustomerWalletWithdrawalsTabProps {
@@ -254,16 +255,16 @@ export const CustomerWalletWithdrawalsTab: React.FC<CustomerWalletWithdrawalsTab
                 <th className="py-3 px-4">Payout Mobile</th>
                 <th
                   onClick={() => handleSort('amount')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-4 text-left cursor-pointer hover:text-slate-900 group amount-heading"
                 >
-                  <div className="flex items-center justify-end gap-1">
-                    <span>Amount</span>
+                  <div className="flex items-center justify-start gap-1">
+                    <span>Amount (ZMW)</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Reservation Ref</th>
-                <th className="py-3 px-4 text-right">Reserved Amount</th>
+                <th className="py-3 px-4 text-left amount-heading">Reserved Amount (ZMW)</th>
                 <th className="py-3 px-4">Paid / Settled</th>
                 <th className="py-3 px-4 text-center">Action</th>
               </tr>
@@ -307,8 +308,8 @@ export const CustomerWalletWithdrawalsTab: React.FC<CustomerWalletWithdrawalsTab
                       </td>
 
                       {/* 5. Amount */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-slate-900">
-                        {formatZMW(item.amount)}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-black text-slate-900 amount-cell">
+                        {formatZmwListingAmount(item.amount)}
                       </td>
 
                       {/* 6. Status */}
@@ -332,8 +333,8 @@ export const CustomerWalletWithdrawalsTab: React.FC<CustomerWalletWithdrawalsTab
                       </td>
 
                       {/* 8. Reserved Amount */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-bold text-amber-800">
-                        {formatZMW(item.reservedAmount)}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-bold text-amber-800 amount-cell">
+                        {formatZmwListingAmount(item.reservedAmount)}
                       </td>
 
                       {/* 9. Paid / Settled */}

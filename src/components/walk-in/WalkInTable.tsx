@@ -9,6 +9,7 @@ import { VendorLogo } from './VendorLogo';
 import { WalkInStatusBadge } from './WalkInStatusBadge';
 import { WalkInTypeBadge } from './WalkInTypeBadge';
 import { formatZMW } from '../../config/appConfig';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface WalkInTableProps {
   transactions: WalkInTransaction[];
@@ -105,13 +106,13 @@ export const WalkInTable: React.FC<WalkInTableProps> = ({
               <th className="py-3.5 px-4">Customer</th>
               <th className="py-3.5 px-4">Transaction Type</th>
               <th className="py-3.5 px-4">Vendor</th>
-              <th className="py-3.5 px-4 text-right">
+              <th className="py-3.5 px-4 text-left amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('amount')}
-                  className="group inline-flex items-center gap-1 font-bold text-gray-600 hover:text-[#0D93AA] focus:outline-none transition-colors ml-auto cursor-pointer"
+                  className="group inline-flex items-center gap-1 font-bold text-gray-600 hover:text-[#0D93AA] focus:outline-none transition-colors cursor-pointer"
                 >
-                  <span>Amount</span>
+                  <span>Amount (ZMW)</span>
                   {renderSortIcon('amount')}
                 </button>
               </th>
@@ -184,8 +185,8 @@ export const WalkInTable: React.FC<WalkInTableProps> = ({
                   </td>
 
                   {/* 6. Amount (never truncated) */}
-                  <td className="py-3 px-4 text-right font-mono font-bold text-gray-900 whitespace-nowrap">
-                    {formatZMW(tx.amount)}
+                  <td className="py-3 px-4 text-left font-mono font-bold text-gray-900 whitespace-nowrap amount-cell">
+                    {formatZmwListingAmount(tx.amount)}
                   </td>
 
                   {/* 7. Transaction Time */}

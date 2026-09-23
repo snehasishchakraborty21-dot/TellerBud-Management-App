@@ -75,7 +75,16 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate('/business-owner/mobile-money-transactions');
+    const searchParams = new URLSearchParams(window.location.search);
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+    const savedFrom = fromParam || sessionStorage.getItem('bo_mmt_date_from');
+    const savedTo = toParam || sessionStorage.getItem('bo_mmt_date_to');
+    if (savedFrom && savedTo) {
+      navigate(`/business-owner/mobile-money-transactions?from=${savedFrom}&to=${savedTo}`);
+    } else {
+      navigate('/business-owner/mobile-money-transactions');
+    }
   };
 
   const renderStatusBadge = (status: MobileMoneyStatus) => {

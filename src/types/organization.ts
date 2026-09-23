@@ -7,7 +7,7 @@ export type DeviceStatus = 'Available' | 'Assigned' | 'Unmapped' | 'Inactive' | 
 export type DeviceType = 'POS Terminal' | 'mPOS' | 'Biometric Scanner' | 'PIN Pad' | 'Smartphone Terminal';
 export type BalanceType = 'Cash Balance' | 'MNO Balance' | 'Bank Balance';
 export type AdjustmentDirection = 'Increase' | 'Decrease';
-export type AdjustmentStatus = 'Completed' | 'Reversed';
+export type AdjustmentStatus = 'Completed' | 'Pending';
 
 export type OrgEntityType =
   | 'Store'
@@ -24,6 +24,11 @@ export interface Store {
   businessId: string;
   storeName: string;
   storeNumber: string;
+  storeCode?: string;
+  cityId?: string;
+  cityName?: string;
+  province?: string;
+  physicalAddress?: string;
   location?: string;
   status: StoreStatus;
   createdAt: string;
@@ -76,6 +81,8 @@ export interface StaffBoothAssignment {
   isActive: boolean;
   reason: string;
   assignedBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface Device {
@@ -91,6 +98,8 @@ export interface Device {
   decommissionReason?: string;
   decommissionedAt?: string;
   decommissionedBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface DeviceAssignment {
@@ -105,6 +114,8 @@ export interface DeviceAssignment {
   isActive: boolean;
   reason: string;
   assignedBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface BalanceAdjustment {

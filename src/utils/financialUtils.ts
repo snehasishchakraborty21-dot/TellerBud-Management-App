@@ -13,6 +13,9 @@ export function formatZMW(amount: number): string {
   })}`;
 }
 
+export { formatZmwListingAmount } from './formatters';
+
+
 /**
  * Calculates the exact 80% / 20% split of an approved Service Fee.
  * Uses integer cents arithmetic to guarantee no floating-point precision issues.

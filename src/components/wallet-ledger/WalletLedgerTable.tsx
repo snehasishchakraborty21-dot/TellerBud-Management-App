@@ -7,18 +7,15 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   AlertCircle,
   Clock,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from 'lucide-react';
 import {
   AuthoritativeLedgerRecord,
   ReconciliationState,
   WalletType,
 } from '../../types/walletLedger';
-import { formatZMW } from '../../data/mockBusinessWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 type SortField = 'date' | 'debit' | 'credit' | 'balance';
 type SortOrder = 'asc' | 'desc';
@@ -106,21 +103,21 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
     switch (state) {
       case 'Matched':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap leading-tight">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Matched
           </span>
         );
       case 'Pending':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap leading-tight">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             Pending
           </span>
         );
       case 'Exception':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap leading-tight">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
             Exception
           </span>
@@ -133,13 +130,13 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
   const getWalletTypeBadge = (type: WalletType) => {
     if (type === 'Customer Wallet') {
       return (
-        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">
+        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100 whitespace-nowrap leading-none">
           Customer Wallet
         </span>
       );
     }
     return (
-      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">
+      <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100 whitespace-nowrap leading-none">
         Business Global Wallet
       </span>
     );
@@ -149,74 +146,74 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
     <div className="bg-white border border-gray-200/90 rounded-xl shadow-xs overflow-hidden flex flex-col">
       {/* Table Container */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[1000px]">
+        <table className="w-full text-left border-collapse min-w-[1050px]">
           <thead>
             <tr className="bg-slate-50/80 border-b border-gray-200 text-[11.5px] font-semibold text-slate-600 tracking-wider">
-              {/* 1. Ledger Entry */}
+              {/* 1. Ledger Entry (18%) */}
               <th
                 scope="col"
                 onClick={() => handleSort('date')}
-                className="py-3 px-4 cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[18%] min-w-[170px]"
               >
-                <div className="flex items-center">
+                <div className="flex items-center justify-start">
                   <span>Ledger Entry</span>
                   {renderSortIcon('date')}
                 </div>
               </th>
 
-              {/* 2. Wallet */}
-              <th scope="col" className="py-3 px-4">
+              {/* 2. Wallet (22%) */}
+              <th scope="col" className="py-2.5 px-3.5 text-left w-[22%] min-w-[200px]">
                 <span>Wallet</span>
               </th>
 
-              {/* 3. Entry Details */}
-              <th scope="col" className="py-3 px-4">
+              {/* 3. Entry Details (19%) */}
+              <th scope="col" className="py-2.5 px-3.5 text-left w-[19%] min-w-[180px]">
                 <span>Entry Details</span>
               </th>
 
-              {/* 4. Debit */}
+              {/* 4. Debit (ZMW) (9%) */}
               <th
                 scope="col"
                 onClick={() => handleSort('debit')}
-                className="py-3 px-4 text-right cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
               >
-                <div className="flex items-center justify-end">
-                  <span>Debit</span>
+                <div className="flex items-center justify-start">
+                  <span>Debit (ZMW)</span>
                   {renderSortIcon('debit')}
                 </div>
               </th>
 
-              {/* 5. Credit */}
+              {/* 5. Credit (ZMW) (9%) */}
               <th
                 scope="col"
                 onClick={() => handleSort('credit')}
-                className="py-3 px-4 text-right cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
               >
-                <div className="flex items-center justify-end">
-                  <span>Credit</span>
+                <div className="flex items-center justify-start">
+                  <span>Credit (ZMW)</span>
                   {renderSortIcon('credit')}
                 </div>
               </th>
 
-              {/* 6. Balance After */}
+              {/* 6. Balance After (ZMW) (11%) */}
               <th
                 scope="col"
                 onClick={() => handleSort('balance')}
-                className="py-3 px-4 text-right cursor-pointer hover:bg-slate-100/80 transition-colors select-none"
+                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[11%] min-w-[110px]"
               >
-                <div className="flex items-center justify-end">
-                  <span>Balance After</span>
+                <div className="flex items-center justify-start">
+                  <span>Balance After (ZMW)</span>
                   {renderSortIcon('balance')}
                 </div>
               </th>
 
-              {/* 7. Reconciliation */}
-              <th scope="col" className="py-3 px-4 text-center">
+              {/* 7. Reconciliation (11%) */}
+              <th scope="col" className="py-2.5 px-3.5 text-left w-[11%] min-w-[100px]">
                 <span>Reconciliation</span>
               </th>
 
-              {/* 8. Action */}
-              <th scope="col" className="py-3 px-4 text-center">
+              {/* 8. Action (11%) */}
+              <th scope="col" className="py-2.5 px-3.5 text-left w-[11%] min-w-[105px]">
                 <span>Action</span>
               </th>
             </tr>
@@ -238,54 +235,51 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
                   className="hover:bg-slate-50/70 transition-colors group"
                 >
                   {/* 1. Ledger Entry */}
-                  <td className="py-3 px-4 align-top">
-                    <div className="font-mono font-bold text-[#102025] group-hover:text-[#0D93AA] transition-colors">
+                  <td className="py-2.5 px-3.5 text-left align-middle whitespace-nowrap">
+                    <div className="font-mono font-bold text-[#102025] group-hover:text-[#0D93AA] transition-colors leading-tight">
                       {item.ledgerEntry}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+                    <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 leading-tight">
                       <Clock size={11} className="text-slate-400 shrink-0" />
                       <span>{item.timestamp}</span>
                     </div>
                   </td>
 
                   {/* 2. Wallet */}
-                  <td className="py-3 px-4 align-top">
-                    <div className="font-semibold text-slate-800 leading-tight">
+                  <td className="py-2.5 px-3.5 text-left align-middle">
+                    <div className="font-semibold text-slate-800 leading-tight truncate max-w-[220px]" title={item.holderName}>
                       {item.holderName}
                     </div>
-                    <div className="font-mono text-[11px] text-slate-500 mt-0.5">
-                      {item.walletId}
-                    </div>
-                    <div className="mt-1">
+                    <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
+                      <span className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                        {item.walletId}
+                      </span>
                       {getWalletTypeBadge(item.walletType)}
                     </div>
                   </td>
 
                   {/* 3. Entry Details */}
-                  <td className="py-3 px-4 align-top">
-                    <div className="font-medium text-slate-800 leading-tight">
-                      {item.entryType}
+                  <td className="py-2.5 px-3.5 text-left align-middle">
+                    <div className="flex items-center gap-1.5 leading-tight">
+                      <span className="font-medium text-slate-800 whitespace-nowrap">
+                        {item.entryType}
+                      </span>
+                      {item.direction === 'Hold Memo' && (
+                        <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap leading-none">
+                          Hold Memo
+                        </span>
+                      )}
                     </div>
-                    <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                    <div className="text-[11px] font-mono text-slate-500 mt-0.5 whitespace-nowrap leading-tight">
                       Source: {item.sourceReference}
                     </div>
-                    {item.originalLedgerReference && (
-                      <div className="text-[10px] text-rose-600 font-medium mt-0.5">
-                        (Reversal of {item.originalLedgerReference})
-                      </div>
-                    )}
-                    {item.direction === 'Hold Memo' && (
-                      <span className="inline-block mt-1 text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                        Hold Memo
-                      </span>
-                    )}
                   </td>
 
                   {/* 4. Debit */}
-                  <td className="py-3 px-4 text-right font-mono align-top whitespace-nowrap">
+                  <td className="py-2.5 px-3.5 text-left font-mono align-middle whitespace-nowrap">
                     {item.debit !== null && item.direction !== 'Hold Memo' ? (
                       <span className="font-bold text-rose-700">
-                        {formatZMW(item.debit)}
+                        {formatZmwListingAmount(item.debit)}
                       </span>
                     ) : (
                       <span className="text-slate-300 font-medium">—</span>
@@ -293,10 +287,10 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
                   </td>
 
                   {/* 5. Credit */}
-                  <td className="py-3 px-4 text-right font-mono align-top whitespace-nowrap">
+                  <td className="py-2.5 px-3.5 text-left font-mono align-middle whitespace-nowrap">
                     {item.credit !== null && item.direction !== 'Hold Memo' ? (
                       <span className="font-bold text-emerald-700">
-                        {formatZMW(item.credit)}
+                        {formatZmwListingAmount(item.credit)}
                       </span>
                     ) : (
                       <span className="text-slate-300 font-medium">—</span>
@@ -304,21 +298,21 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
                   </td>
 
                   {/* 6. Balance After */}
-                  <td className="py-3 px-4 text-right font-mono font-bold text-[#102025] align-top whitespace-nowrap">
-                    {formatZMW(item.balanceAfter)}
+                  <td className="py-2.5 px-3.5 text-left font-mono font-bold text-[#102025] align-middle whitespace-nowrap">
+                    {formatZmwListingAmount(item.balanceAfter)}
                   </td>
 
                   {/* 7. Reconciliation */}
-                  <td className="py-3 px-4 text-center align-top whitespace-nowrap">
+                  <td className="py-2.5 px-3.5 text-left align-middle whitespace-nowrap">
                     {getReconciliationBadge(item.reconciliation)}
                   </td>
 
                   {/* 8. Action */}
-                  <td className="py-3 px-4 text-center align-top whitespace-nowrap">
+                  <td className="py-2.5 px-3.5 text-left align-middle whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => navigate(`/wallet-ledger/${item.ledgerEntry}`)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                       title={`View Details for ${item.ledgerEntry}`}
                     >
                       <Eye size={13} className="shrink-0" />
@@ -333,7 +327,7 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-3.5 sm:px-4 bg-slate-50/70 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <div className="p-3 sm:px-4 bg-slate-50/70 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
         <div className="flex items-center gap-2">
           <span>
             Showing <strong className="text-slate-800">{totalLedgerCount === 0 ? 0 : startIndex + 1}</strong> to{' '}

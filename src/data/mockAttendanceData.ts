@@ -8,9 +8,340 @@ import {
   EndOfDayFilters,
 } from '../types/attendance';
 
-export const TODAY_DATE = '01-09-2026';
+export const TODAY_DATE = '22-09-2026';
 
 export const MOCK_ATTENDANCE_RECORDS: AttendanceRecord[] = [
+  // Today's records (22-09-2026) - Lusaka Central Express Agency
+  {
+    id: 'ATT-20260922-1024',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    avatarInitials: 'KP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '07:45 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Pickup',
+    lastActive: 'Today, 11:15 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '07:45 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1062',
+    agentId: 'TB-AGT-1062',
+    agentName: 'Natasha Zulu',
+    agentPhone: '+260 97 556 7890',
+    avatarInitials: 'NZ',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '07:50 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Pickup',
+    lastActive: 'Today, 11:15 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '07:50 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1050',
+    agentId: 'TB-AGT-1050',
+    agentName: 'Faith Mwewa',
+    agentPhone: '+260 97 456 7890',
+    avatarInitials: 'FM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '07:55 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'None',
+    lastActive: 'Today, 10:48 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '07:55 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1055',
+    agentId: 'TB-AGT-1055',
+    agentName: 'Brian Lungu',
+    agentPhone: '+260 97 678 9012',
+    avatarInitials: 'BL',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '08:00 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'None',
+    lastActive: 'Today, 10:30 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1064',
+    agentId: 'TB-AGT-1064',
+    agentName: 'Joseph Kaunda',
+    agentPhone: '+260 97 123 4567',
+    avatarInitials: 'JK',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '07:40 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'None',
+    lastActive: 'Today, 10:15 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '07:40 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1070',
+    agentId: 'TB-AGT-1070',
+    agentName: 'Mwamba Musonda',
+    agentPhone: '+260 97 889 0123',
+    avatarInitials: 'MM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: '08:45 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'None',
+    lastActive: 'Today, 09:50 AM',
+    timeline: [
+      { id: 'ev-1', event: 'Checked In', timestamp: '08:45 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260922-1078',
+    agentId: 'TB-AGT-1078',
+    agentName: 'Kondwani Banda',
+    agentPhone: '+260 96 334 5678',
+    avatarInitials: 'KB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: undefined,
+    checkOutTime: undefined,
+    checkedInDuration: undefined,
+    totalHours: undefined,
+    status: 'Not Checked In',
+    assignment: 'None',
+    lastActive: 'Yesterday, 05:30 PM',
+    timeline: [],
+  },
+  {
+    id: 'ATT-20260922-1082',
+    agentId: 'TB-AGT-1082',
+    agentName: 'Thandiwe Phiri',
+    agentPhone: '+260 95 445 6789',
+    avatarInitials: 'TP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '22-09-2026',
+    checkInTime: undefined,
+    checkOutTime: undefined,
+    checkedInDuration: undefined,
+    totalHours: undefined,
+    status: 'No Attendance Record',
+    assignment: 'None',
+    lastActive: 'Yesterday, 05:45 PM',
+    timeline: [],
+  },
+  // Records for 19-09-2026 - Lusaka Central Express Agency
+  {
+    id: 'ATT-20260919-1024',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    avatarInitials: 'KP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '07:45 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Pickup',
+    lastActive: 'Today, 11:42 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Branch Counter', timestamp: '07:45 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1031',
+    agentId: 'TB-AGT-1031',
+    agentName: 'Misozi Banda',
+    agentPhone: '+260 96 123 4567',
+    avatarInitials: 'MB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '08:00 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Walk-In',
+    lastActive: 'Today, 11:30 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Main Counter', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1045',
+    agentId: 'TB-AGT-1045',
+    agentName: 'Chileshe Tembo',
+    agentPhone: '+260 95 987 6543',
+    avatarInitials: 'CT',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '08:10 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Walk-In',
+    lastActive: 'Today, 11:15 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Booth 2', timestamp: '08:10 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1052',
+    agentId: 'TB-AGT-1052',
+    agentName: 'Mwape Lungu',
+    agentPhone: '+260 97 889 0123',
+    avatarInitials: 'ML',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '08:15 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Pickup',
+    lastActive: 'Today, 11:00 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Mobile Desk', timestamp: '08:15 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1060',
+    agentId: 'TB-AGT-1060',
+    agentName: 'Natasha Zulu',
+    agentPhone: '+260 96 778 9012',
+    avatarInitials: 'NZ',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '08:20 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'Walk-In',
+    lastActive: 'Today, 10:45 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Counter 3', timestamp: '08:20 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1073',
+    agentId: 'TB-AGT-1073',
+    agentName: 'Brian Mwanza',
+    agentPhone: '+260 95 667 8901',
+    avatarInitials: 'BM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: '08:30 AM',
+    checkOutTime: undefined,
+    checkedInDuration: 'In Progress',
+    totalHours: 'In Progress',
+    status: 'Checked In',
+    assignment: 'None',
+    lastActive: 'Today, 10:30 AM',
+    timeline: [
+      { id: 't-1', event: 'Checked in at Support Desk', timestamp: '08:30 AM' },
+    ],
+  },
+  {
+    id: 'ATT-20260919-1015',
+    agentId: 'TB-AGT-1015',
+    agentName: 'Joseph Mwila',
+    agentPhone: '+260 96 334 5678',
+    avatarInitials: 'KB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: undefined,
+    checkOutTime: undefined,
+    checkedInDuration: undefined,
+    totalHours: undefined,
+    status: 'Not Checked In',
+    assignment: 'None',
+    lastActive: 'Yesterday, 05:30 PM',
+    timeline: [],
+  },
+  {
+    id: 'ATT-20260919-1082',
+    agentId: 'TB-AGT-1082',
+    agentName: 'Thandiwe Phiri',
+    agentPhone: '+260 95 445 6789',
+    avatarInitials: 'TP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    date: '19-09-2026',
+    checkInTime: undefined,
+    checkOutTime: undefined,
+    checkedInDuration: undefined,
+    totalHours: undefined,
+    status: 'No Attendance Record',
+    assignment: 'None',
+    lastActive: 'Yesterday, 05:45 PM',
+    timeline: [],
+  },
+  // Previous records (01-09-2026) - Lusaka Central Express Agency
   {
     id: 'ATT-20260901-1024',
     agentId: 'TB-AGT-1024',
@@ -371,6 +702,363 @@ export const MOCK_ATTENDANCE_RECORDS: AttendanceRecord[] = [
 ];
 
 export const MOCK_EOD_RECORDS: EndOfDayRecord[] = [
+  // Today's records (22-09-2026) - Lusaka Central Express Agency
+  {
+    id: 'EOD-20260922-1024',
+    reference: 'TB-EOD-801',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    avatarInitials: 'KP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Assigned',
+    expectedCash: 12400.0,
+    declaredCash: 12400.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:15 PM',
+    status: 'Pending Review',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:15 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '05:15 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1062',
+    reference: 'TB-EOD-802',
+    agentId: 'TB-AGT-1062',
+    agentName: 'Natasha Zulu',
+    agentPhone: '+260 97 556 7890',
+    avatarInitials: 'NZ',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Assigned',
+    expectedCash: 8900.0,
+    declaredCash: 8900.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:10 PM',
+    status: 'Pending Review',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:10 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '05:10 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1050',
+    reference: 'TB-EOD-803',
+    agentId: 'TB-AGT-1050',
+    agentName: 'Faith Mwewa',
+    agentPhone: '+260 97 456 7890',
+    avatarInitials: 'FM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Available',
+    expectedCash: 15200.0,
+    declaredCash: 15200.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '04:50 PM',
+    status: 'Reconciled',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '04:50 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '04:52 PM' },
+      { id: 'ev-4', event: 'Reconciled', timestamp: '05:00 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1055',
+    reference: 'TB-EOD-804',
+    agentId: 'TB-AGT-1055',
+    agentName: 'Brian Lungu',
+    agentPhone: '+260 97 678 9012',
+    avatarInitials: 'BL',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Assigned',
+    expectedCash: 21500.0,
+    declaredCash: 21200.0,
+    cashVariance: -300.0,
+    submittedTimestamp: '05:25 PM',
+    status: 'Exception',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:25 PM' },
+      { id: 'ev-3', event: 'Exception Flagged', timestamp: '05:28 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1064',
+    reference: 'TB-EOD-805',
+    agentId: 'TB-AGT-1064',
+    agentName: 'Joseph Kaunda',
+    agentPhone: '+260 97 123 4567',
+    avatarInitials: 'JK',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Available',
+    expectedCash: 9800.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1070',
+    reference: 'TB-EOD-806',
+    agentId: 'TB-AGT-1070',
+    agentName: 'Mwamba Musonda',
+    agentPhone: '+260 97 889 0123',
+    avatarInitials: 'MM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Assigned',
+    expectedCash: 11300.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1078',
+    reference: 'TB-EOD-807',
+    agentId: 'TB-AGT-1078',
+    agentName: 'Kondwani Banda',
+    agentPhone: '+260 96 334 5678',
+    avatarInitials: 'KB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Available',
+    expectedCash: 6400.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260922-1082',
+    reference: 'TB-EOD-808',
+    agentId: 'TB-AGT-1082',
+    agentName: 'Thandiwe Phiri',
+    agentPhone: '+260 95 445 6789',
+    avatarInitials: 'TP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '22-09-2026',
+    availability: 'Available',
+    expectedCash: 7200.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  // Records for 19-09-2026 - Lusaka Central Express Agency
+  {
+    id: 'EOD-20260919-1024',
+    reference: 'TB-EOD-901',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    avatarInitials: 'KP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Assigned',
+    expectedCash: 12400.0,
+    declaredCash: 12400.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:15 PM',
+    status: 'Pending Review',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:15 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '05:15 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1031',
+    reference: 'TB-EOD-902',
+    agentId: 'TB-AGT-1031',
+    agentName: 'Misozi Banda',
+    agentPhone: '+260 96 123 4567',
+    avatarInitials: 'MB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Available',
+    expectedCash: 8500.0,
+    declaredCash: 8500.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:00 PM',
+    status: 'Reconciled',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:00 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '05:05 PM' },
+      { id: 'ev-4', event: 'Reconciled', timestamp: '05:20 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1045',
+    reference: 'TB-EOD-903',
+    agentId: 'TB-AGT-1045',
+    agentName: 'Chileshe Tembo',
+    agentPhone: '+260 95 987 6543',
+    avatarInitials: 'CT',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Available',
+    expectedCash: 9200.0,
+    declaredCash: 9000.0,
+    cashVariance: -200.0,
+    submittedTimestamp: '05:25 PM',
+    status: 'Exception',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted with Variance', timestamp: '05:25 PM' },
+      { id: 'ev-3', event: 'Exception Flagged', timestamp: '05:28 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1052',
+    reference: 'TB-EOD-904',
+    agentId: 'TB-AGT-1052',
+    agentName: 'Mwape Lungu',
+    agentPhone: '+260 97 889 0123',
+    avatarInitials: 'ML',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Assigned',
+    expectedCash: 6800.0,
+    declaredCash: 6800.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:10 PM',
+    status: 'Pending Review',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+      { id: 'ev-2', event: 'Submitted', timestamp: '05:10 PM' },
+      { id: 'ev-3', event: 'Pending Review', timestamp: '05:12 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1060',
+    reference: 'TB-EOD-905',
+    agentId: 'TB-AGT-1060',
+    agentName: 'Natasha Zulu',
+    agentPhone: '+260 96 778 9012',
+    avatarInitials: 'NZ',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Available',
+    expectedCash: 11000.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1073',
+    reference: 'TB-EOD-906',
+    agentId: 'TB-AGT-1073',
+    agentName: 'Brian Mwanza',
+    agentPhone: '+260 95 667 8901',
+    avatarInitials: 'BM',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Available',
+    expectedCash: 5400.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1015',
+    reference: 'TB-EOD-907',
+    agentId: 'TB-AGT-1015',
+    agentName: 'Joseph Mwila',
+    agentPhone: '+260 96 334 5678',
+    avatarInitials: 'KB',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Offline',
+    expectedCash: 0.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  {
+    id: 'EOD-20260919-1082',
+    reference: 'TB-EOD-908',
+    agentId: 'TB-AGT-1082',
+    agentName: 'Thandiwe Phiri',
+    agentPhone: '+260 95 445 6789',
+    avatarInitials: 'TP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '19-09-2026',
+    availability: 'Available',
+    expectedCash: 7200.0,
+    declaredCash: undefined,
+    cashVariance: 0.0,
+    submittedTimestamp: undefined,
+    status: 'Pending Submission',
+    timeline: [
+      { id: 'ev-1', event: 'Submission Pending', timestamp: '08:00 AM' },
+    ],
+  },
+  // Previous records (01-09-2026) - Lusaka Central Express Agency
   {
     id: 'EOD-20260901-1024',
     reference: 'TB-EOD-801',
@@ -572,38 +1260,107 @@ export const MOCK_EOD_RECORDS: EndOfDayRecord[] = [
       { id: 'ev-2', event: 'Submitted', timestamp: '05:00 PM' },
     ],
   },
+  // 31-08-2026 Historical End-of-Day records for multi-date ranges
+  {
+    id: 'EOD-20260831-1024',
+    reference: 'TB-EOD-701',
+    agentId: 'TB-AGT-1024',
+    agentName: 'Kelvin Phiri',
+    agentPhone: '+260 97 234 5678',
+    avatarInitials: 'KP',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '31-08-2026',
+    availability: 'Available',
+    expectedCash: 11000.0,
+    declaredCash: 11000.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:00 PM',
+    status: 'Reconciled',
+    timeline: [
+      { id: 'ev-1', event: 'Submitted', timestamp: '05:00 PM' },
+      { id: 'ev-2', event: 'Reconciled', timestamp: '05:20 PM' },
+    ],
+  },
+  {
+    id: 'EOD-20260831-1062',
+    reference: 'TB-EOD-702',
+    agentId: 'TB-AGT-1062',
+    agentName: 'Natasha Zulu',
+    agentPhone: '+260 97 556 7890',
+    avatarInitials: 'NZ',
+    businessId: 'BIZ-LUS-001',
+    businessName: 'Lusaka Central Express Agency',
+    businessCentre: 'Lusaka Central Express Agency',
+    businessDate: '31-08-2026',
+    availability: 'Available',
+    expectedCash: 9500.0,
+    declaredCash: 9500.0,
+    cashVariance: 0.0,
+    submittedTimestamp: '05:15 PM',
+    status: 'Reconciled',
+    timeline: [
+      { id: 'ev-1', event: 'Submitted', timestamp: '05:15 PM' },
+      { id: 'ev-2', event: 'Reconciled', timestamp: '05:30 PM' },
+    ],
+  },
 ];
 
+export function parseDateStrToTime(str?: string): number | null {
+  if (!str) return null;
+  const parts = str.trim().split(/[-/.]/);
+  if (parts.length !== 3) return null;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const year = parseInt(parts[2], 10);
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  return new Date(year, month, day).getTime();
+}
+
+export function isDateWithinRange(recordDate: string, fromDate?: string, toDate?: string): boolean {
+  if (!fromDate && !toDate) return true;
+  const recTime = parseDateStrToTime(recordDate);
+  if (recTime === null) return false;
+  if (fromDate) {
+    const fromTime = parseDateStrToTime(fromDate);
+    if (fromTime !== null && recTime < fromTime) return false;
+  }
+  if (toDate) {
+    const toTime = parseDateStrToTime(toDate);
+    if (toTime !== null && recTime > toTime) return false;
+  }
+  return true;
+}
+
 /**
- * Derives Attendance metrics for a given businessId and date
+ * Derives Attendance metrics for a given businessId and date range
  */
 export function deriveAttendanceMetrics(
   records: AttendanceRecord[],
   businessId?: string,
-  date?: string
+  dateFrom?: string,
+  dateTo?: string
 ): AttendanceMetrics {
-  const isToday = !date || date === TODAY_DATE;
   let filtered = records;
   if (businessId) {
     filtered = filtered.filter((r) => r.businessId === businessId);
   }
-  if (date) {
-    filtered = filtered.filter((r) => r.date === date);
+  if (dateFrom || dateTo) {
+    filtered = filtered.filter((r) => isDateWithinRange(r.date, dateFrom, dateTo));
   }
 
+  const isTodayOnly =
+    (!dateFrom && !dateTo) ||
+    (dateFrom === TODAY_DATE && (!dateTo || dateTo === TODAY_DATE));
+
   const totalAgents = filtered.length;
-  // Current date: Checked In, Checked Out, Not Checked In. Never "No Attendance Record".
-  // Previous date: Checked Out, No Attendance Record. Never "Not Checked In" or active "Checked In".
-  const checkedIn = isToday
+  const checkedIn = isTodayOnly
     ? filtered.filter((r) => r.status === 'Checked In').length
-    : 0;
+    : filtered.filter((r) => r.status === 'Checked In').length;
   const checkedOut = filtered.filter((r) => r.status === 'Checked Out').length;
-  const notCheckedIn = isToday
-    ? filtered.filter((r) => r.status === 'Not Checked In').length
-    : 0;
-  const noAttendanceRecord = isToday
-    ? 0
-    : filtered.filter((r) => r.status === 'No Attendance Record').length;
+  const notCheckedIn = filtered.filter((r) => r.status === 'Not Checked In').length;
+  const noAttendanceRecord = filtered.filter((r) => r.status === 'No Attendance Record').length;
 
   return {
     totalAgents,
@@ -615,19 +1372,20 @@ export function deriveAttendanceMetrics(
 }
 
 /**
- * Derives End-of-Day metrics for a given businessId and date
+ * Derives End-of-Day metrics for a given businessId and date range
  */
 export function deriveEndOfDayMetrics(
   records: EndOfDayRecord[],
   businessId?: string,
-  date?: string
+  dateFrom?: string,
+  dateTo?: string
 ): EndOfDayMetrics {
   let filtered = records;
   if (businessId) {
     filtered = filtered.filter((r) => r.businessId === businessId);
   }
-  if (date) {
-    filtered = filtered.filter((r) => r.businessDate === date);
+  if (dateFrom || dateTo) {
+    filtered = filtered.filter((r) => isDateWithinRange(r.businessDate, dateFrom, dateTo));
   }
 
   const totalAgents = filtered.length;
@@ -650,48 +1408,18 @@ export function filterAttendanceRecords(
   filters: AttendanceFilters,
   businessId?: string
 ): AttendanceRecord[] {
-  const isToday = !filters.date || filters.date === TODAY_DATE;
+  const fromDate = filters.dateFrom || filters.date;
+  const toDate = filters.dateTo || filters.date;
 
-  return records
-    .filter((rec) => {
-      if (businessId && rec.businessId !== businessId) return false;
-      if (filters.date && rec.date !== filters.date) return false;
+  return records.filter((rec) => {
+    if (businessId && rec.businessId !== businessId) return false;
+    if (!isDateWithinRange(rec.date, fromDate, toDate)) return false;
 
-      const effectiveStatus: AttendanceStatusType =
-        !isToday && rec.status === 'Not Checked In'
-          ? 'No Attendance Record'
-          : !isToday && rec.status === 'Checked In'
-          ? 'Checked Out'
-          : rec.status;
+    if (filters.status !== 'ALL' && rec.status !== filters.status) return false;
+    if (filters.assignment !== 'ALL' && rec.assignment !== filters.assignment) return false;
 
-      if (filters.status !== 'ALL' && effectiveStatus !== filters.status) return false;
-      if (filters.assignment !== 'ALL' && rec.assignment !== filters.assignment) return false;
-
-      if (filters.search) {
-        const q = filters.search.toLowerCase().trim();
-        const matchName = rec.agentName.toLowerCase().includes(q);
-        const matchId = rec.agentId.toLowerCase().includes(q);
-        const matchPhone = rec.agentPhone.toLowerCase().includes(q);
-        if (!matchName && !matchId && !matchPhone) return false;
-      }
-
-      return true;
-    })
-    .map((rec) => {
-      if (!isToday && rec.status === 'Not Checked In') {
-        return { ...rec, status: 'No Attendance Record' as const };
-      }
-      if (!isToday && rec.status === 'Checked In') {
-        return {
-          ...rec,
-          status: 'Checked Out' as const,
-          checkOutTime: rec.checkOutTime || '05:00 PM',
-          checkedInDuration: rec.checkedInDuration === 'In Progress' ? '9 hrs' : rec.checkedInDuration,
-          totalHours: rec.totalHours === 'In Progress' ? '9 hrs' : rec.totalHours,
-        };
-      }
-      return rec;
-    });
+    return true;
+  });
 }
 
 export function filterEndOfDayRecords(
@@ -699,20 +1427,15 @@ export function filterEndOfDayRecords(
   filters: EndOfDayFilters,
   businessId?: string
 ): EndOfDayRecord[] {
+  const fromDate = filters.dateFrom || filters.businessDate;
+  const toDate = filters.dateTo || filters.businessDate;
+
   return records.filter((rec) => {
     if (businessId && rec.businessId !== businessId) return false;
-    if (filters.businessDate && rec.businessDate !== filters.businessDate) return false;
+    if (!isDateWithinRange(rec.businessDate, fromDate, toDate)) return false;
 
     if (filters.status !== 'ALL' && rec.status !== filters.status) return false;
     if (filters.availability !== 'ALL' && rec.availability !== filters.availability) return false;
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase().trim();
-      const matchName = rec.agentName.toLowerCase().includes(q);
-      const matchId = rec.agentId.toLowerCase().includes(q);
-      const matchRef = rec.reference.toLowerCase().includes(q);
-      if (!matchName && !matchId && !matchRef) return false;
-    }
 
     return true;
   });

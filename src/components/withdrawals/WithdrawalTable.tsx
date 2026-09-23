@@ -12,7 +12,7 @@ import {
   Ban,
 } from 'lucide-react';
 import { CustomerWithdrawal, WithdrawalStatus } from '../../types/admin';
-import { formatZMW, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
+import { formatZMW, formatZmwListingAmount, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 import { useAuth } from '../../context/AuthContext';
 
@@ -157,14 +157,14 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 </button>
               </th>
 
-              {/* 4. Withdrawal Amount */}
-              <th scope="col" className="py-3 px-4 text-right min-w-[145px]">
+              {/* 4. Withdrawal Amount (ZMW) */}
+              <th scope="col" className="py-3 px-4 text-left min-w-[145px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('amount')}
-                  className="group inline-flex items-center justify-end gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors ml-auto"
+                  className="group inline-flex items-center justify-start gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
-                  <span>Withdrawal Amount</span>
+                  <span>Withdrawal Amount (ZMW)</span>
                   {renderSortIcon('amount')}
                 </button>
               </th>
@@ -174,9 +174,9 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 Mobile Number
               </th>
 
-              {/* 6. Reserved Funds */}
-              <th scope="col" className="py-3 px-4 text-right min-w-[140px]">
-                Reserved Funds
+              {/* 6. Reserved Funds (ZMW) */}
+              <th scope="col" className="py-3 px-4 text-left min-w-[140px] amount-heading">
+                Reserved Funds (ZMW)
               </th>
 
               {/* 7. Status */}
@@ -272,9 +272,9 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 4. Withdrawal Amount (Right-aligned) */}
-                  <td className="py-3 px-4 align-middle text-right font-mono font-bold text-slate-900 text-xs">
-                    {formatZMW(record.amount)}
+                  {/* 4. Withdrawal Amount (ZMW) (Left-aligned) */}
+                  <td className="py-3 px-4 align-middle text-left font-mono font-bold text-slate-900 text-xs amount-cell">
+                    {formatZmwListingAmount(record.amount)}
                   </td>
 
                   {/* 5. Mobile Number (Complete, Unmasked Zambian Format) */}
@@ -284,11 +284,11 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                     </span>
                   </td>
 
-                  {/* 6. Reserved Funds (Right-aligned, Em Dash when inactive) */}
-                  <td className="py-3 px-4 align-middle text-right font-mono text-xs">
+                  {/* 6. Reserved Funds (ZMW) (Left-aligned, Em Dash when inactive) */}
+                  <td className="py-3 px-4 align-middle text-left font-mono text-xs amount-cell">
                     {reservedAmount !== null ? (
                       <span className="font-bold text-slate-900">
-                        {formatZMW(reservedAmount)}
+                        {formatZmwListingAmount(reservedAmount)}
                       </span>
                     ) : (
                       <span className="text-slate-400 font-bold" title="Reservation Released">

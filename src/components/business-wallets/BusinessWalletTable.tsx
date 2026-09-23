@@ -15,6 +15,7 @@ import {
   BusinessWalletState,
 } from '../../types/businessWallet';
 import { formatZMW } from '../../data/mockBusinessWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface BusinessWalletTableProps {
   wallets: BusinessGlobalWallet[];
@@ -163,37 +164,37 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
               </th>
 
               {/* 3. Posted Balance */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[125px]">
+              <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[125px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('postedBalance')}
-                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto cursor-pointer"
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
                 >
-                  <span>Posted Balance</span>
+                  <span>Posted Balance (ZMW)</span>
                   {renderSortIcon('postedBalance')}
                 </button>
               </th>
 
               {/* 4. Available Balance */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[125px]">
+              <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[125px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('availableBalance')}
-                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto cursor-pointer"
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
                 >
-                  <span>Available Balance</span>
+                  <span>Available Balance (ZMW)</span>
                   {renderSortIcon('availableBalance')}
                 </button>
               </th>
 
               {/* 5. Reserved Funds */}
-              <th scope="col" className="py-3 px-3 text-right whitespace-nowrap min-w-[115px]">
+              <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[115px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('reservedFunds')}
-                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto cursor-pointer"
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
                 >
-                  <span>Reserved Funds</span>
+                  <span>Reserved Funds (ZMW)</span>
                   {renderSortIcon('reservedFunds')}
                 </button>
               </th>
@@ -264,27 +265,27 @@ export const BusinessWalletTable: React.FC<BusinessWalletTableProps> = ({
                 </td>
 
                 {/* 3. Posted Balance (authoritative ledger balance) */}
-                <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
                   <span className="font-bold font-mono text-[#102025] text-xs sm:text-[13px]">
-                    {formatZMW(wallet.postedBalance)}
+                    {formatZmwListingAmount(wallet.postedBalance)}
                   </span>
                 </td>
 
                 {/* 4. Available Balance (excludes reserved funds) */}
-                <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
                   <span className="font-semibold font-mono text-emerald-700 text-xs sm:text-[13px]">
-                    {formatZMW(wallet.availableBalance)}
+                    {formatZmwListingAmount(wallet.availableBalance)}
                   </span>
                 </td>
 
                 {/* 5. Reserved Funds (financial amount only) */}
-                <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
                   <span
                     className={`font-semibold font-mono text-xs sm:text-[13px] ${
                       wallet.reservedFunds > 0 ? 'text-amber-700' : 'text-slate-400'
                     }`}
                   >
-                    {formatZMW(wallet.reservedFunds)}
+                    {formatZmwListingAmount(wallet.reservedFunds)}
                   </span>
                 </td>
 

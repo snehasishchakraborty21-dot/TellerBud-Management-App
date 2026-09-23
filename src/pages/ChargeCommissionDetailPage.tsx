@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -79,8 +80,14 @@ export const ChargeCommissionDetailPage: React.FC = () => {
     }
   }, [isCommission, commissionRecord, chargeRecord]);
 
+  const { currentUser } = useAuth();
+
   const handleBack = () => {
-    navigate('/super-admin/transactions/commissions');
+    if (currentUser?.role === 'business_owner') {
+      navigate('/business-owner/transactions/commissions');
+    } else {
+      navigate('/super-admin/transactions/commissions');
+    }
   };
 
   const handlePrint = () => {
@@ -111,18 +118,6 @@ export const ChargeCommissionDetailPage: React.FC = () => {
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
             Cancelled
-          </span>
-        );
-      case 'Refunded':
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            Refunded
-          </span>
-        );
-      case 'Reversed':
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            Reversed
           </span>
         );
       default:
@@ -160,12 +155,6 @@ export const ChargeCommissionDetailPage: React.FC = () => {
             Cancelled
           </span>
         );
-      case 'Reversed':
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            Reversed
-          </span>
-        );
       default:
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
@@ -191,7 +180,7 @@ export const ChargeCommissionDetailPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D93AA] text-white text-sm font-medium rounded-lg shadow-sm hover:bg-[#0b8094] transition-colors cursor-pointer"
         >
           <ArrowLeft size={16} />
-          <span>Return to Charges &amp; Commissions</span>
+          <span>Return to Charges &amp; Revenue</span>
         </button>
       </div>
     );
@@ -241,7 +230,7 @@ export const ChargeCommissionDetailPage: React.FC = () => {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0b8094] transition-colors mb-1.5 cursor-pointer"
             >
               <ArrowLeft size={14} />
-              <span>Back to Charges &amp; Commissions</span>
+              <span>Back to Charges &amp; Revenue</span>
             </button>
             <div className="flex items-center gap-3 flex-wrap">
               <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-teal-50 text-[#0D93AA] border border-[#0D93AA]/20">
@@ -268,7 +257,13 @@ export const ChargeCommissionDetailPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => navigate(`/super-admin/transactions/all/${originalTxn}`)}
+              onClick={() => {
+                if (currentUser?.role === 'business_owner') {
+                  navigate(`/business-owner/transactions`);
+                } else {
+                  navigate(`/super-admin/transactions/all/${originalTxn}`);
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
               title="View Original Transaction"
             >
@@ -561,7 +556,7 @@ export const ChargeCommissionDetailPage: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0b8094] transition-colors mb-1.5 cursor-pointer"
           >
             <ArrowLeft size={14} />
-            <span>Back to Charges &amp; Commissions</span>
+            <span>Back to Charges &amp; Revenue</span>
           </button>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200/50">
@@ -588,7 +583,13 @@ export const ChargeCommissionDetailPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate(`/super-admin/transactions/all/${comm.transactionReference}`)}
+            onClick={() => {
+              if (currentUser?.role === 'business_owner') {
+                navigate(`/business-owner/transactions`);
+              } else {
+                navigate(`/super-admin/transactions/all/${comm.transactionReference}`);
+              }
+            }}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
             title="View Original Transaction"
           >

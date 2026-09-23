@@ -292,6 +292,7 @@ export const BusinessOwnerMobileMoneyPage: React.FC = () => {
           sortDirection={sortDirection}
           onSort={handleSort}
           onRowClick={handleRowClick}
+          onView={handleRowClick}
           containerRef={tableContainerRef}
         />
 

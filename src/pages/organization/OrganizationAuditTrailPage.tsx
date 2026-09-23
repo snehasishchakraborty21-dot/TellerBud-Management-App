@@ -232,7 +232,6 @@ export const OrganizationAuditTrailPage: React.FC = () => {
               <option value="Assigned">Assigned</option>
               <option value="Moved">Moved</option>
               <option value="Reset">Reset</option>
-              <option value="Reversed">Reversed</option>
               <option value="Decommissioned">Decommissioned</option>
             </select>
 

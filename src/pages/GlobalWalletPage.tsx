@@ -17,7 +17,7 @@ import {
   GlobalWalletActivity,
   GlobalWalletTransactionType,
 } from '../types/admin';
-import { formatZMW } from '../utils/formatters';
+import { formatZMW, formatZmwListingAmount } from '../utils/formatters';
 import { AddFundsDrawer } from '../components/wallet/AddFundsDrawer';
 import { RequestWithdrawalDrawer } from '../components/wallet/RequestWithdrawalDrawer';
 import { ActivityDetailsModal } from '../components/wallet/ActivityDetailsModal';
@@ -232,8 +232,6 @@ export const GlobalWalletPage: React.FC = () => {
       case 'Pending':
       case 'Processing':
         return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'Reversed':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
       default:
         return 'bg-slate-100 text-slate-700 border-slate-200';
     }
@@ -462,8 +460,8 @@ export const GlobalWalletPage: React.FC = () => {
                 <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Reference</th>
                 <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Activity / Type</th>
                 <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Direction</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-right">Amount</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-right">Balance After</th>
+                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-left amount-heading">Amount (ZMW)</th>
+                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-left amount-heading">Balance After (ZMW)</th>
                 <th scope="col" className="px-3.5 py-3">Attribution / Source</th>
                 <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-center">Status</th>
                 <th scope="col" className="px-4 py-3 whitespace-nowrap text-right">Action</th>
@@ -536,18 +534,18 @@ export const GlobalWalletPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Amount */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-right font-mono font-bold">
+                      {/* Amount (ZMW) */}
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left font-mono font-bold amount-cell">
                         {isCredit ? (
-                          <span className="text-emerald-600">+{formatZMW(displayAmount)}</span>
+                          <span className="text-emerald-600">+{formatZmwListingAmount(displayAmount)}</span>
                         ) : (
-                          <span className="text-rose-600">-{formatZMW(displayAmount)}</span>
+                          <span className="text-rose-600">-{formatZmwListingAmount(displayAmount)}</span>
                         )}
                       </td>
 
-                      {/* Balance After */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-right font-mono font-bold text-slate-900">
-                        {formatZMW(act.balanceAfter)}
+                      {/* Balance After (ZMW) */}
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left font-mono font-bold text-slate-900 amount-cell">
+                        {formatZmwListingAmount(act.balanceAfter)}
                       </td>
 
                       {/* Attribution / Source */}
@@ -715,9 +713,9 @@ export const GlobalWalletPage: React.FC = () => {
                     <th scope="col" className="px-4 py-3">Timestamp</th>
                     <th scope="col" className="px-4 py-3">Type</th>
                     <th scope="col" className="px-4 py-3">Description</th>
-                    <th scope="col" className="px-4 py-3 text-right">Debit</th>
-                    <th scope="col" className="px-4 py-3 text-right">Credit</th>
-                    <th scope="col" className="px-4 py-3 text-right">Balance After</th>
+                    <th scope="col" className="px-4 py-3 text-left amount-heading">Debit (ZMW)</th>
+                    <th scope="col" className="px-4 py-3 text-left amount-heading">Credit (ZMW)</th>
+                    <th scope="col" className="px-4 py-3 text-left amount-heading">Balance After (ZMW)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -737,22 +735,22 @@ export const GlobalWalletPage: React.FC = () => {
                       <td className="px-4 py-3 max-w-xs text-slate-600">
                         {entry.description}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono font-medium">
+                      <td className="px-4 py-3 text-left font-mono font-medium amount-cell">
                         {entry.direction === 'Debit' ? (
-                          <span className="text-rose-600">-{formatZMW(entry.amount)}</span>
+                          <span className="text-rose-600">-{formatZmwListingAmount(entry.amount)}</span>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono font-medium">
+                      <td className="px-4 py-3 text-left font-mono font-medium amount-cell">
                         {entry.direction === 'Credit' ? (
-                          <span className="text-emerald-600">+{formatZMW(entry.amount)}</span>
+                          <span className="text-emerald-600">+{formatZmwListingAmount(entry.amount)}</span>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono font-semibold text-slate-900">
-                        {formatZMW(entry.balanceAfter)}
+                      <td className="px-4 py-3 text-left font-mono font-semibold text-slate-900 amount-cell">
+                        {formatZmwListingAmount(entry.balanceAfter)}
                       </td>
                     </tr>
                   ))}

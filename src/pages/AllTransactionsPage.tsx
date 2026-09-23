@@ -26,6 +26,7 @@ import {
 } from '../data/mockAllTransactionsData';
 import { TransactionProviderLogo } from '../components/transactions/TransactionProviderLogo';
 import { TransactionStatusBadge } from '../components/transactions/TransactionStatusBadge';
+import { formatZmwListingAmount } from '../utils/formatters';
 
 export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -393,7 +394,6 @@ export const AllTransactionsPage: React.FC = () => {
               <option value="Liquidity Transfer">Liquidity Transfer</option>
               <option value="Wallet Funding">Wallet Funding</option>
               <option value="Wallet Payout">Wallet Payout</option>
-              <option value="Reversal">Reversal</option>
             </select>
           </div>
         </div>
@@ -447,7 +447,6 @@ export const AllTransactionsPage: React.FC = () => {
               <option value="Failed">Failed</option>
               <option value="Cancelled">Cancelled</option>
               <option value="Rejected">Rejected</option>
-              <option value="Reversed">Reversed</option>
             </select>
           </div>
 
@@ -521,27 +520,27 @@ export const AllTransactionsPage: React.FC = () => {
           aria-label="All Transactions List"
           className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none"
         >
-          <table className="w-full text-left text-xs border-collapse table-fixed min-w-[960px]">
+          <table className="all-transactions-table w-full text-left text-xs border-collapse table-fixed">
             <colgroup>
               <col style={{ width: '12%' }} />
-              <col style={{ width: '11.5%' }} />
-              <col style={{ width: '17.5%' }} />
-              <col style={{ width: '14.5%' }} />
-              <col style={{ width: '8%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '19%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '7%' }} />
               <col style={{ width: '11%' }} />
+              <col style={{ width: '12%' }} />
               <col style={{ width: '13%' }} />
-              <col style={{ width: '12.5%' }} />
             </colgroup>
             <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
-              <tr className="border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] bg-[#F9FAFB]">
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Transaction</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Customer</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Agent / Business</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left">Service</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-center">Provider</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-right whitespace-nowrap">Amount</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-center whitespace-nowrap">Status</th>
-                <th scope="col" className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap">Action</th>
+              <tr className="border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] bg-[#F9FAFB] h-[44px]">
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Transaction</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Customer</th>
+                <th scope="col" style={{ width: '19%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Agent / Business</th>
+                <th scope="col" style={{ width: '14%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Service</th>
+                <th scope="col" style={{ width: '7%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Provider</th>
+                <th scope="col" style={{ width: '11%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle amount-heading">Amount (ZMW)</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Status</th>
+                <th scope="col" style={{ width: '13%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -560,20 +559,20 @@ export const AllTransactionsPage: React.FC = () => {
                     className="hover:bg-slate-50/70 transition-colors group"
                   >
                     {/* 1. TRANSACTION COLUMN (12%) */}
-                    <td className="py-3 px-3 align-top text-left">
-                      <div className="space-y-1">
-                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors truncate">
+                    <td className="py-3 px-3 align-middle text-left">
+                      <div className="space-y-0.5 min-w-0">
+                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors truncate" title={tx.reference}>
                           {tx.reference}
                         </span>
                         <span className="text-[11px] text-slate-600 block whitespace-nowrap font-medium">
                           {tx.dateTime}
                         </span>
-                        <div>{renderSourceBadge(tx.source)}</div>
+                        <div className="pt-0.5">{renderSourceBadge(tx.source)}</div>
                       </div>
                     </td>
 
-                    {/* 2. CUSTOMER COLUMN (11.5%) */}
-                    <td className="py-3 px-3 align-top text-left">
+                    {/* 2. CUSTOMER COLUMN (12%) */}
+                    <td className="py-3 px-3 align-middle text-left">
                       {tx.customerName === '—' ? (
                         <div className="text-slate-400 font-medium text-xs">—</div>
                       ) : (
@@ -590,30 +589,30 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 3. AGENT / BUSINESS COLUMN (17.5%) - Balanced spacing, natural wrap without overlapping Service */}
-                    <td className="py-3 px-3 align-top text-left">
+                    {/* 3. AGENT / BUSINESS COLUMN (19%) */}
+                    <td className="py-3 px-3 align-middle text-left">
                       {tx.service === 'Agent-to-Agent Liquidity' ? (
                         <div className="space-y-0.5 min-w-0">
-                          <div className="text-xs text-slate-800 break-words leading-tight">
+                          <div className="text-xs text-slate-800 leading-tight truncate">
                             <span className="text-slate-500 font-medium">From: </span>
                             <span className="font-semibold text-slate-900">{tx.sendingAgent || '—'}</span>
                             {tx.sendingAgentId && (
-                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1 whitespace-nowrap">
+                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1">
                                 ({tx.sendingAgentId})
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-slate-800 break-words leading-tight">
+                          <div className="text-xs text-slate-800 leading-tight truncate">
                             <span className="text-slate-500 font-medium">To: </span>
                             <span className="font-semibold text-slate-900">{tx.receivingAgent || '—'}</span>
                             {tx.receivingAgentId && (
-                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1 whitespace-nowrap">
+                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1">
                                 ({tx.receivingAgentId})
                               </span>
                             )}
                           </div>
                           {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words mt-0.5" title={tx.businessName}>
+                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2 mt-0.5" title={tx.businessName}>
                               {tx.businessName}
                             </div>
                           )}
@@ -631,23 +630,23 @@ export const AllTransactionsPage: React.FC = () => {
                         <div className="space-y-0.5 min-w-0">
                           <div className="text-xs text-slate-400 font-medium">—</div>
                           {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words" title={tx.businessName}>
+                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2" title={tx.businessName}>
                               {tx.businessName}
                             </div>
                           )}
                         </div>
                       ) : (
                         <div className="space-y-0.5 min-w-0">
-                          <div className="font-semibold text-slate-900 text-xs truncate" title={tx.agentName}>
-                            {tx.agentName}
+                          <div className="text-xs text-slate-900 truncate" title={tx.agentName}>
+                            <span className="font-semibold">{tx.agentName}</span>
+                            {tx.agentId && (
+                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1.5 whitespace-nowrap">
+                                {tx.agentId}
+                              </span>
+                            )}
                           </div>
-                          {tx.agentId && (
-                            <div className="text-[11px] font-mono text-slate-600 font-medium whitespace-nowrap">
-                              {tx.agentId}
-                            </div>
-                          )}
                           {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words" title={tx.businessName}>
+                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2" title={tx.businessName}>
                               {tx.businessName}
                             </div>
                           )}
@@ -655,8 +654,8 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 4. SERVICE COLUMN (14.5%) - Closer to Agent / Business */}
-                    <td className="py-3 px-3 align-top text-left">
+                    {/* 4. SERVICE COLUMN (14%) */}
+                    <td className="py-3 px-3 align-middle text-left">
                       <div className="space-y-0.5 min-w-0">
                         <div className="font-semibold text-slate-900 text-xs truncate" title={tx.service}>
                           {tx.service}
@@ -667,33 +666,39 @@ export const AllTransactionsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* 5. PROVIDER COLUMN (8%) - Compact centered logo directly beneath heading */}
-                    <td className="py-3 px-3 align-middle text-center">
-                      <div className="flex items-center justify-center">
+                    {/* 5. PROVIDER COLUMN (7%) */}
+                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
+                      <div className="flex items-center justify-start">
                         <TransactionProviderLogo provider={tx.provider} size="table" showName={false} />
                       </div>
                     </td>
 
-                    {/* 6. AMOUNT COLUMN (11%) - Reduced text size, semibold, single line, right-aligned */}
-                    <td className="py-3 px-3 align-middle text-right whitespace-nowrap">
+                    {/* 6. AMOUNT COLUMN (11%) - Single line, no currency prefix repetition, left-aligned */}
+                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
                       <span className="font-semibold text-slate-900 text-xs sm:text-[13px] tabular-nums whitespace-nowrap">
-                        ZMW {tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatZmwListingAmount(tx.amount)}
                       </span>
                     </td>
 
-                    {/* 7. STATUS COLUMN (13%) - Centered badge */}
-                    <td className="py-3 px-3 align-middle text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center">
+                    {/* 7. STATUS COLUMN (12%) - Left aligned badge */}
+                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
+                      <div className="flex items-center justify-start">
                         <TransactionStatusBadge status={tx.status} />
                       </div>
                     </td>
 
-                    {/* 8. ACTION COLUMN (12.5%) - Completely visible, left-aligned heading & button */}
+                    {/* 8. ACTION COLUMN (13%) - Fully visible View Details button */}
                     <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
                       <button
-                        onClick={() => navigate(`/transactions/${tx.reference}`)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors cursor-pointer whitespace-nowrap"
+                        type="button"
+                        id={`btn-view-details-${tx.reference.toLowerCase()}`}
+                        onClick={() => {
+                          const isBo = window.location.pathname.startsWith('/business-owner');
+                          navigate(isBo ? `/business-owner/transactions/${tx.reference}` : `/super-admin/transactions/${tx.reference}`);
+                        }}
+                        className="inline-flex items-center gap-1.5 h-[32px] px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
                         title={`View Details for ${tx.reference}`}
+                        aria-label={`View Details for ${tx.reference}`}
                       >
                         <Eye size={13} className="shrink-0 stroke-[2.2]" />
                         <span>View Details</span>

@@ -29,6 +29,7 @@ import {
   INITIAL_AUDIT_LOGS,
   hashPasscode,
 } from '../data/mockOrganizationData';
+import { City, CENTRAL_CITY_MASTER_LIST, formatStoreLocation } from '../data/mockCityData';
 import { MOCK_AGENTS } from '../data/mockAgentData';
 
 const STORAGE_KEYS = {
@@ -61,7 +62,20 @@ class OrganizationService {
   private loadFromStorage() {
     try {
       const sStores = localStorage.getItem(STORAGE_KEYS.STORES);
-      this.stores = sStores ? JSON.parse(sStores) : [...INITIAL_STORES];
+      const rawStores: Store[] = sStores ? JSON.parse(sStores) : [...INITIAL_STORES];
+      this.stores = rawStores.map((s) => {
+        const cityId = s.cityId || 'CITY-LUS';
+        const cityName = s.cityName || 'Lusaka';
+        const physicalAddress = s.physicalAddress || s.location || 'Plot 4821, Cairo Road';
+        return {
+          ...s,
+          storeCode: s.storeCode || s.storeNumber,
+          cityId,
+          cityName,
+          physicalAddress,
+          location: formatStoreLocation(physicalAddress, cityName),
+        };
+      });
 
       const sBooths = localStorage.getItem(STORAGE_KEYS.BOOTHS);
       this.booths = sBooths ? JSON.parse(sBooths) : [...INITIAL_BOOTHS];
@@ -206,6 +220,35 @@ class OrganizationService {
     });
   }
 
+  public getSupportedCities(
+    actor: AuthenticatedUser | null,
+    businessId?: string
+  ): { success: boolean; cities: City[]; error?: string } {
+    try {
+      const targetBusinessId = businessId || (actor ? this.getTenantBusinessId(actor) : undefined);
+      const activeCities = CENTRAL_CITY_MASTER_LIST.filter((city) => {
+        if (!city.isActive) return false;
+        if (
+          targetBusinessId &&
+          city.permittedBusinessIds &&
+          city.permittedBusinessIds.length > 0 &&
+          !city.permittedBusinessIds.includes(targetBusinessId)
+        ) {
+          return false;
+        }
+        return true;
+      }).sort((a, b) => a.cityName.localeCompare(b.cityName));
+
+      return { success: true, cities: activeCities };
+    } catch (error: any) {
+      return {
+        success: false,
+        cities: [],
+        error: error.message || 'Cities could not be loaded. Please refresh and try again.',
+      };
+    }
+  }
+
   public getStoreById(actor: AuthenticatedUser | null, storeId: string): Store | null {
     const businessId = this.getTenantBusinessId(actor);
     const store = this.stores.find((s) => s.id === storeId && s.businessId === businessId);
@@ -214,37 +257,74 @@ class OrganizationService {
 
   public createStore(
     actor: AuthenticatedUser,
-    data: { storeName: string; storeNumber: string; location?: string }
+    data: {
+      storeName: string;
+      storeNumber: string;
+      storeCode?: string;
+      cityId: string;
+      cityName?: string;
+      province?: string;
+      physicalAddress: string;
+    }
   ): { success: boolean; error?: string; store?: Store } {
     if (actor.role !== 'business_owner') {
       return { success: false, error: 'Forbidden: Only Business Owner can create stores.' };
     }
     const businessId = this.getTenantBusinessId(actor);
 
-    if (!data.storeName.trim()) {
-      return { success: false, error: 'Store Name is required.' };
+    if (!data.cityId?.trim()) {
+      return { success: false, error: 'Please select a city.' };
     }
-    if (!data.storeNumber.trim()) {
-      return { success: false, error: 'Store Number is required.' };
+    if (!data.storeName?.trim()) {
+      return { success: false, error: 'Store name is required.' };
     }
+    const storeNum = (data.storeNumber || data.storeCode || '').trim();
+    if (!storeNum) {
+      return { success: false, error: 'Store code or number is required.' };
+    }
+    if (!data.physicalAddress?.trim()) {
+      return { success: false, error: 'Physical address is required.' };
+    }
+
+    // Validate city from centralized master list
+    const cityMatch = CENTRAL_CITY_MASTER_LIST.find((c) => c.cityId === data.cityId && c.isActive);
+    if (!cityMatch) {
+      return { success: false, error: 'Selected city is invalid or unsupported.' };
+    }
+    if (
+      cityMatch.permittedBusinessIds &&
+      cityMatch.permittedBusinessIds.length > 0 &&
+      !cityMatch.permittedBusinessIds.includes(businessId)
+    ) {
+      return { success: false, error: `Operating in ${cityMatch.cityName} is not permitted for your business.` };
+    }
+
+    const resolvedCityName = data.cityName?.trim() || cityMatch.cityName;
+    const resolvedProvince = data.province?.trim() || cityMatch.province;
+    const combinedLocation = formatStoreLocation(data.physicalAddress, resolvedCityName);
 
     // Check unique storeNumber within business
     const exists = this.stores.some(
       (s) =>
         s.businessId === businessId &&
-        s.storeNumber.trim().toLowerCase() === data.storeNumber.trim().toLowerCase() &&
+        s.storeNumber.trim().toLowerCase() === storeNum.toLowerCase() &&
         s.status !== 'Archived'
     );
     if (exists) {
-      return { success: false, error: `Store number "${data.storeNumber}" already exists in this business.` };
+      return { success: false, error: `Store code or number "${storeNum}" already exists in this business.` };
     }
 
     const newStore: Store = {
       id: `STR-LUS-${Date.now().toString().slice(-4)}`,
       businessId,
       storeName: data.storeName.trim(),
-      storeNumber: data.storeNumber.trim(),
-      location: data.location?.trim() || undefined,
+      storeNumber: storeNum,
+      storeCode: storeNum,
+      cityId: data.cityId,
+      cityName: resolvedCityName,
+      province: resolvedProvince,
+      physicalAddress: data.physicalAddress.trim(),
+      location: combinedLocation,
       status: 'Active',
       createdAt: new Date().toISOString(),
       createdBy: actor.uid,
@@ -260,7 +340,7 @@ class OrganizationService {
       entityId: newStore.id,
       affectedName: `${newStore.storeName} (${newStore.storeNumber})`,
       previousValue: 'None',
-      newValue: `Store Name: ${newStore.storeName}, Store Number: ${newStore.storeNumber}`,
+      newValue: `Store Name: ${newStore.storeName}, Store Code: ${newStore.storeNumber}, City: ${newStore.cityName}${newStore.province ? ` (${newStore.province})` : ''}, Physical Location: ${newStore.physicalAddress}`,
       reason: 'New store branch registered in organization',
       actor,
       storeId: newStore.id,
@@ -274,7 +354,16 @@ class OrganizationService {
   public updateStore(
     actor: AuthenticatedUser,
     storeId: string,
-    data: { storeName: string; storeNumber: string; location?: string; status?: StoreStatus }
+    data: {
+      storeName: string;
+      storeNumber: string;
+      storeCode?: string;
+      cityId: string;
+      cityName?: string;
+      province?: string;
+      physicalAddress: string;
+      status?: StoreStatus;
+    }
   ): { success: boolean; error?: string; store?: Store } {
     if (actor.role !== 'business_owner') {
       return { success: false, error: 'Forbidden: Only Business Owner can update stores.' };
@@ -287,39 +376,95 @@ class OrganizationService {
 
     const current = this.stores[index];
 
+    if (!data.cityId?.trim()) {
+      return { success: false, error: 'Please select a city.' };
+    }
+    if (!data.storeName?.trim()) {
+      return { success: false, error: 'Store name is required.' };
+    }
+    const storeNum = (data.storeNumber || data.storeCode || '').trim();
+    if (!storeNum) {
+      return { success: false, error: 'Store code or number is required.' };
+    }
+    if (!data.physicalAddress?.trim()) {
+      return { success: false, error: 'Physical address is required.' };
+    }
+
+    // Validate city
+    const cityMatch = CENTRAL_CITY_MASTER_LIST.find((c) => c.cityId === data.cityId && c.isActive);
+    if (!cityMatch) {
+      return { success: false, error: 'Selected city is invalid or unsupported.' };
+    }
+    if (
+      cityMatch.permittedBusinessIds &&
+      cityMatch.permittedBusinessIds.length > 0 &&
+      !cityMatch.permittedBusinessIds.includes(businessId)
+    ) {
+      return { success: false, error: `Operating in ${cityMatch.cityName} is not permitted for your business.` };
+    }
+
     // Check duplicate storeNumber
     const duplicate = this.stores.some(
       (s) =>
         s.id !== storeId &&
         s.businessId === businessId &&
-        s.storeNumber.trim().toLowerCase() === data.storeNumber.trim().toLowerCase() &&
+        s.storeNumber.trim().toLowerCase() === storeNum.toLowerCase() &&
         s.status !== 'Archived'
     );
     if (duplicate) {
-      return { success: false, error: `Store number "${data.storeNumber}" is already in use by another store.` };
+      return { success: false, error: `Store number "${storeNum}" is already in use by another store.` };
     }
 
-    const previousValue = `Name: ${current.storeName}, Number: ${current.storeNumber}, Status: ${current.status}`;
+    const resolvedCityName = data.cityName?.trim() || cityMatch.cityName;
+    const resolvedProvince = data.province?.trim() || cityMatch.province;
+    const combinedLocation = formatStoreLocation(data.physicalAddress, resolvedCityName);
+
+    const cityChanged = current.cityId !== data.cityId || current.cityName !== resolvedCityName;
+    const addressChanged = current.physicalAddress?.trim() !== data.physicalAddress.trim();
+
+    let previousValue = `Name: ${current.storeName}, Code: ${current.storeNumber}, Status: ${current.status}`;
+    let newValue = `Name: ${data.storeName.trim()}, Code: ${storeNum}, Status: ${data.status || current.status}`;
+
+    if (cityChanged) {
+      previousValue += `, City: ${current.cityName || 'None'}`;
+      newValue += `, City: ${resolvedCityName}${resolvedProvince ? ` (${resolvedProvince})` : ''}`;
+    }
+    if (addressChanged) {
+      previousValue += `, Address: ${current.physicalAddress || current.location || 'None'}`;
+      newValue += `, Address: ${data.physicalAddress.trim()}`;
+    }
+
     const updatedStore: Store = {
       ...current,
-      storeName: data.storeName.trim() || current.storeName,
-      storeNumber: data.storeNumber.trim() || current.storeNumber,
-      location: data.location !== undefined ? data.location.trim() : current.location,
+      storeName: data.storeName.trim(),
+      storeNumber: storeNum,
+      storeCode: storeNum,
+      cityId: data.cityId,
+      cityName: resolvedCityName,
+      province: resolvedProvince,
+      physicalAddress: data.physicalAddress.trim(),
+      location: combinedLocation,
       status: data.status || current.status,
       updatedAt: new Date().toISOString(),
       updatedBy: actor.uid,
     };
 
     this.stores[index] = updatedStore;
+
+    const eventType = cityChanged ? 'Store City & Location Updated' : 'Store Updated';
+    const reason = cityChanged
+      ? `Store city changed from ${current.cityName || 'None'} to ${resolvedCityName}`
+      : 'Store details updated by Business Owner';
+
     this.logAuditEvent({
       businessId,
-      eventType: 'Store Updated',
+      eventType,
       entityType: 'Store',
       entityId: updatedStore.id,
       affectedName: `${updatedStore.storeName} (${updatedStore.storeNumber})`,
       previousValue,
-      newValue: `Name: ${updatedStore.storeName}, Number: ${updatedStore.storeNumber}, Status: ${updatedStore.status}`,
-      reason: 'Store details updated by Business Owner',
+      newValue,
+      reason,
       actor,
       storeId: updatedStore.id,
       storeName: updatedStore.storeName,
@@ -329,62 +474,125 @@ class OrganizationService {
     return { success: true, store: updatedStore };
   }
 
-  public archiveStore(
+  public deleteStore(
     actor: AuthenticatedUser,
     storeId: string,
-    reason: string
+    reason?: string
   ): { success: boolean; error?: string } {
+    // 1. Check authorization: Must be Business Owner
     if (actor.role !== 'business_owner') {
-      return { success: false, error: 'Forbidden: Only Business Owner can archive stores.' };
+      return { success: false, error: 'Forbidden: Only an authorized Business Owner can delete stores.' };
     }
     const businessId = this.getTenantBusinessId(actor);
     const store = this.stores.find((s) => s.id === storeId && s.businessId === businessId);
     if (!store) {
-      return { success: false, error: 'Store not found.' };
+      return { success: false, error: 'Store not found or does not belong to your authorized business.' };
     }
 
-    // Check if active booths exist
-    const activeBooths = this.booths.filter(
-      (b) => b.storeId === storeId && b.status === 'Active'
+    // 2. Collect store booths
+    const storeBooths = this.booths.filter((b) => b.storeId === storeId);
+    const storeBoothIds = storeBooths.map((b) => b.id);
+
+    // 3. Operational dependency checks: pending adjustments
+    const pendingAdjustments = this.balanceAdjustments.filter(
+      (a) =>
+        a.businessId === businessId &&
+        (a.storeId === storeId || storeBoothIds.includes(a.boothId)) &&
+        (a.status as string) === 'Pending'
     );
-    if (activeBooths.length > 0) {
+    if (pendingAdjustments.length > 0) {
       return {
         success: false,
-        error: `Cannot archive store with ${activeBooths.length} active booth(s). Please archive or move booths first.`,
+        error: `Cannot delete store: There are ${pendingAdjustments.length} pending balance adjustment(s) in this store. Please complete or reverse them before deletion.`,
       };
     }
 
-    // Check if active staff assigned
-    const activeStaff = this.staffAssignments.filter(
-      (sa) => sa.storeId === storeId && sa.isActive
+    // Check active assigned staff
+    const assignedStaffAssignments = this.staffAssignments.filter(
+      (sa) => (sa.storeId === storeId || storeBoothIds.includes(sa.boothId)) && sa.isActive
     );
-    if (activeStaff.length > 0) {
-      return {
-        success: false,
-        error: `Cannot archive store with ${activeStaff.length} assigned staff member(s). Please reassign staff first.`,
-      };
-    }
+    const assignedStaffIds = Array.from(new Set(assignedStaffAssignments.map((sa) => sa.userId)));
+    const unassignedStaff = this.users.filter((u) => assignedStaffIds.includes(u.id));
+    const unassignedStaffNames = unassignedStaff.map((u) => `${u.firstName} ${u.lastName}`);
 
-    store.status = 'Archived';
-    store.updatedAt = new Date().toISOString();
-    store.updatedBy = actor.uid;
+    // Check active devices mapped
+    const activeDeviceAssignments = this.deviceAssignments.filter(
+      (da) => (da.storeId === storeId || storeBoothIds.includes(da.boothId)) && da.isActive
+    );
+    const assignedDeviceIds = Array.from(new Set(activeDeviceAssignments.map((da) => da.deviceId)));
+    const unmappedDevices = this.devices.filter((d) => assignedDeviceIds.includes(d.id));
+    const unmappedDeviceNames = unmappedDevices.map((d) => `${d.deviceName} (${d.serialNumber})`);
 
+    const now = new Date().toISOString();
+
+    // 4. Create immutable audit entry BEFORE removing the operational record
     this.logAuditEvent({
       businessId,
-      eventType: 'Store Archived',
+      eventType: 'Store Deleted',
       entityType: 'Store',
       entityId: store.id,
       affectedName: `${store.storeName} (${store.storeNumber})`,
-      previousValue: 'Status: Active',
-      newValue: 'Status: Archived',
-      reason: reason || 'Store archived by Business Owner',
+      previousValue: `City: ${store.cityName || 'N/A'}${store.province ? ` (${store.province})` : ''}, Booths: ${storeBooths.length}, Staff: ${unassignedStaffNames.join(', ') || 'None'}, Devices: ${unmappedDeviceNames.join(', ') || 'None'}`,
+      newValue: 'Permanently Deleted (Booths removed, staff unassigned, devices unmapped)',
+      reason: reason || 'Store permanently deleted by Business Owner',
       actor,
       storeId: store.id,
       storeName: store.storeName,
     });
 
+    // 5. Unassign staff without deleting user accounts
+    this.staffAssignments.forEach((sa) => {
+      if ((sa.storeId === storeId || storeBoothIds.includes(sa.boothId)) && sa.isActive) {
+        sa.isActive = false;
+        sa.effectiveTo = now;
+        sa.updatedAt = now;
+        sa.updatedBy = actor.uid;
+      }
+    });
+
+    this.users.forEach((u) => {
+      if (u.storeId === storeId || storeBoothIds.includes(u.boothId || '')) {
+        u.storeId = undefined;
+        u.boothId = undefined;
+        u.updatedAt = now;
+        u.updatedBy = actor.uid;
+      }
+    });
+
+    // 6. Unmap devices without decommissioning or deleting
+    this.deviceAssignments.forEach((da) => {
+      if ((da.storeId === storeId || storeBoothIds.includes(da.boothId)) && da.isActive) {
+        da.isActive = false;
+        da.effectiveTo = now;
+        da.updatedAt = now;
+        da.updatedBy = actor.uid;
+      }
+    });
+
+    this.devices.forEach((d) => {
+      if (assignedDeviceIds.includes(d.id)) {
+        d.status = 'Available';
+        d.updatedAt = now;
+        d.updatedBy = actor.uid;
+      }
+    });
+
+    // 7. Delete all booths belonging to this store in same transaction
+    this.booths = this.booths.filter((b) => b.storeId !== storeId);
+
+    // 8. Permanently remove store record from backend
+    this.stores = this.stores.filter((s) => s.id !== storeId);
+
     this.saveToStorage();
     return { success: true };
+  }
+
+  public archiveStore(
+    actor: AuthenticatedUser,
+    storeId: string,
+    reason: string
+  ): { success: boolean; error?: string } {
+    return this.deleteStore(actor, storeId, reason);
   }
 
   // ==========================================
@@ -557,57 +765,62 @@ class OrganizationService {
     return { success: true, booth: updatedBooth };
   }
 
-  public archiveBooth(
+  public deleteBooth(
     actor: AuthenticatedUser,
     boothId: string,
-    reason: string
+    reason?: string
   ): { success: boolean; error?: string } {
+    // 1. Check authorization: Must be Business Owner
     if (actor.role !== 'business_owner') {
-      return { success: false, error: 'Forbidden: Only Business Owner can archive booths.' };
+      return { success: false, error: 'Forbidden: Only an authorized Business Owner can delete booths.' };
     }
     const businessId = this.getTenantBusinessId(actor);
     const booth = this.booths.find((b) => b.id === boothId && b.businessId === businessId);
     if (!booth) {
-      return { success: false, error: 'Booth not found.' };
+      return { success: false, error: 'Booth not found or does not belong to your authorized business.' };
     }
-
-    // Require staff to be moved or unassigned first
-    const activeStaff = this.staffAssignments.filter(
-      (sa) => sa.boothId === boothId && sa.isActive
-    );
-    if (activeStaff.length > 0) {
-      return {
-        success: false,
-        error: `Cannot archive booth. ${activeStaff.length} staff member(s) are currently assigned. Please move or unassign staff first.`,
-      };
-    }
-
-    // Require devices to be moved or unmapped first
-    const activeDevices = this.deviceAssignments.filter(
-      (da) => da.boothId === boothId && da.isActive
-    );
-    if (activeDevices.length > 0) {
-      return {
-        success: false,
-        error: `Cannot archive booth. ${activeDevices.length} device(s) are currently assigned. Please move or unmap devices first.`,
-      };
-    }
-
-    booth.status = 'Archived';
-    booth.updatedAt = new Date().toISOString();
-    booth.updatedBy = actor.uid;
 
     const store = this.stores.find((s) => s.id === booth.storeId);
 
+    // 2. Operational dependency checks: pending adjustments
+    const pendingAdjustments = this.balanceAdjustments.filter(
+      (a) => a.businessId === businessId && a.boothId === boothId && (a.status as string) === 'Pending'
+    );
+    if (pendingAdjustments.length > 0) {
+      return {
+        success: false,
+        error: `Cannot delete booth: There are ${pendingAdjustments.length} pending balance adjustment(s) for this booth. Please complete or reverse them before deletion.`,
+      };
+    }
+
+    // Check active assigned staff
+    const activeStaffAssignments = this.staffAssignments.filter(
+      (sa) => sa.boothId === boothId && sa.isActive
+    );
+    const assignedStaffIds = Array.from(new Set(activeStaffAssignments.map((sa) => sa.userId)));
+    const unassignedStaff = this.users.filter((u) => assignedStaffIds.includes(u.id));
+    const unassignedStaffNames = unassignedStaff.map((u) => `${u.firstName} ${u.lastName}`);
+
+    // Check active devices mapped
+    const activeDeviceAssignments = this.deviceAssignments.filter(
+      (da) => da.boothId === boothId && da.isActive
+    );
+    const assignedDeviceIds = Array.from(new Set(activeDeviceAssignments.map((da) => da.deviceId)));
+    const unmappedDevices = this.devices.filter((d) => assignedDeviceIds.includes(d.id));
+    const unmappedDeviceNames = unmappedDevices.map((d) => `${d.deviceName} (${d.serialNumber})`);
+
+    const now = new Date().toISOString();
+
+    // 3. Create immutable audit entry BEFORE removing the operational record
     this.logAuditEvent({
       businessId,
-      eventType: 'Booth Archived',
+      eventType: 'Booth Deleted',
       entityType: 'Booth',
       entityId: booth.id,
       affectedName: `${booth.boothName} (${booth.boothNumber})`,
-      previousValue: 'Status: Active',
-      newValue: 'Status: Archived',
-      reason: reason || 'Booth archived by Business Owner',
+      previousValue: `Store: ${store?.storeName || 'Unknown Store'}, Staff: ${unassignedStaffNames.join(', ') || 'None'}, Devices: ${unmappedDeviceNames.join(', ') || 'None'}`,
+      newValue: 'Permanently Deleted (Staff unassigned, devices unmapped)',
+      reason: reason || 'Booth permanently deleted by Business Owner',
       actor,
       storeId: store?.id,
       storeName: store?.storeName,
@@ -615,8 +828,55 @@ class OrganizationService {
       boothName: booth.boothName,
     });
 
+    // 4. Unassign staff without deleting user accounts
+    this.staffAssignments.forEach((sa) => {
+      if (sa.boothId === boothId && sa.isActive) {
+        sa.isActive = false;
+        sa.effectiveTo = now;
+        sa.updatedAt = now;
+        sa.updatedBy = actor.uid;
+      }
+    });
+
+    this.users.forEach((u) => {
+      if (u.boothId === boothId) {
+        u.boothId = undefined;
+        u.updatedAt = now;
+        u.updatedBy = actor.uid;
+      }
+    });
+
+    // 5. Unmap devices without decommissioning or deleting
+    this.deviceAssignments.forEach((da) => {
+      if (da.boothId === boothId && da.isActive) {
+        da.isActive = false;
+        da.effectiveTo = now;
+        da.updatedAt = now;
+        da.updatedBy = actor.uid;
+      }
+    });
+
+    this.devices.forEach((d) => {
+      if (assignedDeviceIds.includes(d.id)) {
+        d.status = 'Available';
+        d.updatedAt = now;
+        d.updatedBy = actor.uid;
+      }
+    });
+
+    // 6. Permanently remove booth record from backend
+    this.booths = this.booths.filter((b) => b.id !== boothId);
+
     this.saveToStorage();
     return { success: true };
+  }
+
+  public archiveBooth(
+    actor: AuthenticatedUser,
+    boothId: string,
+    reason: string
+  ): { success: boolean; error?: string } {
+    return this.deleteBooth(actor, boothId, reason);
   }
 
   // ==========================================
@@ -1147,99 +1407,6 @@ class OrganizationService {
 
     this.saveToStorage();
     return { success: true, adjustment: newAdjustment };
-  }
-
-  public reverseBalanceAdjustment(
-    actor: AuthenticatedUser,
-    originalAdjustmentId: string,
-    reversalReason: string
-  ): { success: boolean; error?: string; reversalAdjustment?: BalanceAdjustment } {
-    if (actor.role !== 'business_owner') {
-      return { success: false, error: 'Forbidden: Only Business Owner can reverse balance adjustments.' };
-    }
-    const businessId = this.getTenantBusinessId(actor);
-    const original = this.balanceAdjustments.find(
-      (a) => a.id === originalAdjustmentId && a.businessId === businessId
-    );
-    if (!original) {
-      return { success: false, error: 'Original adjustment record not found.' };
-    }
-    if (original.status === 'Reversed') {
-      return { success: false, error: 'This adjustment has already been reversed.' };
-    }
-    if (!reversalReason.trim()) {
-      return { success: false, error: 'Reversal reason is mandatory.' };
-    }
-
-    const reversedDirection: AdjustmentDirection =
-      original.direction === 'Increase' ? 'Decrease' : 'Increase';
-
-    const currentBalance = original.newBalance;
-    const restoredBalance =
-      reversedDirection === 'Increase'
-        ? currentBalance + original.amount
-        : currentBalance - original.amount;
-
-    if (restoredBalance < 0) {
-      return {
-        success: false,
-        error: `Cannot reverse adjustment: Resulting balance would be negative (ZMW ${restoredBalance.toFixed(
-          2
-        )}).`,
-      };
-    }
-
-    const revRef = `REV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const reversalRecord: BalanceAdjustment = {
-      id: `ADJ-${Date.now()}`,
-      adjustmentReference: revRef,
-      businessId,
-      staffUserId: original.staffUserId,
-      staffName: original.staffName,
-      storeId: original.storeId,
-      storeName: original.storeName,
-      boothId: original.boothId,
-      boothName: original.boothName,
-      balanceType: original.balanceType,
-      providerId: original.providerId,
-      direction: reversedDirection,
-      amount: original.amount,
-      previousBalance: currentBalance,
-      newBalance: restoredBalance,
-      reason: `Reversal of ${original.adjustmentReference}: ${reversalReason.trim()}`,
-      supportingReference: original.adjustmentReference,
-      status: 'Completed',
-      reversedAdjustmentId: original.id,
-      createdAt: new Date().toISOString(),
-      createdBy: actor.fullName,
-    };
-
-    original.status = 'Reversed';
-    this.balanceAdjustments.unshift(reversalRecord);
-
-    const ag = MOCK_AGENTS.find((a) => a.id === original.staffUserId);
-    if (ag && original.balanceType === 'Cash Balance') {
-      ag.cashPosition = restoredBalance;
-    }
-
-    this.logAuditEvent({
-      businessId,
-      eventType: 'Balance Adjustment Reversed',
-      entityType: 'BalanceAdjustment',
-      entityId: reversalRecord.id,
-      affectedName: `${original.staffName} (${original.staffUserId})`,
-      previousValue: `Adj Ref ${original.adjustmentReference}: ZMW ${currentBalance.toFixed(2)}`,
-      newValue: `Reversal ${reversalRecord.adjustmentReference}: Restored to ZMW ${restoredBalance.toFixed(2)}`,
-      reason: reversalReason.trim(),
-      actor,
-      storeId: original.storeId,
-      storeName: original.storeName,
-      boothId: original.boothId,
-      boothName: original.boothName,
-    });
-
-    this.saveToStorage();
-    return { success: true, reversalAdjustment: reversalRecord };
   }
 
   // ==========================================

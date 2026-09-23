@@ -31,6 +31,7 @@ import { AllTransactionsPage } from './pages/AllTransactionsPage';
 import { TransactionDetailPage } from './pages/TransactionDetailPage';
 import { ChargesCommissionsPage } from './pages/ChargesCommissionsPage';
 import { ChargeCommissionDetailPage } from './pages/ChargeCommissionDetailPage';
+import { AgentRevenueDetailPage } from './pages/AgentRevenueDetailPage';
 import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificationsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { NotificationDetailsPage } from './pages/NotificationDetailsPage';
@@ -371,12 +372,19 @@ function AppRoutes() {
         <Route path="transactions/:transactionId" element={<TransactionDetailPage />} />
         <Route path="transactions" element={<Navigate to="/super-admin/transactions/all" replace />} />
 
-        {/* Charges & Commissions */}
+        {/* Charges & Revenue */}
         <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
         <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
+        <Route path="transactions/charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
+        <Route path="charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
+        <Route path="charges-revenue/:recordId" element={<ChargeCommissionDetailPage />} />
 
         {/* Configuration: Vendors */}
         <Route path="configuration/vendors" element={<VendorsPage />} />
@@ -502,14 +510,22 @@ function AppRoutes() {
         <Route path="transactions" element={<Navigate to="/business-owner/transactions/all" replace />} />
         <Route path="transactions/:reference" element={<TransactionDetailPage />} />
 
-        {/* Charges & Commissions (Scoped to Business) */}
+        {/* Charges & Revenue (Scoped to Business) */}
         <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
         <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
+        <Route path="transactions/charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
+        <Route path="charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
+        <Route path="charges-revenue/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="commissions" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
         <Route path="charges" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
+        <Route path="revenue" element={<Navigate to="/business-owner/transactions/commissions" replace />} />
 
         {/* Notifications (Scoped to Business) */}
         <Route path="communication/notifications" element={<BusinessOwnerNotificationsPage />} />
@@ -724,6 +740,28 @@ function AppRoutes() {
         <Route index element={<TransactionDetailPage />} />
       </Route>
 
+      {/* Dedicated Agent Revenue Details Direct Route */}
+      <Route
+        path="/charges-revenue/agents/:agentId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner', 'business_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AgentRevenueDetailPage />} />
+      </Route>
+      <Route
+        path="/charges-commissions/agents/:agentId"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner', 'business_admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AgentRevenueDetailPage />} />
+      </Route>
+
       {/* TellerBud Admin Businesses Direct & Legacy Routes */}
       <Route
         path="/tellerbud-admin/businesses"
@@ -787,9 +825,20 @@ function AppRoutes() {
         <Route path=":reconciliationId" element={<ApiLedgerReconciliationDetailPage />} />
       </Route>
 
-      {/* Charges & Commissions Direct & Details Routes */}
+      {/* Charges & Revenue Direct & Details Routes */}
       <Route
         path="/charges-commissions"
+        element={
+          <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ChargesCommissionsPage />} />
+        <Route path=":recordId" element={<ChargeCommissionDetailPage />} />
+      </Route>
+      <Route
+        path="/charges-revenue"
         element={
           <ProtectedRoute allowedRoles={['super_admin', 'business_owner']}>
             <AdminLayout />

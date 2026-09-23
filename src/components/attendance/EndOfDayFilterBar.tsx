@@ -1,51 +1,67 @@
-import React from 'react';
-import { Search, RotateCcw, RefreshCw, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, RotateCcw, RefreshCw, AlertCircle } from 'lucide-react';
 import { EndOfDayFilters, EndOfDayStatusType, AgentAvailabilityType } from '../../types/attendance';
+import { AttendanceDateRangePicker } from './AttendanceDateRangePicker';
 
 interface EndOfDayFilterBarProps {
   filters: EndOfDayFilters;
   onFilterChange: (filters: EndOfDayFilters) => void;
-  onClear: () => void;
+  onExport: () => void;
+  onClearDateRange: () => void;
   onRefresh: () => void;
   isRefreshing?: boolean;
+  isExporting?: boolean;
+  isExportDisabled?: boolean;
 }
 
 export const EndOfDayFilterBar: React.FC<EndOfDayFilterBarProps> = ({
   filters,
   onFilterChange,
-  onClear,
+  onExport,
+  onClearDateRange,
   onRefresh,
   isRefreshing = false,
+  isExporting = false,
+  isExportDisabled = false,
 }) => {
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const hasAnyDate = Boolean(filters.dateFrom || filters.dateTo);
+  const isRangeValid = !validationError;
+
+  const handleDateChange = (from?: string, to?: string, isValid: boolean = true) => {
+    if (isValid) {
+      setValidationError(null);
+      onFilterChange({
+        ...filters,
+        dateFrom: from,
+        dateTo: to,
+        businessDate: from === to ? from : undefined,
+      });
+    } else {
+      // Invalid range
+      onFilterChange({
+        ...filters,
+        dateFrom: from,
+        dateTo: to,
+      });
+    }
+  };
+
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-2xs space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
-        {/* 1. Search Input */}
-        <div className="lg:col-span-4 relative">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={filters.search}
-            onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
-            placeholder="Search Agent name, ID or reference"
-            className="w-full pl-9 pr-3.5 py-2 text-xs rounded-lg border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] transition-all"
-          />
-        </div>
+    <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-200 shadow-2xs">
+      <div className="end-of-day-filter-row">
+        {/* 1. From Date & 2. To Date */}
+        <AttendanceDateRangePicker
+          className="contents"
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+          onChange={handleDateChange}
+          onValidationError={setValidationError}
+        />
 
-        {/* 2. Business Date (dd-mm-yyyy) */}
-        <div className="lg:col-span-2 relative">
-          <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={filters.businessDate}
-            onChange={(e) => onFilterChange({ ...filters, businessDate: e.target.value })}
-            placeholder="dd-mm-yyyy"
-            className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] transition-all font-mono"
-          />
-        </div>
-
-        {/* 3. Status Dropdown */}
-        <div className="lg:col-span-2">
+        {/* 3. All Statuses Dropdown */}
+        <div className="w-full min-w-0">
           <select
             value={filters.status}
             onChange={(e) =>
@@ -54,8 +70,8 @@ export const EndOfDayFilterBar: React.FC<EndOfDayFilterBarProps> = ({
                 status: e.target.value as EndOfDayStatusType | 'ALL',
               })
             }
-            aria-label="End-of-Day Status"
-            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] transition-all"
+            aria-label="All Statuses"
+            className="w-full h-[38px] px-3 text-xs bg-gray-50/70 border border-gray-200 rounded-lg text-gray-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
           >
             <option value="ALL">All Statuses</option>
             <option value="Pending Submission">Pending Submission</option>
@@ -65,8 +81,8 @@ export const EndOfDayFilterBar: React.FC<EndOfDayFilterBarProps> = ({
           </select>
         </div>
 
-        {/* 4. Availability Dropdown */}
-        <div className="lg:col-span-2">
+        {/* 4. All Availabilities Dropdown */}
+        <div className="w-full min-w-0">
           <select
             value={filters.availability}
             onChange={(e) =>
@@ -75,8 +91,8 @@ export const EndOfDayFilterBar: React.FC<EndOfDayFilterBarProps> = ({
                 availability: e.target.value as AgentAvailabilityType | 'ALL',
               })
             }
-            aria-label="Agent Availability"
-            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] transition-all"
+            aria-label="All Availabilities"
+            className="w-full h-[38px] px-3 text-xs bg-gray-50/70 border border-gray-200 rounded-lg text-gray-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
           >
             <option value="ALL">All Availabilities</option>
             <option value="Available">Available</option>
@@ -85,28 +101,73 @@ export const EndOfDayFilterBar: React.FC<EndOfDayFilterBarProps> = ({
           </select>
         </div>
 
-        {/* 5. Clear and Refresh Controls */}
-        <div className="lg:col-span-2 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClear}
-            className="flex-1 sm:flex-none px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Clear</span>
-          </button>
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="p-2 text-gray-600 hover:text-[#0D93AA] bg-gray-50 hover:bg-cyan-50 border border-gray-200 hover:border-[#0D93AA]/30 rounded-lg transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
-            title="Refresh End-of-Day"
-            aria-label="Refresh End-of-Day"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : ''}`} />
-          </button>
-        </div>
+        {/* 5. Export Button (Oceanic-green) */}
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={isExportDisabled || !isRangeValid || isExporting}
+          className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3.5 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
+            !isExportDisabled && isRangeValid && !isExporting
+              ? 'bg-[#0D93AA] hover:bg-[#0B7A8D] active:bg-[#096677] text-white border-[#0D93AA] shadow-2xs cursor-pointer'
+              : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none'
+          } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1`}
+          aria-label="Export End-of-Day"
+          title={
+            isExportDisabled
+              ? 'No records available to export'
+              : !isRangeValid
+              ? 'Select a valid date range to enable Export'
+              : 'Download End-of-Day records as CSV'
+          }
+        >
+          <Download size={15} className="shrink-0" />
+          <span>{isExporting ? 'Exporting...' : 'Export'}</span>
+        </button>
+
+        {/* 6. Clear Date Range Button */}
+        <button
+          type="button"
+          onClick={onClearDateRange}
+          disabled={!hasAnyDate}
+          className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
+            hasAnyDate
+              ? 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 cursor-pointer shadow-2xs'
+              : 'border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed shadow-none'
+          } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1`}
+          aria-label="Clear Date Range"
+          title="Clear Date Range and restore default view"
+        >
+          <RotateCcw size={14} className="shrink-0" />
+          <span>Clear Date Range</span>
+        </button>
+
+        {/* 7. Refresh Button */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer shadow-2xs disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1"
+          title="Refresh End-of-Day"
+          aria-label="Refresh End-of-Day"
+        >
+          <RefreshCw
+            size={14}
+            className={`shrink-0 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : 'text-gray-500'}`}
+          />
+          <span>Refresh</span>
+        </button>
       </div>
+
+      {/* Inline validation message */}
+      {validationError && (
+        <div
+          role="alert"
+          className="mt-2.5 pt-2 border-t border-rose-100 flex items-center gap-1.5 text-xs text-rose-600 font-medium animate-in fade-in"
+        >
+          <AlertCircle size={14} className="shrink-0" />
+          <span>{validationError}</span>
+        </div>
+      )}
     </div>
   );
 };

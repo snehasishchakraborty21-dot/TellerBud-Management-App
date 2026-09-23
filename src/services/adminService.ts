@@ -114,14 +114,14 @@ export interface IAdminService {
     businessId?: string
   ): Promise<{ items: import('../types/attendance').AttendanceRecord[]; total: number; metrics: import('../types/attendance').AttendanceMetrics }>;
   getAttendanceRecordById(id: string, businessId?: string): Promise<import('../types/attendance').AttendanceRecord | null>;
-  getAttendanceMetrics(businessId?: string, date?: string): Promise<import('../types/attendance').AttendanceMetrics>;
+  getAttendanceMetrics(businessId?: string, dateFrom?: string, dateTo?: string): Promise<import('../types/attendance').AttendanceMetrics>;
   checkInAgent(agentId: string, checkInTime?: string): Promise<{ success: boolean; record?: import('../types/attendance').AttendanceRecord }>;
   getEndOfDayRecords(
     filters?: Partial<import('../types/attendance').EndOfDayFilters>,
     businessId?: string
   ): Promise<{ items: import('../types/attendance').EndOfDayRecord[]; total: number; metrics: import('../types/attendance').EndOfDayMetrics }>;
   getEndOfDayRecordByReference(reference: string, businessId?: string): Promise<import('../types/attendance').EndOfDayRecord | null>;
-  getEndOfDayMetrics(businessId?: string, date?: string): Promise<import('../types/attendance').EndOfDayMetrics>;
+  getEndOfDayMetrics(businessId?: string, dateFrom?: string, dateTo?: string): Promise<import('../types/attendance').EndOfDayMetrics>;
   getBusinessProfile(businessId?: string): Promise<import('../types/businessProfile').BusinessProfile | null>;
   updateBusinessProfile(
     businessId: string,

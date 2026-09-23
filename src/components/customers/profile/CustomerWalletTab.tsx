@@ -188,9 +188,9 @@ export const CustomerWalletTab: React.FC<CustomerWalletTabProps> = ({
                 <th scope="col" className="py-3.5 px-4">Date & Time</th>
                 <th scope="col" className="py-3.5 px-4">Activity Type</th>
                 <th scope="col" className="py-3.5 px-4">Description</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Credit</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Debit</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Resulting Balance</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Credit</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Debit</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Resulting Balance</th>
                 <th scope="col" className="py-3.5 px-4 text-center">Status</th>
                 <th scope="col" className="py-3.5 px-4 text-center">Details</th>
               </tr>
@@ -231,17 +231,17 @@ export const CustomerWalletTab: React.FC<CustomerWalletTabProps> = ({
                   </td>
 
                   {/* Credit */}
-                  <td className="py-3.5 px-4 text-right whitespace-nowrap font-bold text-emerald-600">
+                  <td className="py-3.5 px-4 text-left whitespace-nowrap font-bold text-emerald-600 amount-cell">
                     {act.credit !== null ? `+ ${formatZMW(act.credit)}` : '—'}
                   </td>
 
                   {/* Debit */}
-                  <td className="py-3.5 px-4 text-right whitespace-nowrap font-bold text-rose-600">
+                  <td className="py-3.5 px-4 text-left whitespace-nowrap font-bold text-rose-600 amount-cell">
                     {act.debit !== null ? `- ${formatZMW(act.debit)}` : '—'}
                   </td>
 
                   {/* Resulting Balance */}
-                  <td className="py-3.5 px-4 text-right whitespace-nowrap font-semibold text-gray-900">
+                  <td className="py-3.5 px-4 text-left whitespace-nowrap font-semibold text-gray-900 amount-cell">
                     {formatZMW(act.resultingBalance)}
                   </td>
 

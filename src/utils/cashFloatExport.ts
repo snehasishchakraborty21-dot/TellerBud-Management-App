@@ -33,7 +33,7 @@ export function exportCashFloatRequestsToExcel(
       'Business': req.businessName,
       'Requested From': req.requestedFrom,
       'Request Type': req.requestType,
-      'Amount': formatZMW(req.amount),
+      'Amount (ZMW)': req.amount,
       'Requested Date & Time': formatWithdrawalDate(req.requestedAt),
       'Status': req.status,
       'Notes': req.notes || '—',

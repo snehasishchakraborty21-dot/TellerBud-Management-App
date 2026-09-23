@@ -30,7 +30,6 @@ export const TransactionStatusBadge: React.FC<TransactionStatusBadgeProps> = ({
       break;
 
     case 'Processing':
-    case 'Reversed':
       badgeStyle = 'bg-purple-50 text-purple-700 border-purple-200/90';
       break;
 

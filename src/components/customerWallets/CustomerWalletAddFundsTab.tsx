@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { CustomerWalletAddFundsRecord, AddFundsStatus } from '../../types/customerWallet';
 import { formatZMW } from '../../data/mockCustomerWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 
 interface CustomerWalletAddFundsTabProps {
@@ -256,10 +257,10 @@ export const CustomerWalletAddFundsTab: React.FC<CustomerWalletAddFundsTabProps>
                 <th className="py-3 px-4">Masked Mobile</th>
                 <th
                   onClick={() => handleSort('amount')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-4 text-left cursor-pointer hover:text-slate-900 group amount-heading"
                 >
-                  <div className="flex items-center justify-end gap-1">
-                    <span>Amount</span>
+                  <div className="flex items-center justify-start gap-1">
+                    <span>Amount (ZMW)</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
@@ -305,8 +306,8 @@ export const CustomerWalletAddFundsTab: React.FC<CustomerWalletAddFundsTabProps>
                       </td>
 
                       {/* 5. Amount */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-slate-900">
-                        {formatZMW(record.amount)}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-black text-slate-900 amount-cell">
+                        {formatZmwListingAmount(record.amount)}
                       </td>
 
                       {/* 6. Provider Reference */}

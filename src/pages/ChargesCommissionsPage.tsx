@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Coins,
   Users,
@@ -20,13 +20,22 @@ import {
   MOCK_CHARGES_COMMISSIONS_KPIS,
   MOCK_CHARGE_RECORDS,
   MOCK_COMMISSION_RECORDS,
+  calculateRevenueKpis,
+  MOCK_AGENT_TRANSACTION_REVENUE_RECORDS,
+  calculateAgentRevenueBreakdown,
+  MOCK_BUSINESS_AGENTS,
+  formatCurrencyAmount,
 } from '../data/mockChargesCommissionsData';
 import {
   ChargeRecord,
   CommissionRecord,
   ChargeStatus,
   CommissionSettlementStatus,
+  AgentRevenueFilters,
 } from '../types/chargesCommissions';
+import { formatZmwListingAmount } from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
+import { AgentRevenueBreakdownTable } from '../components/charges/AgentRevenueBreakdownTable';
 
 const SERVICES_OPTIONS = [
   'All Services',
@@ -57,8 +66,6 @@ const STATUSES_OPTIONS = [
   'Posted',
   'Settled',
   'Cancelled',
-  'Refunded',
-  'Reversed',
 ];
 
 function formatZMW(amount: number): string {
@@ -70,11 +77,85 @@ function formatZMW(amount: number): string {
 
 export const ChargesCommissionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const isBusinessOwner =
+    currentUser?.role === 'business_owner' ||
+    (typeof window !== 'undefined' && window.location.pathname.includes('/business-owner'));
 
-  // Active Tab: 'charges' | 'commissions'
-  const [activeTab, setActiveTab] = useState<'charges' | 'commissions'>('charges');
+  const currentBusinessId = currentUser?.businessId || 'BIZ-LUS-001';
+  const currentBusinessName = currentUser?.businessName || 'Lusaka Central Express Agency';
 
-  // Filter States
+  // Active Tab: 'agent-breakdown' (default for Business Owner) | 'charges' | 'commissions'
+  const [activeTab, setActiveTab] = useState<'agent-breakdown' | 'charges' | 'commissions'>(() => {
+    if (location.state && (location.state as any).activeTab) {
+      return (location.state as any).activeTab;
+    }
+    return 'agent-breakdown';
+  });
+
+  // Agent Revenue Breakdown Filters
+  const [agentFilters, setAgentFilters] = useState<AgentRevenueFilters>(() => {
+    if (location.state && (location.state as any).filters) {
+      return (location.state as any).filters;
+    }
+    return {
+      fromDate: '',
+      toDate: '',
+      storeId: 'All',
+      boothId: 'All',
+      agentId: 'All',
+    };
+  });
+
+  // Restore state if location.state changes
+  useEffect(() => {
+    if (location.state && (location.state as any).activeTab) {
+      setActiveTab((location.state as any).activeTab);
+    }
+    if (location.state && (location.state as any).filters) {
+      setAgentFilters((location.state as any).filters);
+    }
+  }, [location.state]);
+
+  // Business stores and booths for logged-in business
+  const businessStores = useMemo(
+    () => [
+      { id: 'STR-LUS-001', name: 'Cairo Road Flagship Store' },
+      { id: 'STR-LUS-002', name: 'Woodlands Mall Agency Branch' },
+      { id: 'STR-LUS-003', name: 'Matero East Hub' },
+    ],
+    []
+  );
+
+  const businessBooths = useMemo(
+    () => [
+      { id: 'BTH-LUS-101', name: 'Counter 1 - Cash & Float Desk', storeId: 'STR-LUS-001' },
+      { id: 'BTH-LUS-102', name: 'Counter 2 - MNO Pickup Hub', storeId: 'STR-LUS-001' },
+      { id: 'BTH-LUS-103', name: 'Counter 3 - Express Walk-in Desk', storeId: 'STR-LUS-001' },
+      { id: 'BTH-LUS-201', name: 'Booth 1 - Banking Services', storeId: 'STR-LUS-002' },
+      { id: 'BTH-LUS-202', name: 'Booth 2 - Cash In / Cash Out', storeId: 'STR-LUS-002' },
+      { id: 'BTH-LUS-301', name: 'Booth 1 - Main Till', storeId: 'STR-LUS-003' },
+      { id: 'BTH-LUS-302', name: 'Booth 2 - Fast Cash Desk', storeId: 'STR-LUS-003' },
+    ],
+    []
+  );
+
+  // Business agents belonging strictly to currentBusinessId (Tenant isolation)
+  const businessAgents = useMemo(() => {
+    return MOCK_BUSINESS_AGENTS.filter((a) => a.businessId === currentBusinessId);
+  }, [currentBusinessId]);
+
+  // Agent revenue breakdown and 100% reconciling KPIs
+  const { breakdown: agentBreakdown, kpis: agentKpis } = useMemo(() => {
+    return calculateAgentRevenueBreakdown(
+      MOCK_AGENT_TRANSACTION_REVENUE_RECORDS,
+      currentBusinessId,
+      agentFilters
+    );
+  }, [currentBusinessId, agentFilters]);
+
+  // Common Filter States (for Charges & Revenue records tabs)
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedService, setSelectedService] = useState('All Services');
   const [selectedProvider, setSelectedProvider] = useState('All Providers');
@@ -82,7 +163,7 @@ export const ChargesCommissionsPage: React.FC = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // Pagination State
+  // Pagination State for Charges & Revenue records tabs
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -106,9 +187,16 @@ export const ChargesCommissionsPage: React.FC = () => {
     }, 400);
   };
 
-  // Filter Charge Records (Cash Pickup Reservation Charges only, sorted descending by timestamp)
+  useEffect(() => {
+    document.title = 'Charges & Revenue | TellerBud';
+  }, []);
+
+  // Filter Charge Records (Strict tenant isolation to current business)
   const filteredChargeRecords = useMemo(() => {
     return MOCK_CHARGE_RECORDS.filter((rec) => {
+      // Business-level data isolation
+      if (isBusinessOwner && rec.businessId && rec.businessId !== currentBusinessId) return false;
+
       // Reservation Charge applies strictly to Customer Cash Pickup requests
       if (rec.service !== 'Cash Pickup') return false;
       // Valid Cash Pickup transaction types: Deposit, Withdrawal, Purchase
@@ -149,11 +237,30 @@ export const ChargesCommissionsPage: React.FC = () => {
 
       return true;
     }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  }, [searchQuery, selectedService, selectedProvider, selectedStatus, fromDate, toDate]);
+  }, [
+    isBusinessOwner,
+    currentBusinessId,
+    searchQuery,
+    selectedService,
+    selectedProvider,
+    selectedStatus,
+    fromDate,
+    toDate,
+  ]);
 
-  // Filter Commission Records (sorted descending by timestamp)
+  // Filter Commission Records (Strict tenant isolation to current business)
   const filteredCommissionRecords = useMemo(() => {
     return MOCK_COMMISSION_RECORDS.filter((rec) => {
+      // Business-level data isolation
+      if (
+        isBusinessOwner &&
+        rec.associatedBusiness &&
+        rec.associatedBusiness !== currentBusinessName &&
+        rec.associatedBusiness !== currentBusinessId
+      ) {
+        return false;
+      }
+
       // Search
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
@@ -194,9 +301,19 @@ export const ChargesCommissionsPage: React.FC = () => {
 
       return true;
     }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  }, [searchQuery, selectedService, selectedProvider, selectedStatus, fromDate, toDate]);
+  }, [
+    isBusinessOwner,
+    currentBusinessName,
+    currentBusinessId,
+    searchQuery,
+    selectedService,
+    selectedProvider,
+    selectedStatus,
+    fromDate,
+    toDate,
+  ]);
 
-  // Active records based on tab
+  // Active records based on tab (for charges / commissions tabs)
   const activeRecords = activeTab === 'charges' ? filteredChargeRecords : filteredCommissionRecords;
   const totalRecordsCount = activeRecords.length;
   const totalPages = Math.max(1, Math.ceil(totalRecordsCount / rowsPerPage));
@@ -207,10 +324,28 @@ export const ChargesCommissionsPage: React.FC = () => {
     return activeRecords.slice(startIndex, startIndex + rowsPerPage);
   }, [activeRecords, currentPage, rowsPerPage]);
 
-  // Safe navigation to details page
   const handleViewDetails = (recordId: string) => {
-    navigate(`/super-admin/transactions/commissions/${recordId}`);
+    if (isBusinessOwner) {
+      navigate(`/business-owner/transactions/commissions/${recordId}`);
+    } else {
+      navigate(`/super-admin/transactions/commissions/${recordId}`);
+    }
   };
+
+  // Dynamic revenue calculation for charges and commission records
+  const revenueKpis = useMemo(() => {
+    return calculateRevenueKpis(filteredChargeRecords, filteredCommissionRecords);
+  }, [filteredChargeRecords, filteredCommissionRecords]);
+
+  // Active reconciling KPIs:
+  // When viewing Agent Revenue Breakdown, use agentKpis which guarantees exact reconciliation
+  // with the listing totals across all filtered agents.
+  const activeKpis = useMemo(() => {
+    if (activeTab === 'agent-breakdown') {
+      return agentKpis;
+    }
+    return revenueKpis;
+  }, [activeTab, agentKpis, revenueKpis]);
 
   // Export filtered records to CSV
   const handleExport = () => {
@@ -250,7 +385,7 @@ export const ChargesCommissionsPage: React.FC = () => {
       document.body.removeChild(link);
     } else {
       const headers = [
-        'Commission Record',
+        'Revenue Record',
         'Transaction Ref',
         'Created At',
         'Recipient',
@@ -278,7 +413,7 @@ export const ChargesCommissionsPage: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `tellerbud_commissions_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `tellerbud_revenue_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -304,18 +439,6 @@ export const ChargesCommissionsPage: React.FC = () => {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
             Cancelled
-          </span>
-        );
-      case 'Refunded':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/80 whitespace-nowrap">
-            Refunded
-          </span>
-        );
-      case 'Reversed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200/80 whitespace-nowrap">
-            Reversed
           </span>
         );
       default:
@@ -354,12 +477,6 @@ export const ChargesCommissionsPage: React.FC = () => {
             Cancelled
           </span>
         );
-      case 'Reversed':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200/80 whitespace-nowrap">
-            Reversed
-          </span>
-        );
       default:
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 whitespace-nowrap">
@@ -373,116 +490,107 @@ export const ChargesCommissionsPage: React.FC = () => {
   const endRecordNum = Math.min(currentPage * rowsPerPage, totalRecordsCount);
 
   return (
-    <div id="charges-commissions-container" className="w-full space-y-4 px-3 sm:px-6 pt-2 pb-4">
-      {/* 1. FIVE COMPACT SUMMARY CARDS (Full Width, No Truncation, Exact Reconciled Values) */}
+    <div
+      id="charges-commissions-container"
+      aria-label="Charges & Revenue"
+      className="w-full space-y-4 px-3 sm:px-6 pt-2 pb-4"
+    >
+      <h1 className="sr-only">Charges &amp; Revenue</h1>
+      {/* 1. THREE COMPACT SUMMARY CARDS (Single horizontal line, equal height and width) */}
       <div
         id="kpi-summary-cards"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
-        {/* Card 1: Reservation Charges Collected */}
+        {/* Card 1: Reservation Charges */}
         <div
           id="kpi-reservation-charges"
-          className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-sm flex flex-col justify-between"
+          className="bg-white border border-slate-200/90 rounded-xl px-4 py-3 shadow-sm flex items-center justify-between gap-3 h-full"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold text-slate-600 uppercase tracking-wider leading-tight">
-              Reservation Charges Collected
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 whitespace-nowrap">
+            <span
+              className="text-sm font-semibold text-slate-700 normal-case whitespace-nowrap"
+              style={{ textTransform: 'none' }}
+            >
+              Reservation Charges
             </span>
-            <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#0D93AA] flex items-center justify-center flex-shrink-0">
-              <Coins size={16} />
-            </div>
+            <span className="text-base sm:text-lg font-bold font-mono text-slate-900 tracking-tight whitespace-nowrap">
+              {formatZMW(activeKpis.reservationCharges)}
+            </span>
           </div>
-          <div className="mt-3">
-            <div className="text-[20px] 2xl:text-[22px] font-bold font-mono text-slate-900 tracking-tight whitespace-nowrap">
-              {formatZMW(MOCK_CHARGES_COMMISSIONS_KPIS.reservationChargesCollected)}
-            </div>
+          <div className="w-9 h-9 rounded-lg bg-teal-50 text-[#0D93AA] flex items-center justify-center flex-shrink-0">
+            <Coins size={18} />
           </div>
         </div>
 
-        {/* Card 2: Agent Commissions */}
+        {/* Card 2: TellerBud Charges */}
         <div
-          id="kpi-agent-commissions"
-          className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-sm flex flex-col justify-between"
+          id="kpi-tellerbud-charges"
+          className="bg-white border border-slate-200/90 rounded-xl px-4 py-3 shadow-sm flex items-center justify-between gap-3 h-full"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold text-slate-600 uppercase tracking-wider leading-tight">
-              Agent Commissions
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 whitespace-nowrap">
+            <span
+              className="text-sm font-semibold text-slate-700 normal-case whitespace-nowrap"
+              style={{ textTransform: 'none' }}
+            >
+              TellerBud Charges
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-              <Users size={16} />
-            </div>
+            <span className="text-base sm:text-lg font-bold font-mono text-[#0D93AA] tracking-tight whitespace-nowrap">
+              {formatZMW(activeKpis.tellerBudCharges)}
+            </span>
           </div>
-          <div className="mt-3">
-            <div className="text-[20px] 2xl:text-[22px] font-bold font-mono text-emerald-700 tracking-tight whitespace-nowrap">
-              {formatZMW(MOCK_CHARGES_COMMISSIONS_KPIS.agentCommissions)}
-            </div>
+          <div className="w-9 h-9 rounded-lg bg-cyan-50 text-[#0D93AA] flex items-center justify-center flex-shrink-0">
+            <Landmark size={18} />
           </div>
         </div>
 
-        {/* Card 3: Business Commissions */}
+        {/* Card 3: Business Revenue */}
         <div
-          id="kpi-business-commissions"
-          className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-sm flex flex-col justify-between"
+          id="kpi-business-revenue"
+          className="bg-white border border-slate-200/90 rounded-xl px-4 py-3 shadow-sm flex items-center justify-between gap-3 h-full"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold text-slate-600 uppercase tracking-wider leading-tight">
-              Business Commissions
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 whitespace-nowrap">
+            <span
+              className="text-sm font-semibold text-slate-700 normal-case whitespace-nowrap"
+              style={{ textTransform: 'none' }}
+            >
+              Business Revenue
             </span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-              <Building2 size={16} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-[20px] 2xl:text-[22px] font-bold font-mono text-indigo-700 tracking-tight whitespace-nowrap">
-              {formatZMW(MOCK_CHARGES_COMMISSIONS_KPIS.businessCommissions)}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: TellerBud Revenue */}
-        <div
-          id="kpi-tellerbud-revenue"
-          className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold text-slate-600 uppercase tracking-wider leading-tight">
-              TellerBud Revenue
+            <span className="text-base sm:text-lg font-bold font-mono text-emerald-700 tracking-tight whitespace-nowrap">
+              {formatZMW(activeKpis.businessRevenue)}
             </span>
-            <div className="w-8 h-8 rounded-lg bg-cyan-50 text-[#0D93AA] flex items-center justify-center flex-shrink-0">
-              <Landmark size={16} />
-            </div>
           </div>
-          <div className="mt-3">
-            <div className="text-[20px] 2xl:text-[22px] font-bold font-mono text-[#0D93AA] tracking-tight whitespace-nowrap">
-              {formatZMW(MOCK_CHARGES_COMMISSIONS_KPIS.tellerBudRevenue)}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 5: Pending Settlements */}
-        <div
-          id="kpi-pending-settlements"
-          className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-sm flex flex-col justify-between"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] font-semibold text-slate-600 uppercase tracking-wider leading-tight">
-              Pending Settlements
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
-              <Clock size={16} />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-[20px] 2xl:text-[22px] font-bold font-mono text-amber-700 tracking-tight whitespace-nowrap">
-              {formatZMW(MOCK_CHARGES_COMMISSIONS_KPIS.pendingSettlements)}
-            </div>
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+            <Building2 size={18} />
           </div>
         </div>
       </div>
 
-      {/* 2. TABS: Charge Records (default) & Commission Records */}
+      {/* 2. TABS: Agent Revenue Breakdown (default), Charge Records & Revenue Records */}
       <div id="tabs-header" className="border-b border-slate-200 bg-white px-2 rounded-t-xl">
-        <nav className="flex space-x-4" aria-label="Tabs">
+        <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+          <button
+            id="tab-agent-breakdown"
+            type="button"
+            onClick={() => setActiveTab('agent-breakdown')}
+            className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'agent-breakdown'
+                ? 'border-[#0D93AA] text-[#0D93AA] bg-cyan-50/40 rounded-t-lg'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+            }`}
+          >
+            <Users size={16} />
+            <span>Agent Revenue Breakdown</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
+                activeTab === 'agent-breakdown'
+                  ? 'bg-[#0D93AA]/15 text-[#0D93AA]'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {agentBreakdown.length}
+            </span>
+          </button>
+
           <button
             id="tab-charge-records"
             type="button"
@@ -523,7 +631,7 @@ export const ChargesCommissionsPage: React.FC = () => {
             }`}
           >
             <Layers size={16} />
-            <span>Commission Records</span>
+            <span>Revenue Records</span>
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
                 activeTab === 'commissions'
@@ -537,11 +645,33 @@ export const ChargesCommissionsPage: React.FC = () => {
         </nav>
       </div>
 
-      {/* 3. COMMON FILTERS SECTION (Organized into 2 clean, balanced rows) */}
-      <div
-        id="filter-controls-section"
-        className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3"
-      >
+      {/* 3. TAB CONTENT */}
+      {activeTab === 'agent-breakdown' ? (
+        <AgentRevenueBreakdownTable
+          breakdown={agentBreakdown}
+          allTransactions={MOCK_AGENT_TRANSACTION_REVENUE_RECORDS}
+          filters={agentFilters}
+          onFilterChange={setAgentFilters}
+          stores={businessStores}
+          booths={businessBooths}
+          agents={businessAgents}
+          onResetFilters={() =>
+            setAgentFilters({
+              fromDate: '',
+              toDate: '',
+              storeId: 'All',
+              boothId: 'All',
+              agentId: 'All',
+            })
+          }
+        />
+      ) : (
+        <>
+          {/* COMMON FILTERS SECTION (Organized into 2 clean, balanced rows) */}
+          <div
+            id="filter-controls-section"
+            className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3"
+          >
         {/* Row 1: Search, Service, Provider, Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
           {/* Search */}
@@ -717,8 +847,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                   <th className="py-3.5 px-4">Transaction</th>
                   <th className="py-3.5 px-4">Charged Customer</th>
                   <th className="py-3.5 px-4">Service</th>
-                  <th className="py-3.5 px-4">Transaction Amount</th>
-                  <th className="py-3.5 px-4">Reservation Charge</th>
+                  <th className="py-3.5 px-4 text-left amount-heading">Transaction Amount (ZMW)</th>
+                  <th className="py-3.5 px-4 text-left amount-heading">Reservation Charge (ZMW)</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
@@ -777,17 +907,17 @@ export const ChargesCommissionsPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 5. Transaction Amount (Separated, one line) */}
-                      <td className="py-3 px-4">
+                      {/* 5. Transaction Amount (ZMW) */}
+                      <td className="py-3 px-4 text-left amount-cell">
                         <div className="font-mono font-medium text-slate-700 whitespace-nowrap">
-                          {formatZMW(row.transactionAmount)}
+                          {formatZmwListingAmount(row.transactionAmount)}
                         </div>
                       </td>
 
-                      {/* 6. Reservation Charge (Separated, one line) */}
-                      <td className="py-3 px-4">
+                      {/* 6. Reservation Charge (ZMW) */}
+                      <td className="py-3 px-4 text-left amount-cell">
                         <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {formatZMW(row.reservationCharge)}
+                          {formatZmwListingAmount(row.reservationCharge)}
                         </div>
                       </td>
 
@@ -818,12 +948,12 @@ export const ChargesCommissionsPage: React.FC = () => {
             <table id="commission-records-table" className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-[12px] font-semibold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Commission Record</th>
+                  <th className="py-3.5 px-4">Revenue Record</th>
                   <th className="py-3.5 px-4">Transaction</th>
                   <th className="py-3.5 px-4">Recipient</th>
                   <th className="py-3.5 px-4">Recipient Type</th>
                   <th className="py-3.5 px-4">Calculation Basis</th>
-                  <th className="py-3.5 px-4">Commission Amount</th>
+                  <th className="py-3.5 px-4 text-left amount-heading">Commission Amount (ZMW)</th>
                   <th className="py-3.5 px-4">Settlement Status</th>
                   <th className="py-3.5 px-4 text-right">Action</th>
                 </tr>
@@ -832,7 +962,7 @@ export const ChargesCommissionsPage: React.FC = () => {
                 {paginatedRecords.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12 text-center text-slate-500">
-                      No commission records matching your criteria.
+                      No revenue records matching your criteria.
                     </td>
                   </tr>
                 ) : (
@@ -842,7 +972,7 @@ export const ChargesCommissionsPage: React.FC = () => {
                       id={`commission-row-${row.id}`}
                       className="hover:bg-slate-50/70 transition-colors"
                     >
-                      {/* 1. Commission Record */}
+                      {/* 1. Revenue Record */}
                       <td className="py-3 px-4">
                         <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap">
                           {row.reference}
@@ -902,10 +1032,10 @@ export const ChargesCommissionsPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 6. Commission Amount */}
-                      <td className="py-3 px-4">
+                      {/* 6. Commission Amount (ZMW) */}
+                      <td className="py-3 px-4 text-left amount-cell">
                         <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {formatZMW(row.commissionAmount)}
+                          {formatZmwListingAmount(row.commissionAmount)}
                         </div>
                       </td>
 
@@ -941,7 +1071,7 @@ export const ChargesCommissionsPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <span id="pagination-record-count-text" className="font-medium text-slate-700">
               Showing {startRecordNum} to {endRecordNum} of {totalRecordsCount}{' '}
-              {activeTab === 'charges' ? 'charge records' : 'commission records'}
+              {activeTab === 'charges' ? 'charge records' : 'revenue records'}
             </span>
 
             {/* Rows Per Page Selector */}
@@ -996,7 +1126,9 @@ export const ChargesCommissionsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
+  )}
+</div>
   );
 };
 

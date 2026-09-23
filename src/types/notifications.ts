@@ -8,6 +8,7 @@ export type NotificationCategory =
   | 'End-of-Day'
   | 'Global Wallet'
   | 'Charges & Commissions'
+  | 'Charges & Revenue'
   | 'System';
 
 export type NotificationPriority = 'Normal' | 'Important' | 'Urgent';

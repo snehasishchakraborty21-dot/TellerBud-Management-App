@@ -28,6 +28,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { businessService } from '../services/businessService';
+import { formatZmwListingAmount } from '../utils/formatters';
 import {
   BusinessRecord,
   BusinessAccountStatus,
@@ -771,8 +772,8 @@ export const BusinessDetailsPage: React.FC = () => {
                         <th className="py-3 px-4">Date & Time</th>
                         <th className="py-3 px-4">Reference</th>
                         <th className="py-3 px-4">Transaction Type</th>
-                        <th className="py-3 px-4 text-right">Amount (ZMW)</th>
-                        <th className="py-3 px-4 text-right">Running Balance</th>
+                        <th className="py-3 px-4 text-left amount-heading">Amount (ZMW)</th>
+                        <th className="py-3 px-4 text-left amount-heading">Running Balance (ZMW)</th>
                         <th className="py-3 px-4 text-center">Status</th>
                       </tr>
                     </thead>
@@ -790,13 +791,13 @@ export const BusinessDetailsPage: React.FC = () => {
                             <td className="py-3.5 px-4 font-semibold text-gray-900">
                               {led.transactionType}
                             </td>
-                            <td className={`py-3.5 px-4 text-right font-mono font-bold ${
+                            <td className={`py-3.5 px-4 text-left font-mono font-bold amount-cell ${
                               isPositive ? 'text-emerald-600' : 'text-slate-800'
                             }`}>
-                              {isPositive ? `+${formatZMW(led.amount)}` : formatZMW(led.amount)}
+                              {isPositive ? `+${formatZmwListingAmount(led.amount)}` : formatZmwListingAmount(led.amount)}
                             </td>
-                            <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-800">
-                              {formatZMW(led.runningBalance)}
+                            <td className="py-3.5 px-4 text-left font-mono font-semibold text-slate-800 amount-cell">
+                              {formatZmwListingAmount(led.runningBalance)}
                             </td>
                             <td className="py-3.5 px-4 text-center">
                               <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">

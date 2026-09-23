@@ -247,6 +247,8 @@ export function isBusinessOwnerDatePage(pathname: string): boolean {
     '/business-owner/transactions',
     '/business-owner/transactions/commissions',
     '/business-owner/charges-commissions',
+    '/business-owner/charges-revenue',
+    '/business-owner/transactions/charges-revenue',
   ];
 
   // Also include exact root '/business-owner'

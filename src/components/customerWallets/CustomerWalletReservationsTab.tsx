@@ -15,6 +15,7 @@ import {
   WalletReservationType,
 } from '../../types/customerWallet';
 import { formatZMW } from '../../data/mockCustomerWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface CustomerWalletReservationsTabProps {
   reservations: CustomerWalletReservation[];
@@ -251,13 +252,13 @@ export const CustomerWalletReservationsTab: React.FC<CustomerWalletReservationsT
                 </th>
                 <th className="py-3 px-4">Reservation Type</th>
                 <th className="py-3 px-4">Related Reference</th>
-                <th className="py-3 px-4 text-right">Original Amount</th>
+                <th className="py-3 px-4 text-left amount-heading">Original Amount (ZMW)</th>
                 <th
                   onClick={() => handleSort('amount')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-4 text-left cursor-pointer hover:text-slate-900 group amount-heading"
                 >
-                  <div className="flex items-center justify-end gap-1">
-                    <span>Remaining Hold</span>
+                  <div className="flex items-center justify-start gap-1">
+                    <span>Remaining Hold (ZMW)</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
@@ -297,13 +298,13 @@ export const CustomerWalletReservationsTab: React.FC<CustomerWalletReservationsT
                     </td>
 
                     {/* 5. Original Amount */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono text-slate-700 font-semibold">
-                      {formatZMW(res.originalAmount)}
+                    <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono text-slate-700 font-semibold amount-cell">
+                      {formatZmwListingAmount(res.originalAmount)}
                     </td>
 
                     {/* 6. Remaining Hold */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-amber-700">
-                      {formatZMW(res.remainingAmount)}
+                    <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-black text-amber-700 amount-cell">
+                      {formatZmwListingAmount(res.remainingAmount)}
                     </td>
 
                     {/* 7. Status */}

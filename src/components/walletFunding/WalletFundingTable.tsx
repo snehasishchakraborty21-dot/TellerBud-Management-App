@@ -6,6 +6,7 @@ import {
   WalletFundingSortDirection,
 } from '../../types/walletFunding';
 import { formatZMW } from '../../data/mockWalletFundingData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 import { getCustomerRegisteredPhone } from '../../data/mockCustomerData';
 import { useAuth } from '../../context/AuthContext';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
@@ -198,14 +199,14 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                 </div>
               </th>
 
-              {/* 4. Amount */}
+              {/* 4. Amount (ZMW) */}
               <th
                 scope="col"
-                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-right w-[140px]"
+                className="py-3 px-4 cursor-pointer hover:text-slate-900 select-none text-left w-[140px] amount-heading"
                 onClick={() => onSort('amount')}
               >
-                <div className="flex items-center justify-end gap-1.5">
-                  <span>Amount</span>
+                <div className="flex items-center justify-start gap-1.5">
+                  <span>Amount (ZMW)</span>
                   {renderSortIcon('amount')}
                 </div>
               </th>
@@ -294,9 +295,9 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 4. Amount */}
-                  <td className="py-3 px-4 align-middle text-right font-mono font-bold text-slate-900 text-xs">
-                    {formatZMW(record.amount)}
+                  {/* 4. Amount (ZMW) */}
+                  <td className="py-3 px-4 align-middle text-left font-mono font-bold text-slate-900 text-xs amount-cell">
+                    {formatZmwListingAmount(record.amount)}
                   </td>
 
                   {/* 5. Status */}

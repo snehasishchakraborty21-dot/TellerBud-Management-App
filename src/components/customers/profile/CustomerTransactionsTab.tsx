@@ -134,9 +134,9 @@ export const CustomerTransactionsTab: React.FC<CustomerTransactionsTabProps> = (
                 <th scope="col" className="py-3.5 px-4">Reference / Date</th>
                 <th scope="col" className="py-3.5 px-4">Service Channel</th>
                 <th scope="col" className="py-3.5 px-4">Transaction Type</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Amount</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Charges</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Customer Total</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Amount</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Charges</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Customer Total</th>
                 <th scope="col" className="py-3.5 px-4 text-center">Action</th>
               </tr>
             </thead>
@@ -179,17 +179,17 @@ export const CustomerTransactionsTab: React.FC<CustomerTransactionsTabProps> = (
                       </td>
 
                       {/* 4. Amount */}
-                      <td className="py-3.5 px-4 whitespace-nowrap text-right font-bold text-gray-900">
+                      <td className="py-3.5 px-4 whitespace-nowrap text-left font-bold text-gray-900 amount-cell">
                         {formatZMW(txn.amount)}
                       </td>
 
                       {/* 5. Charges */}
-                      <td className="py-3.5 px-4 whitespace-nowrap text-right text-gray-600">
+                      <td className="py-3.5 px-4 whitespace-nowrap text-left text-gray-600 amount-cell">
                         {charges > 0 ? formatZMW(charges) : <span className="text-gray-400">ZMW 0.00</span>}
                       </td>
 
                       {/* 6. Customer Total */}
-                      <td className="py-3.5 px-4 whitespace-nowrap text-right font-bold text-[#0D93AA]">
+                      <td className="py-3.5 px-4 whitespace-nowrap text-left font-bold text-[#0D93AA] amount-cell">
                         {formatZMW(txn.customerTotal || txn.amount + charges)}
                       </td>
 

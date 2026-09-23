@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { CustomerWalletLedgerEntry, WalletLedgerEntryType } from '../../types/customerWallet';
 import { formatZMW } from '../../data/mockCustomerWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface CustomerWalletLedgerTabProps {
   ledger: CustomerWalletLedgerEntry[];
@@ -235,14 +236,14 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                 </th>
                 <th className="py-3 px-4">Entry Type</th>
                 <th className="py-3 px-4">Source</th>
-                <th className="py-3 px-4 text-right">Credit</th>
-                <th className="py-3 px-4 text-right">Debit</th>
+                <th className="py-3 px-4 text-left amount-heading">Credit (ZMW)</th>
+                <th className="py-3 px-4 text-left amount-heading">Debit (ZMW)</th>
                 <th
                   onClick={() => handleSort('balance')}
-                  className="py-3 px-4 text-right cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-4 text-left cursor-pointer hover:text-slate-900 group amount-heading"
                 >
-                  <div className="flex items-center justify-end gap-1">
-                    <span>Balance After</span>
+                  <div className="flex items-center justify-start gap-1">
+                    <span>Balance After (ZMW)</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
@@ -286,18 +287,18 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                       </td>
 
                       {/* 5. Credit */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-bold text-emerald-600">
-                        {isCredit ? `+ ${formatZMW(entry.credit)}` : '—'}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-bold text-emerald-600 amount-cell">
+                        {isCredit ? `+ ${formatZmwListingAmount(entry.credit)}` : '—'}
                       </td>
 
                       {/* 6. Debit */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-bold text-rose-600">
-                        {isDebit ? `- ${formatZMW(entry.debit)}` : '—'}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-bold text-rose-600 amount-cell">
+                        {isDebit ? `- ${formatZmwListingAmount(entry.debit)}` : '—'}
                       </td>
 
                       {/* 7. Balance After */}
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono font-black text-slate-900">
-                        {formatZMW(entry.balanceAfter)}
+                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-black text-slate-900 amount-cell">
+                        {formatZmwListingAmount(entry.balanceAfter)}
                       </td>
 
                       {/* 8. Related Reference */}

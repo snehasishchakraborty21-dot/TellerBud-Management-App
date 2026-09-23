@@ -188,7 +188,7 @@ export const CustomerRequestsTab: React.FC<CustomerRequestsTabProps> = ({
                 <th scope="col" className="py-3.5 px-4">Reference / Created</th>
                 <th scope="col" className="py-3.5 px-4">Transaction Type</th>
                 <th scope="col" className="py-3.5 px-4">Vendor</th>
-                <th scope="col" className="py-3.5 px-4 text-right">Amount</th>
+                <th scope="col" className="py-3.5 px-4 text-left amount-heading">Amount</th>
                 <th scope="col" className="py-3.5 px-4">Requested Service Time</th>
                 <th scope="col" className="py-3.5 px-4">Pickup Location</th>
                 <th scope="col" className="py-3.5 px-4">Matched Agent / Business</th>
@@ -223,7 +223,7 @@ export const CustomerRequestsTab: React.FC<CustomerRequestsTabProps> = ({
                     </td>
 
                     {/* Amount */}
-                    <td className="py-3.5 px-4 whitespace-nowrap text-right font-bold text-gray-900">
+                    <td className="py-3.5 px-4 whitespace-nowrap text-left font-bold text-gray-900 amount-cell">
                       {formatZMW(req.amount)}
                     </td>
 

@@ -11,6 +11,31 @@ export const formatZMW = (amount?: number | null): string => {
 };
 
 /**
+ * Formats an amount value for table listings across Admin and Business Owner portals.
+ * Displays comma thousands separators and two decimals without the currency prefix (e.g. "8,000.00").
+ * Returns "—" for null/undefined/empty/NaN values.
+ */
+export function formatZmwListingAmount(
+  value: number | string | null | undefined
+): string {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("en-ZM", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+
+/**
  * Formats an ISO date string in the Africa/Lusaka timezone (UTC+2) with 12-hour AM/PM.
  * e.g. "31 Aug 2026, 10:51 AM"
  */

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Store,
   Plus,
@@ -11,10 +11,13 @@ import {
   ChevronRight,
   ChevronDown,
   Edit2,
+  Trash2,
   Archive,
   ArrowRightLeft,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
+  RefreshCw,
   X,
   Layers,
   Sparkles,
@@ -30,6 +33,8 @@ import {
   StoreStatus,
   BoothStatus,
 } from '../../types/organization';
+import { CityDropdown } from '../../components/organization/CityDropdown';
+import { City, formatStoreLocation } from '../../data/mockCityData';
 
 export const StoresBoothsPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -49,15 +54,50 @@ export const StoresBoothsPage: React.FC = () => {
   // Modals state
   const [showStoreModal, setShowStoreModal] = useState(false);
   const [editingStore, setEditingStore] = useState<StoreWithStats | null>(null);
-  const [storeForm, setStoreForm] = useState({ storeName: '', storeNumber: '', location: '', status: 'Active' as StoreStatus });
+  const [storeForm, setStoreForm] = useState({
+    storeName: '',
+    storeNumber: '',
+    cityId: '',
+    cityName: '',
+    province: '',
+    physicalAddress: '',
+    status: 'Active' as StoreStatus,
+  });
+  const [storeFormErrors, setStoreFormErrors] = useState<{
+    storeName?: string;
+    storeNumber?: string;
+    cityId?: string;
+    physicalAddress?: string;
+    general?: string;
+  }>({});
+  const [isSubmittingStore, setIsSubmittingStore] = useState(false);
+
+  // Available Cities
+  const [availableCities, setAvailableCities] = useState<City[]>([]);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [cityLoadError, setCityLoadError] = useState<string | null>(null);
+
+  // Focus refs for first invalid field
+  const cityDropdownTriggerRef = useRef<HTMLButtonElement>(null);
+  const storeNameInputRef = useRef<HTMLInputElement>(null);
+  const storeNumberInputRef = useRef<HTMLInputElement>(null);
+  const physicalAddressInputRef = useRef<HTMLInputElement>(null);
 
   const [showBoothModal, setShowBoothModal] = useState(false);
   const [editingBooth, setEditingBooth] = useState<BoothWithDetails | null>(null);
   const [boothForm, setBoothForm] = useState({ storeId: '', boothName: '', boothNumber: '', status: 'Active' as BoothStatus });
 
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [archiveTarget, setArchiveTarget] = useState<{ type: 'store' | 'booth'; id: string; name: string } | null>(null);
-  const [archiveReason, setArchiveReason] = useState('');
+  // Delete Modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'store' | 'booth';
+    id: string;
+    name: string;
+    storeNumber?: string;
+    boothNumber?: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignForm, setAssignForm] = useState({
@@ -93,8 +133,29 @@ export const StoresBoothsPage: React.FC = () => {
     }
   };
 
+  const loadCities = () => {
+    setIsLoadingCities(true);
+    setCityLoadError(null);
+    try {
+      const res = organizationService.getSupportedCities(currentUser);
+      if (!res.success) {
+        setCityLoadError(res.error || 'Cities could not be loaded. Please refresh and try again.');
+        setAvailableCities([]);
+      } else {
+        setAvailableCities(res.cities);
+        setCityLoadError(null);
+      }
+    } catch {
+      setCityLoadError('Cities could not be loaded. Please refresh and try again.');
+      setAvailableCities([]);
+    } finally {
+      setIsLoadingCities(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
+    loadCities();
     const unsubscribe = organizationService.subscribe(() => {
       loadData();
     });
@@ -124,6 +185,8 @@ export const StoresBoothsPage: React.FC = () => {
       const matchStore =
         store.storeName.toLowerCase().includes(q) ||
         store.storeNumber.toLowerCase().includes(q) ||
+        (store.cityName && store.cityName.toLowerCase().includes(q)) ||
+        (store.physicalAddress && store.physicalAddress.toLowerCase().includes(q)) ||
         (store.location && store.location.toLowerCase().includes(q));
       if (!matchStore) {
         // Match child booths
@@ -158,18 +221,54 @@ export const StoresBoothsPage: React.FC = () => {
   // Handlers for Store Modal
   const openCreateStore = () => {
     setEditingStore(null);
-    setStoreForm({ storeName: '', storeNumber: '', location: '', status: 'Active' });
+    setStoreForm({
+      storeName: '',
+      storeNumber: '',
+      cityId: '',
+      cityName: '',
+      province: '',
+      physicalAddress: '',
+      status: 'Active',
+    });
+    setStoreFormErrors({});
+    setIsSubmittingStore(false);
     setShowStoreModal(true);
   };
 
   const openEditStore = (store: StoreWithStats) => {
     setEditingStore(store);
+    let cityId = store.cityId || '';
+    let cityName = store.cityName || '';
+    let province = store.province || '';
+
+    // If cityId not stored directly, resolve from location or availableCities
+    if (!cityId && availableCities.length > 0 && store.location) {
+      const matchCity = availableCities.find((c) =>
+        store.location!.toLowerCase().includes(c.cityName.toLowerCase())
+      );
+      if (matchCity) {
+        cityId = matchCity.cityId;
+        cityName = matchCity.cityName;
+        province = matchCity.province || '';
+      }
+    } else if (cityId && !province && availableCities.length > 0) {
+      const matchCity = availableCities.find((c) => c.cityId === cityId);
+      if (matchCity?.province) {
+        province = matchCity.province;
+      }
+    }
+
     setStoreForm({
       storeName: store.storeName,
       storeNumber: store.storeNumber,
-      location: store.location || '',
+      cityId,
+      cityName,
+      province,
+      physicalAddress: store.physicalAddress || store.location || '',
       status: store.status,
     });
+    setStoreFormErrors({});
+    setIsSubmittingStore(false);
     setShowStoreModal(true);
   };
 
@@ -178,31 +277,100 @@ export const StoresBoothsPage: React.FC = () => {
     if (!currentUser) return;
     setFeedback(null);
 
+    const errors: {
+      cityId?: string;
+      storeName?: string;
+      storeNumber?: string;
+      physicalAddress?: string;
+      general?: string;
+    } = {};
+
+    // Validate in required field order: City, Store Name, Store Code, Physical Location
+    if (!storeForm.cityId.trim()) {
+      errors.cityId = 'Please select a city.';
+    }
+    if (!storeForm.storeName.trim()) {
+      errors.storeName = 'Store name is required.';
+    }
+    if (!storeForm.storeNumber.trim()) {
+      errors.storeNumber = 'Store code or number is required.';
+    }
+    if (!storeForm.physicalAddress.trim()) {
+      errors.physicalAddress = 'Physical location is required.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setStoreFormErrors(errors);
+      // Focus first invalid field in order
+      if (errors.cityId) {
+        cityDropdownTriggerRef.current?.focus();
+      } else if (errors.storeName) {
+        storeNameInputRef.current?.focus();
+      } else if (errors.storeNumber) {
+        storeNumberInputRef.current?.focus();
+      } else if (errors.physicalAddress) {
+        physicalAddressInputRef.current?.focus();
+      }
+      return;
+    }
+
+    // Check unique store code within business
+    const duplicate = stores.some(
+      (s) =>
+        (!editingStore || s.id !== editingStore.id) &&
+        s.businessId === currentUser.businessId &&
+        s.storeNumber.trim().toLowerCase() === storeForm.storeNumber.trim().toLowerCase() &&
+        s.status !== 'Archived'
+    );
+    if (duplicate) {
+      setStoreFormErrors({
+        storeNumber: `Store code or number "${storeForm.storeNumber}" already exists in this business.`,
+      });
+      storeNumberInputRef.current?.focus();
+      return;
+    }
+
+    setIsSubmittingStore(true);
+    setStoreFormErrors({});
+
     if (editingStore) {
       const res = organizationService.updateStore(currentUser, editingStore.id, {
         storeName: storeForm.storeName,
         storeNumber: storeForm.storeNumber,
-        location: storeForm.location,
+        storeCode: storeForm.storeNumber,
+        cityId: storeForm.cityId,
+        cityName: storeForm.cityName,
+        province: storeForm.province,
+        physicalAddress: storeForm.physicalAddress,
         status: storeForm.status,
       });
+      setIsSubmittingStore(false);
       if (!res.success) {
-        setFeedback({ type: 'error', message: res.error || 'Failed to update store.' });
+        setStoreFormErrors({ general: res.error || 'Failed to update store.' });
         return;
       }
-      setFeedback({ type: 'success', message: `Store "${storeForm.storeName}" successfully updated.` });
+      setFeedback({ type: 'success', message: 'Store updated successfully.' });
+      setShowStoreModal(false);
+      loadData();
     } else {
       const res = organizationService.createStore(currentUser, {
         storeName: storeForm.storeName,
         storeNumber: storeForm.storeNumber,
-        location: storeForm.location,
+        storeCode: storeForm.storeNumber,
+        cityId: storeForm.cityId,
+        cityName: storeForm.cityName,
+        province: storeForm.province,
+        physicalAddress: storeForm.physicalAddress,
       });
+      setIsSubmittingStore(false);
       if (!res.success) {
-        setFeedback({ type: 'error', message: res.error || 'Failed to create store.' });
+        setStoreFormErrors({ general: res.error || 'Failed to create store.' });
         return;
       }
-      setFeedback({ type: 'success', message: `Store "${storeForm.storeName}" successfully created.` });
+      setFeedback({ type: 'success', message: 'Store created successfully.' });
+      setShowStoreModal(false);
+      loadData();
     }
-    setShowStoreModal(false);
   };
 
   // Handlers for Booth Modal
@@ -244,6 +412,7 @@ export const StoresBoothsPage: React.FC = () => {
         return;
       }
       setFeedback({ type: 'success', message: `Booth "${boothForm.boothName}" successfully updated.` });
+      loadData();
     } else {
       const res = organizationService.createBooth(currentUser, {
         storeId: boothForm.storeId,
@@ -255,39 +424,58 @@ export const StoresBoothsPage: React.FC = () => {
         return;
       }
       setFeedback({ type: 'success', message: `Booth "${boothForm.boothName}" successfully registered.` });
+      loadData();
     }
     setShowBoothModal(false);
   };
 
-  // Archive Handlers
-  const openArchive = (type: 'store' | 'booth', id: string, name: string) => {
-    setArchiveTarget({ type, id, name });
-    setArchiveReason('');
-    setShowArchiveModal(true);
+  // Delete Handlers
+  const openDelete = (type: 'store' | 'booth', id: string, name: string, number?: string) => {
+    setDeleteTarget({
+      type,
+      id,
+      name,
+      storeNumber: type === 'store' ? number : undefined,
+      boothNumber: type === 'booth' ? number : undefined,
+    });
+    setDeleteError(null);
+    setShowDeleteModal(true);
   };
 
-  const handleConfirmArchive = () => {
-    if (!currentUser || !archiveTarget) return;
-    setFeedback(null);
+  const handleConfirmDelete = () => {
+    if (!currentUser || !deleteTarget || isDeleting) return;
 
-    if (archiveTarget.type === 'store') {
-      const res = organizationService.archiveStore(currentUser, archiveTarget.id, archiveReason);
-      if (!res.success) {
-        setFeedback({ type: 'error', message: res.error || 'Failed to archive store.' });
-        setShowArchiveModal(false);
-        return;
-      }
-      setFeedback({ type: 'success', message: `Store "${archiveTarget.name}" archived successfully.` });
-    } else {
-      const res = organizationService.archiveBooth(currentUser, archiveTarget.id, archiveReason);
-      if (!res.success) {
-        setFeedback({ type: 'error', message: res.error || 'Failed to archive booth.' });
-        setShowArchiveModal(false);
-        return;
-      }
-      setFeedback({ type: 'success', message: `Booth "${archiveTarget.name}" archived successfully.` });
+    if (currentUser.role !== 'business_owner') {
+      setDeleteError('Forbidden: Only an authorized Business Owner can delete stores and booths.');
+      return;
     }
-    setShowArchiveModal(false);
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    if (deleteTarget.type === 'store') {
+      const res = organizationService.deleteStore(currentUser, deleteTarget.id);
+      setIsDeleting(false);
+      if (!res.success) {
+        setDeleteError(res.error || 'Failed to delete store.');
+        return;
+      }
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      loadData();
+      setFeedback({ type: 'success', message: 'Store deleted successfully.' });
+    } else {
+      const res = organizationService.deleteBooth(currentUser, deleteTarget.id);
+      setIsDeleting(false);
+      if (!res.success) {
+        setDeleteError(res.error || 'Failed to delete booth.');
+        return;
+      }
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      loadData();
+      setFeedback({ type: 'success', message: 'Booth deleted successfully.' });
+    }
   };
 
   // Staff Assignment Handlers
@@ -472,51 +660,37 @@ export const StoresBoothsPage: React.FC = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Total Stores</span>
-            <Building2 className="w-4 h-4 text-emerald-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl px-4.5 py-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 min-h-[52px]">
+          <div className="flex items-center gap-2.5 whitespace-nowrap min-w-0">
+            <span className="text-xs font-semibold text-slate-600">Total Stores</span>
+            <span className="text-xl font-bold text-slate-900 leading-none">{totalStores}</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">{totalStores}</div>
-          <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium mt-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>{activeStores} Operational</span>
-          </div>
+          <Building2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Active Booths</span>
-            <Layers className="w-4 h-4 text-teal-600" />
+        <div className="bg-white rounded-xl px-4.5 py-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 min-h-[52px]">
+          <div className="flex items-center gap-2.5 whitespace-nowrap min-w-0">
+            <span className="text-xs font-semibold text-slate-600">Active Booths</span>
+            <span className="text-xl font-bold text-slate-900 leading-none">{activeBooths}</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">{activeBooths}</div>
-          <div className="flex items-center gap-1.5 text-xs text-teal-700 font-medium mt-1">
-            <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-            <span>{totalBooths} Total Registered</span>
-          </div>
+          <Layers className="w-4.5 h-4.5 text-teal-600 shrink-0" />
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Assigned Staff</span>
-            <Users className="w-4 h-4 text-cyan-600" />
+        <div className="bg-white rounded-xl px-4.5 py-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 min-h-[52px]">
+          <div className="flex items-center gap-2.5 whitespace-nowrap min-w-0">
+            <span className="text-xs font-semibold text-slate-600">Assigned Staff</span>
+            <span className="text-xl font-bold text-slate-900 leading-none">{totalStaffAssigned}</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">{totalStaffAssigned}</div>
-          <div className="text-xs text-slate-500 font-medium mt-1">
-            {users.filter((u) => u.role === 'agent' && !u.boothId).length} unassigned agents
-          </div>
+          <Users className="w-4.5 h-4.5 text-cyan-600 shrink-0" />
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Assigned Devices</span>
-            <Smartphone className="w-4 h-4 text-indigo-600" />
+        <div className="bg-white rounded-xl px-4.5 py-3 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 min-h-[52px]">
+          <div className="flex items-center gap-2.5 whitespace-nowrap min-w-0">
+            <span className="text-xs font-semibold text-slate-600">Assigned Devices</span>
+            <span className="text-xl font-bold text-slate-900 leading-none">{totalDevicesAssigned}</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">{totalDevicesAssigned}</div>
-          <div className="text-xs text-indigo-700 font-medium mt-1">
-            {totalDevicesAssigned === 5 ? '5 devices currently assigned' : `${totalDevicesAssigned} devices currently assigned`}
-          </div>
+          <Smartphone className="w-4.5 h-4.5 text-indigo-600 shrink-0" />
         </div>
       </div>
 
@@ -641,10 +815,10 @@ export const StoresBoothsPage: React.FC = () => {
                             </span>
                           </div>
 
-                          {store.location && (
+                          {(store.physicalAddress || store.cityName || store.location) && (
                             <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              <span>{store.location}</span>
+                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>{formatStoreLocation(store.physicalAddress || store.location, store.cityName)}</span>
                             </div>
                           )}
                         </div>
@@ -682,16 +856,14 @@ export const StoresBoothsPage: React.FC = () => {
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            {store.status !== 'Archived' && (
-                              <button
-                                onClick={() => openArchive('store', store.id, store.storeName)}
-                                className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-                                title="Archive Store"
-                                aria-label="Archive Store"
-                              >
-                                <Archive className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => openDelete('store', store.id, store.storeName, store.storeNumber)}
+                              className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
+                              title="Delete Store"
+                              aria-label="Delete Store"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         )}
                       </div>
@@ -785,16 +957,14 @@ export const StoresBoothsPage: React.FC = () => {
                                     >
                                       <Edit2 className="w-3.5 h-3.5" />
                                     </button>
-                                    {booth.status !== 'Archived' && (
-                                      <button
-                                        onClick={() => openArchive('booth', booth.id, booth.boothName)}
-                                        className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-                                        title="Archive Booth"
-                                        aria-label="Archive Booth"
-                                      >
-                                        <Archive className="w-3.5 h-3.5" />
-                                      </button>
-                                    )}
+                                    <button
+                                      onClick={() => openDelete('booth', booth.id, booth.boothName, booth.boothNumber)}
+                                      className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
+                                      title="Delete Booth"
+                                      aria-label="Delete Booth"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
                                   </>
                                 )}
                               </div>
@@ -906,16 +1076,14 @@ export const StoresBoothsPage: React.FC = () => {
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-                              {booth.status !== 'Archived' && (
-                                <button
-                                  onClick={() => openArchive('booth', booth.id, booth.boothName)}
-                                  className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-                                  title="Archive Booth"
-                                  aria-label="Archive Booth"
-                                >
-                                  <Archive className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                              <button
+                                onClick={() => openDelete('booth', booth.id, booth.boothName, booth.boothNumber)}
+                                className="min-w-[32px] min-h-[32px] inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
+                                title="Delete Booth"
+                                aria-label="Delete Booth"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         )}
@@ -1024,68 +1192,185 @@ export const StoresBoothsPage: React.FC = () => {
       {/* MODAL: ADD / EDIT STORE */}
       {/* ========================================== */}
       {showStoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fadeIn overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 my-auto max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
               <h3 className="font-bold text-slate-900 text-lg">
                 {editingStore ? 'Edit Branch Store' : 'Add New Branch Store'}
               </h3>
               <button
+                type="button"
                 onClick={() => setShowStoreModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors cursor-pointer"
+                aria-label="Close dialog"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveStore} className="space-y-4 text-xs">
+            {/* General Submission Error Banner (if any) */}
+            {storeFormErrors.general && (
+              <div className="mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2 animate-fadeIn shrink-0">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{storeFormErrors.general}</span>
+              </div>
+            )}
+
+            {/* Modal Form */}
+            <form
+              onSubmit={handleSaveStore}
+              noValidate
+              className="space-y-4 text-xs pt-4 overflow-y-auto flex-1 pr-0.5"
+            >
+              {/* 1. City * */}
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">
+                  City <span className="text-rose-500">*</span>
+                </label>
+                <CityDropdown
+                  selectedCityId={storeForm.cityId}
+                  onSelectCity={(city) => {
+                    setStoreForm((prev) => ({
+                      ...prev,
+                      cityId: city.cityId,
+                      cityName: city.cityName,
+                      province: city.province || '',
+                    }));
+                    if (storeFormErrors.cityId) {
+                      setStoreFormErrors((prev) => ({ ...prev, cityId: undefined }));
+                    }
+                  }}
+                  disabled={isSubmittingStore}
+                  error={storeFormErrors.cityId}
+                  cities={availableCities}
+                  isLoading={isLoadingCities}
+                  loadError={cityLoadError}
+                  onRefreshCities={loadCities}
+                  triggerRef={cityDropdownTriggerRef}
+                />
+                {!storeForm.cityId && !editingStore && (
+                  <p className="text-[11px] text-amber-700 font-medium mt-1">
+                    Please select a city first before entering remaining store information.
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Store Name * */}
+              <div>
+                <label htmlFor="store-name-input" className="block text-slate-700 font-semibold mb-1">
                   Store Name <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  ref={storeNameInputRef}
+                  id="store-name-input"
                   type="text"
-                  required
-                  placeholder="e.g. Cairo Road Flagship Store"
+                  disabled={!storeForm.cityId || isSubmittingStore}
+                  placeholder={storeForm.cityId ? "e.g. Cairo Road Flagship Store" : "Select city first..."}
                   value={storeForm.storeName}
-                  onChange={(e) => setStoreForm({ ...storeForm, storeName: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  onChange={(e) => {
+                    setStoreForm({ ...storeForm, storeName: e.target.value });
+                    if (storeFormErrors.storeName) {
+                      setStoreFormErrors((prev) => ({ ...prev, storeName: undefined }));
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 min-h-[38px] text-xs transition-colors ${
+                    !storeForm.cityId
+                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                      : storeFormErrors.storeName
+                      ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20 text-slate-900'
+                      : 'border-slate-300 focus:ring-emerald-500 bg-white text-slate-900'
+                  }`}
                 />
+                {storeFormErrors.storeName && (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1 animate-fadeIn">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{storeFormErrors.storeName}</span>
+                  </p>
+                )}
               </div>
 
+              {/* 3. Store Code / Number * */}
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">
+                <label htmlFor="store-number-input" className="block text-slate-700 font-semibold mb-1">
                   Store Code / Number <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  ref={storeNumberInputRef}
+                  id="store-number-input"
                   type="text"
-                  required
-                  placeholder="e.g. STR-004"
+                  disabled={!storeForm.cityId || isSubmittingStore}
+                  placeholder={storeForm.cityId ? "e.g. STR-004" : "Select city first..."}
                   value={storeForm.storeNumber}
-                  onChange={(e) => setStoreForm({ ...storeForm, storeNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                  onChange={(e) => {
+                    setStoreForm({ ...storeForm, storeNumber: e.target.value });
+                    if (storeFormErrors.storeNumber) {
+                      setStoreFormErrors((prev) => ({ ...prev, storeNumber: undefined }));
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 min-h-[38px] text-xs font-mono transition-colors ${
+                    !storeForm.cityId
+                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                      : storeFormErrors.storeNumber
+                      ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20 text-slate-900'
+                      : 'border-slate-300 focus:ring-emerald-500 bg-white text-slate-900'
+                  }`}
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Unique store identifier within your agency business.</p>
+                {storeFormErrors.storeNumber ? (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1 animate-fadeIn">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{storeFormErrors.storeNumber}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1">Unique store identifier within your agency business.</p>
+                )}
               </div>
 
+              {/* 4. Physical Location * */}
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Physical Location</label>
+                <label htmlFor="store-address-input" className="block text-slate-700 font-semibold mb-1">
+                  Physical Location <span className="text-rose-500">*</span>
+                </label>
                 <input
+                  ref={physicalAddressInputRef}
+                  id="store-address-input"
                   type="text"
-                  placeholder="e.g. Plot 4821, Cairo Road, Lusaka Central"
-                  value={storeForm.location}
-                  onChange={(e) => setStoreForm({ ...storeForm, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  disabled={!storeForm.cityId || isSubmittingStore}
+                  placeholder={storeForm.cityId ? "e.g. Plot 4821, Cairo Road, Central Business District" : "Select city first..."}
+                  value={storeForm.physicalAddress}
+                  onChange={(e) => {
+                    setStoreForm({ ...storeForm, physicalAddress: e.target.value });
+                    if (storeFormErrors.physicalAddress) {
+                      setStoreFormErrors((prev) => ({ ...prev, physicalAddress: undefined }));
+                    }
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 min-h-[38px] text-xs transition-colors ${
+                    !storeForm.cityId
+                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                      : storeFormErrors.physicalAddress
+                      ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20 text-slate-900'
+                      : 'border-slate-300 focus:ring-emerald-500 bg-white text-slate-900'
+                  }`}
                 />
+                {storeFormErrors.physicalAddress ? (
+                  <p className="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1 animate-fadeIn">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{storeFormErrors.physicalAddress}</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-1">Physical street address or plot location (city is recorded separately).</p>
+                )}
               </div>
 
+              {/* Status (when editing) */}
               {editingStore && (
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Status</label>
+                  <label htmlFor="store-status-select" className="block text-slate-700 font-semibold mb-1">Status</label>
                   <select
+                    id="store-status-select"
                     value={storeForm.status}
                     onChange={(e) => setStoreForm({ ...storeForm, status: e.target.value as StoreStatus })}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[38px] bg-white text-slate-900 cursor-pointer"
                   >
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
@@ -1093,19 +1378,33 @@ export const StoresBoothsPage: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              {/* 5. Cancel and Create/Save Store buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowStoreModal(false)}
-                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-semibold"
+                  disabled={isSubmittingStore}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-semibold transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold shadow-xs"
+                  disabled={isSubmittingStore || !!cityLoadError}
+                  className="px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  {editingStore ? 'Save Store' : 'Create Store'}
+                  {isSubmittingStore && (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>
+                    {editingStore
+                      ? isSubmittingStore
+                        ? 'Saving Store...'
+                        : 'Save Store'
+                      : isSubmittingStore
+                      ? 'Creating Store...'
+                      : 'Create Store'}
+                  </span>
                 </button>
               </div>
             </form>
@@ -1516,83 +1815,102 @@ export const StoresBoothsPage: React.FC = () => {
       )}
 
       {/* ========================================== */}
-      {/* MODAL: ARCHIVE CONFIRMATION */}
+      {/* MODAL: PERMANENT DELETE CONFIRMATION */}
       {/* ========================================== */}
-      {showArchiveModal && archiveTarget && (() => {
-        const targetStore = archiveTarget.type === 'store' ? stores.find((s) => s.id === archiveTarget.id) : null;
-        const targetBooth = archiveTarget.type === 'booth' ? booths.find((b) => b.id === archiveTarget.id) : null;
+      {showDeleteModal && deleteTarget && (() => {
+        const targetStore = deleteTarget.type === 'store' ? stores.find((s) => s.id === deleteTarget.id) : null;
+        const targetBooth = deleteTarget.type === 'booth' ? booths.find((b) => b.id === deleteTarget.id) : null;
+
+        const storeName = targetStore?.storeName || deleteTarget.name;
+        const storeNumber = targetStore?.storeNumber || deleteTarget.storeNumber || '—';
+        const boothName = targetBooth?.boothName || deleteTarget.name;
+        const boothNumber = targetBooth?.boothNumber || deleteTarget.boothNumber || '—';
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fadeIn">
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+              {/* Header */}
               <div className="flex items-center gap-3 text-rose-600 border-b border-slate-100 pb-3">
-                <div className="p-2 bg-rose-50 rounded-xl">
-                  <Archive className="w-5 h-5 text-rose-600" />
+                <div className="p-2.5 bg-rose-50 rounded-xl">
+                  <Trash2 className="w-5 h-5 text-rose-600" />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">
-                    Archive {archiveTarget.type === 'store' ? 'Store' : 'Booth'}
+                    {deleteTarget.type === 'store' ? 'Delete Store?' : 'Delete Booth?'}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    {archiveTarget.name}
+                    This action cannot be undone.
                   </p>
                 </div>
               </div>
 
-              {targetStore && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
-                  <div className="font-semibold text-slate-800">Associated Infrastructure:</div>
-                  <div className="text-slate-600">• {targetStore.boothCount} service counter booth(s)</div>
-                  <div className="text-slate-600">• {targetStore.assignedStaffCount} stationed staff member(s)</div>
-                  <div className="text-slate-600">• {targetStore.assignedDeviceCount} mapped hardware device(s)</div>
+              {/* Error Banner (if deletion blocked by dependencies or failed) */}
+              {deleteError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2 animate-fadeIn">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 leading-relaxed">{deleteError}</div>
                 </div>
               )}
 
-              {targetBooth && (
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
-                  <div className="font-semibold text-slate-800">Current Booth Status:</div>
-                  <div className="text-slate-600">
-                    • Staff: {targetBooth.assignedStaffNames.length > 0 ? targetBooth.assignedStaffNames.join(', ') : 'No staff currently assigned'}
+              {/* Store Confirmation Body */}
+              {deleteTarget.type === 'store' && (
+                <div className="space-y-3">
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Store Name:</span>
+                      <span className="font-bold text-slate-900">{storeName}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Store Number:</span>
+                      <span className="font-mono font-semibold text-slate-800">{storeNumber}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Number of booths:</span>
+                      <span className="font-semibold text-slate-800">{targetStore?.boothCount ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Number of assigned staff:</span>
+                      <span className="font-semibold text-slate-800">{targetStore?.assignedStaffCount ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Number of mapped devices:</span>
+                      <span className="font-semibold text-slate-800">{targetStore?.assignedDeviceCount ?? 0}</span>
+                    </div>
                   </div>
-                  <div className="text-slate-600">
-                    • Hardware: {targetBooth.assignedDeviceNames.length > 0 ? targetBooth.assignedDeviceNames.join(', ') : 'No devices currently mapped'}
-                  </div>
+
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Are you sure you want to permanently delete this store? This action cannot be undone. All booths under this store will also be deleted. Assigned staff will be unassigned and mapped devices will be unmapped.
+                  </p>
                 </div>
               )}
 
-              <div className="p-3 bg-rose-50/70 border border-rose-200 rounded-xl text-[11px] text-rose-900 leading-relaxed">
-                <strong>Audit Protection:</strong> Permanent deletion is prevented for entities with operational, device, or financial history. Archiving safely deactivates this {archiveTarget.type} from active operations while strictly preserving all transaction ledgers and audit records.
-              </div>
+              {/* Booth Confirmation Body */}
+              {deleteTarget.type === 'booth' && (
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Are you sure you want to permanently delete <strong className="text-slate-900">{boothName}</strong> ({boothNumber})? This action cannot be undone. Assigned staff will be unassigned and mapped devices will be unmapped.
+                  </p>
+                </div>
+              )}
 
-              <div>
-                <label className="block text-slate-700 font-semibold text-xs mb-1">
-                  Reason for Archiving <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={2}
-                  required
-                  placeholder="e.g. Lease renewal relocation, permanent renovation, route consolidation..."
-                  value={archiveReason}
-                  onChange={(e) => setArchiveReason(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowArchiveModal(false)}
-                  className="px-4 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg font-semibold"
+                  disabled={isDeleting}
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg font-semibold cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  onClick={handleConfirmArchive}
-                  disabled={!archiveReason.trim()}
-                  className="px-4 py-2 text-xs text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg font-semibold shadow-xs"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 text-xs text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg font-semibold shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  Confirm Archiving
+                  {isDeleting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{deleteTarget.type === 'store' ? 'Delete Store' : 'Delete Booth'}</span>
                 </button>
               </div>
             </div>

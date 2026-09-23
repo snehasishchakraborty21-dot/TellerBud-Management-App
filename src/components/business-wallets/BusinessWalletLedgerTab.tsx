@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BusinessWalletLedgerEntry } from '../../types/businessWallet';
 import { formatZMW } from '../../data/mockBusinessWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface BusinessWalletLedgerTabProps {
   ledgerEntries: BusinessWalletLedgerEntry[];
@@ -100,8 +101,8 @@ export const BusinessWalletLedgerTab: React.FC<BusinessWalletLedgerTabProps> = (
               <th className="py-2.5 px-3.5 whitespace-nowrap">Date & Time</th>
               <th className="py-2.5 px-3.5 whitespace-nowrap">Type</th>
               <th className="py-2.5 px-3.5">Description & Counterparty</th>
-              <th className="py-2.5 px-3.5 whitespace-nowrap text-right">Amount</th>
-              <th className="py-2.5 px-3.5 whitespace-nowrap text-right">Resulting Balance</th>
+              <th className="py-2.5 px-3.5 whitespace-nowrap text-left amount-heading">Amount (ZMW)</th>
+              <th className="py-2.5 px-3.5 whitespace-nowrap text-left amount-heading">Resulting Balance (ZMW)</th>
               <th className="py-2.5 px-3.5 whitespace-nowrap">Actor</th>
             </tr>
           </thead>
@@ -150,7 +151,7 @@ export const BusinessWalletLedgerTab: React.FC<BusinessWalletLedgerTabProps> = (
                         Counterparty: {item.counterparty}
                       </div>
                     </td>
-                    <td className="py-3 px-3.5 text-right font-mono font-bold whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-left font-mono font-bold whitespace-nowrap amount-cell">
                       <span
                         className={
                           isCredit
@@ -162,11 +163,11 @@ export const BusinessWalletLedgerTab: React.FC<BusinessWalletLedgerTabProps> = (
                       >
                         {isCredit && '+'}
                         {isDebit && '-'}
-                        {formatZMW(item.amount)}
+                        {formatZmwListingAmount(item.amount)}
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 text-right font-mono font-bold text-slate-800 whitespace-nowrap">
-                      {formatZMW(item.resultingBalance)}
+                    <td className="py-3 px-3.5 text-left font-mono font-bold text-slate-800 whitespace-nowrap amount-cell">
+                      {formatZmwListingAmount(item.resultingBalance)}
                     </td>
                     <td className="py-3 px-3.5 text-slate-600 whitespace-nowrap">
                       <div className="font-medium text-slate-800">{item.actor}</div>

@@ -147,5 +147,448 @@
   flex: 0 0 auto;
 }
 
+/* Zambian Currency Listing Standard - Left Alignment */
+.amount-heading,
+.amount-cell,
+.listing-amount-heading,
+.listing-amount-cell {
+  width: 100%;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  justify-self: start !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-cell > *,
+.listing-amount-cell > * {
+  margin-left: 0 !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  justify-self: start !important;
+}
+
+.amount-column {
+  justify-self: stretch;
+  text-align: left !important;
+}
+
+.amount-column-content {
+  display: flex;
+  justify-content: flex-start !important;
+}
+
+/* Live Operations Customer Requests CSS Grid */
+.live-requests-table {
+  --live-request-columns:
+    minmax(105px, 1.05fr)
+    minmax(110px, 1.10fr)
+    minmax(115px, 1.10fr)
+    minmax(105px, 1fr)
+    minmax(135px, 1.35fr)
+    minmax(145px, 1.45fr)
+    minmax(180px, 1.80fr)
+    minmax(130px, 1.30fr)
+    minmax(80px, 0.80fr);
+  width: 100%;
+  min-width: 1105px;
+}
+
+.live-requests-header,
+.live-requests-row {
+  display: grid;
+  grid-template-columns: var(--live-request-columns);
+  width: 100%;
+  min-width: 1105px;
+  column-gap: 0;
+  align-items: center;
+}
+
+.live-requests-header > *,
+.live-requests-row > * {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 10px 8px;
+  text-align: left;
+}
+
+.live-requests-header {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #374151;
+  background-color: #F9FAFB;
+  user-select: none;
+}
+
+.reference-cell,
+.customer-cell,
+.transaction-cell {
+  min-width: 0;
+}
+
+.cell-primary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.cell-secondary {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount-heading,
+.amount-cell {
+  text-align: left;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  justify-self: stretch;
+}
+
+.service-time-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pickup-location-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-business-cell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.agent-business-cell .agent-line,
+.agent-business-cell .business-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-cell {
+  min-width: 0;
+  padding-right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.action-cell {
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.status-cell .status-badge,
+.action-cell .view-button {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.live-requests-table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Cash / Float Requests Table Styling */
+.cash-float-table {
+  --table-border-color: #E5E7EB;
+}
+
+.cash-float-table th {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.sortable-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.cash-float-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table-cell-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+
+.cash-float-table th,
+.cash-float-table td {
+  box-sizing: border-box;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.cash-float-table tbody tr {
+  height: 56px;
+}
+
+.cash-float-table tbody td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--table-border-color, #E5E7EB);
+}
+
+.requested-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+/* Agent-to-Agent Liquidity Table Styling */
+.cash-liquidity-table {
+  --table-border-color: #E5E7EB;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.cash-liquidity-table th {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cash-liquidity-table td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.amount-heading,
+.amount-cell {
+  text-align: left;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cash-liquidity-table th,
+.cash-liquidity-table td {
+  box-sizing: border-box;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.cash-liquidity-table tbody tr {
+  min-height: 92px;
+}
+
+.cash-liquidity-table tbody td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--table-border-color, #E5E7EB);
+}
+
+.cash-liquidity-row {
+  min-height: 92px;
+  align-items: center;
+}
+
+.table-cell-content.multiline {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.type-cell-content {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.offered-agent-cell {
+  text-align: left;
+}
+
+.offered-agent-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.offered-agent-card {
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+.requested-cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  text-align: left;
+}
+
+.status-cell-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.action-cell-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.agent-details,
+.matched-agent-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+/* Business Owner Mobile Money Transactions Table Styling */
+.business-mobile-money-table {
+  --table-border-color: #E5E7EB;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.business-mobile-money-table th {
+  text-align: left;
+  vertical-align: middle;
+  box-sizing: border-box;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.business-mobile-money-table td {
+  text-align: left;
+  vertical-align: middle;
+  box-sizing: border-box;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.business-mobile-money-table tbody tr {
+  height: 56px;
+}
+
+.business-mobile-money-table tbody td {
+  border-bottom: 1px solid var(--table-border-color, #E5E7EB);
+}
+
+/* Business Owner & Super Admin All Transactions Table Styling */
+.all-transactions-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.all-transactions-table th,
+.all-transactions-table td {
+  padding-inline: 12px;
+  text-align: left;
+  vertical-align: middle;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.all-transactions-table tbody td {
+  border-bottom: 1px solid var(--table-border-color, #E5E7EB);
+}
+
+/* =========================================================================
+   Attendance & End-of-Day Layout Styles
+   ========================================================================= */
+
+/* KPI Cards: Single horizontal line layout, fixed 72px height */
+.attendance-kpi-card {
+  min-height: 72px;
+  height: 72px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.attendance-kpi-content {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.attendance-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.attendance-kpi-value {
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.attendance-kpi-icon {
+  flex: 0 0 auto;
+  margin-left: 12px;
+}
+
+/* Filter Rows: Single row layout on desktop */
+.end-of-day-filter-row,
+.attendance-filter-row {
+  display: grid;
+  grid-template-columns:
+    minmax(210px, 1fr)
+    minmax(210px, 1fr)
+    minmax(140px, 0.65fr)
+    minmax(140px, 0.65fr)
+    max-content
+    max-content
+    max-content;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .end-of-day-filter-row,
+  .attendance-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
 
 

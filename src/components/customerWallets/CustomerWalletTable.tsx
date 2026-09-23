@@ -18,6 +18,7 @@ import {
   WalletHealthStatus,
 } from '../../types/customerWallet';
 import { formatZMW } from '../../data/mockCustomerWalletData';
+import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface CustomerWalletTableProps {
   wallets: CustomerWalletRecord[];
@@ -198,49 +199,49 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
               </th>
 
               {/* 2. Wallet Balance */}
-              <th scope="col" className="py-3.5 px-3 text-right whitespace-nowrap min-w-[130px]">
+              <th scope="col" className="py-3.5 px-3 text-left whitespace-nowrap min-w-[130px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('walletBalance')}
-                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto"
+                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none"
                 >
-                  <span>Wallet Balance</span>
+                  <span>Wallet Balance (ZMW)</span>
                   {renderSortIcon('walletBalance')}
                 </button>
               </th>
 
               {/* 3. Available Balance */}
-              <th scope="col" className="py-3.5 px-3 text-right whitespace-nowrap min-w-[130px]">
+              <th scope="col" className="py-3.5 px-3 text-left whitespace-nowrap min-w-[130px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('availableBalance')}
-                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto"
+                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none"
                 >
-                  <span>Available Balance</span>
+                  <span>Available Balance (ZMW)</span>
                   {renderSortIcon('availableBalance')}
                 </button>
               </th>
 
               {/* 4. Reserved Funds */}
-              <th scope="col" className="py-3.5 px-3 text-right whitespace-nowrap min-w-[125px]">
+              <th scope="col" className="py-3.5 px-3 text-left whitespace-nowrap min-w-[125px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('reservedFunds')}
-                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto"
+                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none"
                 >
-                  <span>Reserved Funds</span>
+                  <span>Reserved Funds (ZMW)</span>
                   {renderSortIcon('reservedFunds')}
                 </button>
               </th>
 
               {/* 5. Pending Withdrawal */}
-              <th scope="col" className="py-3.5 px-3 text-right whitespace-nowrap min-w-[135px]">
+              <th scope="col" className="py-3.5 px-3 text-left whitespace-nowrap min-w-[135px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('pendingWithdrawal')}
-                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none ml-auto"
+                  className="group inline-flex items-center gap-1.5 text-slate-600 hover:text-[#0D93AA] focus:outline-none"
                 >
-                  <span>Pending Withdrawal</span>
+                  <span>Pending Withdrawal (ZMW)</span>
                   {renderSortIcon('pendingWithdrawal')}
                 </button>
               </th>
@@ -308,36 +309,36 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
                 </td>
 
                 {/* 2. Wallet Balance */}
-                <td className="py-3 px-3 text-right whitespace-nowrap">
+                <td className="py-3 px-3 text-left whitespace-nowrap amount-cell">
                   <span className="font-semibold text-[#102025]">
-                    {formatZMW(wallet.walletBalance)}
+                    {formatZmwListingAmount(wallet.walletBalance)}
                   </span>
                 </td>
 
                 {/* 3. Available Balance */}
-                <td className="py-3 px-3 text-right whitespace-nowrap">
+                <td className="py-3 px-3 text-left whitespace-nowrap amount-cell">
                   <span className="font-semibold text-emerald-700">
-                    {formatZMW(wallet.availableBalance)}
+                    {formatZmwListingAmount(wallet.availableBalance)}
                   </span>
                 </td>
 
                 {/* 4. Reserved Funds */}
-                <td className="py-3 px-3 text-right whitespace-nowrap">
+                <td className="py-3 px-3 text-left whitespace-nowrap amount-cell">
                   <span
                     className={`font-medium ${
                       wallet.reservedFunds > 0 ? 'text-amber-700' : 'text-slate-400'
                     }`}
                   >
-                    {formatZMW(wallet.reservedFunds)}
+                    {formatZmwListingAmount(wallet.reservedFunds)}
                   </span>
                 </td>
 
                 {/* 5. Pending Withdrawal */}
-                <td className="py-3 px-3 text-right whitespace-nowrap">
+                <td className="py-3 px-3 text-left whitespace-nowrap amount-cell">
                   {wallet.pendingWithdrawalAmount !== null ? (
-                    <div className="flex flex-col items-end">
+                    <div className="flex flex-col items-start">
                       <span className="font-semibold text-purple-700">
-                        {formatZMW(wallet.pendingWithdrawalAmount)}
+                        {formatZmwListingAmount(wallet.pendingWithdrawalAmount)}
                       </span>
                       {wallet.pendingWithdrawalReference && (
                         <span className="text-[10.5px] text-purple-600/80 font-mono">
@@ -346,7 +347,7 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
                       )}
                     </div>
                   ) : (
-                    <span className="text-slate-400 font-medium">—</span>
+                    <span className="text-slate-300 font-medium">—</span>
                   )}
                 </td>
 

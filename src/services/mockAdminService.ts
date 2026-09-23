@@ -1342,16 +1342,18 @@ class MockAdminService implements IAdminService {
     filters?: Partial<AttendanceFilters>,
     businessId?: string
   ): Promise<{ items: AttendanceRecord[]; total: number; metrics: AttendanceMetrics }> {
-    const activeDate = filters?.date || TODAY_DATE;
+    const fromDate = filters?.dateFrom;
+    const toDate = filters?.dateTo;
     const defaultFilters: AttendanceFilters = {
-      search: filters?.search || '',
-      date: activeDate,
+      dateFrom: fromDate,
+      dateTo: toDate,
+      date: filters?.date,
       status: filters?.status || 'ALL',
       assignment: filters?.assignment || 'ALL',
     };
 
     const items = filterAttendanceRecords(this.attendanceRecords, defaultFilters, businessId);
-    const metrics = deriveAttendanceMetrics(this.attendanceRecords, businessId, activeDate);
+    const metrics = deriveAttendanceMetrics(this.attendanceRecords, businessId, fromDate, toDate);
 
     return {
       items,
@@ -1372,9 +1374,10 @@ class MockAdminService implements IAdminService {
 
   async getAttendanceMetrics(
     businessId?: string,
-    date?: string
+    dateFrom?: string,
+    dateTo?: string
   ): Promise<AttendanceMetrics> {
-    return deriveAttendanceMetrics(this.attendanceRecords, businessId, date || TODAY_DATE);
+    return deriveAttendanceMetrics(this.attendanceRecords, businessId, dateFrom, dateTo);
   }
 
   async checkInAgent(
@@ -1422,16 +1425,18 @@ class MockAdminService implements IAdminService {
     filters?: Partial<EndOfDayFilters>,
     businessId?: string
   ): Promise<{ items: EndOfDayRecord[]; total: number; metrics: EndOfDayMetrics }> {
-    const activeDate = filters?.businessDate || TODAY_DATE;
+    const fromDate = filters?.dateFrom;
+    const toDate = filters?.dateTo;
     const defaultFilters: EndOfDayFilters = {
-      search: filters?.search || '',
-      businessDate: activeDate,
+      dateFrom: fromDate,
+      dateTo: toDate,
+      businessDate: filters?.businessDate,
       status: filters?.status || 'ALL',
       availability: filters?.availability || 'ALL',
     };
 
     const items = filterEndOfDayRecords(this.eodRecords, defaultFilters, businessId);
-    const metrics = deriveEndOfDayMetrics(this.eodRecords, businessId, activeDate);
+    const metrics = deriveEndOfDayMetrics(this.eodRecords, businessId, fromDate, toDate);
 
     return {
       items,
@@ -1454,9 +1459,10 @@ class MockAdminService implements IAdminService {
 
   async getEndOfDayMetrics(
     businessId?: string,
-    date?: string
+    dateFrom?: string,
+    dateTo?: string
   ): Promise<EndOfDayMetrics> {
-    return deriveEndOfDayMetrics(this.eodRecords, businessId, date || TODAY_DATE);
+    return deriveEndOfDayMetrics(this.eodRecords, businessId, dateFrom, dateTo);
   }
 
   async getBusinessProfile(businessId?: string): Promise<BusinessProfile | null> {
@@ -2006,7 +2012,6 @@ class MockAdminService implements IAdminService {
       pending: baseItems.filter((t) => t.status === 'Pending').length,
       failed: baseItems.filter((t) => t.status === 'Failed').length,
       cancelled: baseItems.filter((t) => t.status === 'Cancelled').length,
-      reversed: baseItems.filter((t) => t.status === 'Reversed').length,
     };
 
     // Filter items based on active criteria

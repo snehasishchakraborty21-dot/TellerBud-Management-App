@@ -606,13 +606,13 @@ export const MOCK_BO_NOTIFICATIONS: BONotification[] = [
   },
 
   // ==========================================
-  // 8. CHARGES & COMMISSIONS
+  // 8. CHARGES & REVENUE
   // ==========================================
   {
     id: 'NOTIF-CHG-001',
     title: 'Operational Charge Deducted',
     message: 'Processing charge of ZMW 12.50 deducted from Global Wallet for walk-in transaction.',
-    category: 'Charges & Commissions',
+    category: 'Charges & Revenue',
     priority: 'Normal',
     read: false,
     actionRequired: false,
@@ -630,7 +630,7 @@ export const MOCK_BO_NOTIFICATIONS: BONotification[] = [
     id: 'NOTIF-CHG-002',
     title: 'Commission Credited to Global Wallet',
     message: 'Commission earnings of ZMW 180.00 credited to Agency Global Wallet for bill payments.',
-    category: 'Charges & Commissions',
+    category: 'Charges & Revenue',
     priority: 'Normal',
     read: true,
     actionRequired: false,
@@ -648,7 +648,7 @@ export const MOCK_BO_NOTIFICATIONS: BONotification[] = [
     id: 'NOTIF-CHG-003',
     title: 'Agency Commission Settlement Pending',
     message: 'Monthly performance tier commission of ZMW 1,200.00 pending end-of-period audit.',
-    category: 'Charges & Commissions',
+    category: 'Charges & Revenue',
     priority: 'Important',
     read: false,
     actionRequired: false,
@@ -666,7 +666,7 @@ export const MOCK_BO_NOTIFICATIONS: BONotification[] = [
     id: 'NOTIF-CHG-004',
     title: 'Monthly Platform Fee Completed',
     message: 'Monthly platform connectivity charge of ZMW 250.00 completed and posted to ledger.',
-    category: 'Charges & Commissions',
+    category: 'Charges & Revenue',
     priority: 'Normal',
     read: true,
     actionRequired: false,
