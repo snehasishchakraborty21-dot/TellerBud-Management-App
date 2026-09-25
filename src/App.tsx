@@ -63,7 +63,6 @@ import { StoresBoothsPage } from './pages/organization/StoresBoothsPage';
 import { UsersRolesPage } from './pages/organization/UsersRolesPage';
 import { BalanceAdjustmentsPage } from './pages/organization/BalanceAdjustmentsPage';
 import { DeviceManagementPage } from './pages/organization/DeviceManagementPage';
-import { OrganizationAuditTrailPage } from './pages/organization/OrganizationAuditTrailPage';
 import { AdminDeviceAllocationPage } from './pages/organization/AdminDeviceAllocationPage';
 import { VendorProvider } from './context/VendorContext';
 import { BusinessOwnerDateProvider } from './context/BusinessOwnerDateContext';
@@ -490,7 +489,8 @@ function AppRoutes() {
         <Route path="organization/users" element={<UsersRolesPage />} />
         <Route path="organization/balance-adjustments" element={<BalanceAdjustmentsPage />} />
         <Route path="organization/devices" element={<DeviceManagementPage />} />
-        <Route path="organization/audit-trail" element={<OrganizationAuditTrailPage />} />
+        <Route path="organization/audit-trail" element={<Navigate to="/business-owner/dashboard" replace />} />
+        <Route path="audit-trail" element={<Navigate to="/business-owner/dashboard" replace />} />
 
         {/* Global Wallet (Lusaka Central Express Agency Shared Wallet) */}
         <Route path="wallets/global-wallet" element={<GlobalWalletPage />} />

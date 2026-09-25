@@ -19,14 +19,22 @@ import {
   ALL_TRANSACTIONS_SUMMARY,
   AllTransactionRecord,
   TransactionSource,
-  TransactionService,
-  TransactionType,
-  TransactionProvider,
-  TransactionStatus,
 } from '../data/mockAllTransactionsData';
-import { TransactionProviderLogo } from '../components/transactions/TransactionProviderLogo';
 import { TransactionStatusBadge } from '../components/transactions/TransactionStatusBadge';
 import { formatZmwListingAmount } from '../utils/formatters';
+
+const getVendorDisplayName = (vendorOrProvider: string): string => {
+  if (vendorOrProvider === 'MTN Mobile Money' || vendorOrProvider === 'MTN') return 'MTN Mobile Money';
+  if (vendorOrProvider === 'Airtel Money' || vendorOrProvider === 'Airtel') return 'Airtel Money';
+  if (vendorOrProvider === 'Zamtel') return 'Zamtel';
+  if (vendorOrProvider === 'Zanaco') return 'Zanaco';
+  if (vendorOrProvider === 'FNB') return 'FNB';
+  if (vendorOrProvider === 'INDO' || vendorOrProvider === 'Indo-Zambia Bank') return 'INDO';
+  if (vendorOrProvider === 'Stanbic') return 'Stanbic';
+  if (vendorOrProvider === 'Access' || vendorOrProvider === 'Access Bank') return 'Access Bank';
+  if (vendorOrProvider === 'TellerBud Ledger' || vendorOrProvider === 'TellerBud') return 'TellerBud Ledger';
+  return vendorOrProvider;
+};
 
 export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +49,7 @@ export const AllTransactionsPage: React.FC = () => {
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
   const [serviceFilter, setServiceFilter] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
-  const [providerFilter, setProviderFilter] = useState<string>('ALL');
+  const [vendorFilter, setVendorFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
@@ -56,7 +64,7 @@ export const AllTransactionsPage: React.FC = () => {
     setSourceFilter('ALL');
     setServiceFilter('ALL');
     setTypeFilter('ALL');
-    setProviderFilter('ALL');
+    setVendorFilter('ALL');
     setStatusFilter('ALL');
     setFromDate('');
     setToDate('');
@@ -87,7 +95,9 @@ export const AllTransactionsPage: React.FC = () => {
         const matchesSending = tx.sendingAgent ? tx.sendingAgent.toLowerCase().includes(q) : false;
         const matchesReceiving = tx.receivingAgent ? tx.receivingAgent.toLowerCase().includes(q) : false;
         const matchesBiz = tx.businessName ? tx.businessName.toLowerCase().includes(q) : false;
-        const matchesProvider = tx.provider.toLowerCase().includes(q);
+        const matchesVendor =
+          tx.provider.toLowerCase().includes(q) ||
+          getVendorDisplayName(tx.provider).toLowerCase().includes(q);
         const matchesService = tx.service.toLowerCase().includes(q);
         const matchesType = tx.transactionType.toLowerCase().includes(q);
 
@@ -100,7 +110,7 @@ export const AllTransactionsPage: React.FC = () => {
           !matchesSending &&
           !matchesReceiving &&
           !matchesBiz &&
-          !matchesProvider &&
+          !matchesVendor &&
           !matchesService &&
           !matchesType
         ) {
@@ -123,9 +133,13 @@ export const AllTransactionsPage: React.FC = () => {
         return false;
       }
 
-      // 5. Provider
-      if (providerFilter !== 'ALL' && tx.provider !== providerFilter) {
-        return false;
+      // 5. Vendor
+      if (vendorFilter !== 'ALL') {
+        if (vendorFilter === 'Access' || vendorFilter === 'Access Bank') {
+          if ((tx.provider as string) !== 'Access' && (tx.provider as string) !== 'Access Bank') return false;
+        } else if (tx.provider !== vendorFilter) {
+          return false;
+        }
       }
 
       // 6. Status
@@ -149,7 +163,7 @@ export const AllTransactionsPage: React.FC = () => {
     sourceFilter,
     serviceFilter,
     typeFilter,
-    providerFilter,
+    vendorFilter,
     statusFilter,
     fromDate,
     toDate,
@@ -167,7 +181,7 @@ export const AllTransactionsPage: React.FC = () => {
       'Business Name',
       'Service',
       'Transaction Type',
-      'Provider',
+      'Vendor',
       'Amount (ZMW)',
       'Status',
     ];
@@ -184,7 +198,7 @@ export const AllTransactionsPage: React.FC = () => {
       tx.businessName || '—',
       tx.service,
       tx.transactionType,
-      tx.provider,
+      getVendorDisplayName(tx.provider),
       tx.amount.toFixed(2),
       tx.status,
     ]);
@@ -398,19 +412,19 @@ export const AllTransactionsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: Provider + Status + Date Range + Action Buttons */}
+        {/* Row 2: Vendor + Status + Date Range + Action Buttons */}
         <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 pt-0.5">
-          {/* Provider */}
+          {/* Vendor */}
           <div className="w-full sm:w-auto min-w-[150px] flex-1">
             <select
-              value={providerFilter}
+              value={vendorFilter}
               onChange={(e) => {
-                setProviderFilter(e.target.value);
+                setVendorFilter(e.target.value);
                 setCurrentPage(1);
               }}
               className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
             >
-              <option value="ALL">All Providers</option>
+              <option value="ALL">All Vendors</option>
               <option value="MTN Mobile Money">MTN Mobile Money</option>
               <option value="Airtel Money">Airtel Money</option>
               <option value="Zamtel">Zamtel</option>
@@ -418,7 +432,7 @@ export const AllTransactionsPage: React.FC = () => {
               <option value="FNB">FNB</option>
               <option value="INDO">INDO</option>
               <option value="Stanbic">Stanbic</option>
-              <option value="Access">Access</option>
+              <option value="Access">Access Bank</option>
               <option value="TellerBud Ledger">TellerBud Ledger</option>
             </select>
           </div>
@@ -524,23 +538,23 @@ export const AllTransactionsPage: React.FC = () => {
             <colgroup>
               <col style={{ width: '12%' }} />
               <col style={{ width: '12%' }} />
-              <col style={{ width: '19%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '7%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '10%' }} />
               <col style={{ width: '11%' }} />
               <col style={{ width: '12%' }} />
-              <col style={{ width: '13%' }} />
             </colgroup>
             <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
               <tr className="border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] bg-[#F9FAFB] h-[44px]">
                 <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Transaction</th>
                 <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Customer</th>
-                <th scope="col" style={{ width: '19%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Agent / Business</th>
-                <th scope="col" style={{ width: '14%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Service</th>
-                <th scope="col" style={{ width: '7%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Provider</th>
-                <th scope="col" style={{ width: '11%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle amount-heading">Amount (ZMW)</th>
-                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Status</th>
-                <th scope="col" style={{ width: '13%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Action</th>
+                <th scope="col" style={{ width: '18%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Agent / Business</th>
+                <th scope="col" style={{ width: '13%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Service</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Vendor</th>
+                <th scope="col" style={{ width: '10%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle amount-heading">Amount (ZMW)</th>
+                <th scope="col" style={{ width: '11%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Status</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -589,7 +603,7 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 3. AGENT / BUSINESS COLUMN (19%) */}
+                    {/* 3. AGENT / BUSINESS COLUMN (18%) */}
                     <td className="py-3 px-3 align-middle text-left">
                       {tx.service === 'Agent-to-Agent Liquidity' ? (
                         <div className="space-y-0.5 min-w-0">
@@ -654,7 +668,7 @@ export const AllTransactionsPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* 4. SERVICE COLUMN (14%) */}
+                    {/* 4. SERVICE COLUMN (13%) */}
                     <td className="py-3 px-3 align-middle text-left">
                       <div className="space-y-0.5 min-w-0">
                         <div className="font-semibold text-slate-900 text-xs truncate" title={tx.service}>
@@ -666,28 +680,28 @@ export const AllTransactionsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* 5. PROVIDER COLUMN (7%) */}
+                    {/* 5. VENDOR COLUMN (12%) - Plain text vendor name without logo */}
                     <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
-                      <div className="flex items-center justify-start">
-                        <TransactionProviderLogo provider={tx.provider} size="table" showName={false} />
-                      </div>
+                      <span className="font-semibold text-slate-800 text-xs truncate block" title={getVendorDisplayName(tx.provider)}>
+                        {getVendorDisplayName(tx.provider)}
+                      </span>
                     </td>
 
-                    {/* 6. AMOUNT COLUMN (11%) - Single line, no currency prefix repetition, left-aligned */}
+                    {/* 6. AMOUNT COLUMN (10%) - Single line, no currency prefix repetition, left-aligned */}
                     <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
                       <span className="font-semibold text-slate-900 text-xs sm:text-[13px] tabular-nums whitespace-nowrap">
                         {formatZmwListingAmount(tx.amount)}
                       </span>
                     </td>
 
-                    {/* 7. STATUS COLUMN (12%) - Left aligned badge */}
+                    {/* 7. STATUS COLUMN (11%) - Left aligned badge */}
                     <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
                       <div className="flex items-center justify-start">
                         <TransactionStatusBadge status={tx.status} />
                       </div>
                     </td>
 
-                    {/* 8. ACTION COLUMN (13%) - Fully visible View Details button */}
+                    {/* 8. ACTION COLUMN (12%) - Fully visible View Details button */}
                     <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
                       <button
                         type="button"

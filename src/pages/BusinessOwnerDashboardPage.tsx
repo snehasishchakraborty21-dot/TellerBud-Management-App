@@ -5,27 +5,28 @@ import {
   Users,
   UserCheck,
   Banknote,
-  Store,
-  CalendarCheck,
+  Wallet,
+  Coins,
+  Award,
   ChevronRight,
   AlertTriangle,
-  Activity,
-  ArrowUpRight,
-  ArrowDownLeft,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { adminService } from '../services/mockAdminService';
 import { useAuth } from '../context/AuthContext';
 import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
 import { toDisplayDate, getZambiaTodayString } from '../utils/dateUtils';
-import { formatZMW, formatZmwListingAmount } from '../utils/formatters';
+import { formatZMW } from '../utils/formatters';
 import { AttendanceRecord } from '../types/attendance';
+import { MonthlyRevenueOverviewChart } from '../components/dashboard/MonthlyRevenueOverviewChart';
 
 interface BusinessMetricCardProps {
   label: string;
-  value: string | number;
+  value?: string | number;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   accentColor?: string;
   iconBgColor?: string;
+  isBadge?: boolean;
   onClick: () => void;
 }
 
@@ -35,6 +36,7 @@ const BusinessMetricCard: React.FC<BusinessMetricCardProps> = ({
   icon: Icon,
   accentColor = 'text-[#0D93AA]',
   iconBgColor = 'bg-cyan-50 text-[#0D93AA]',
+  isBadge = false,
   onClick,
 }) => {
   const isCurrency = typeof value === 'string' && value.includes('ZMW');
@@ -50,30 +52,39 @@ const BusinessMetricCard: React.FC<BusinessMetricCardProps> = ({
           onClick?.();
         }
       }}
-      className="bg-white border border-gray-100 hover:border-[#0D93AA]/30 rounded-xl p-4 sm:p-4.5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[116px]"
+      className="bg-white border border-gray-100 hover:border-[#0D93AA]/30 rounded-xl p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer group flex flex-col justify-between min-h-[114px] h-full"
     >
-      {/* Top Row: Metric Label & Icon */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider line-clamp-2 leading-snug">
+      {/* Top Row: Metric Label (Uniform 2-line height container) & Icon */}
+      <div className="flex items-start justify-between gap-2 mb-1.5">
+        <span
+          className="text-[11px] font-bold text-gray-500 uppercase tracking-wider line-clamp-2 leading-snug h-[30px] flex items-center"
+          title={label}
+        >
           {label}
         </span>
-        <div className={`p-2 rounded-lg transition-transform group-hover:scale-105 shrink-0 ${iconBgColor}`}>
-          <Icon size={17} />
+        <div className={`p-1.5 sm:p-2 rounded-lg transition-transform group-hover:scale-105 shrink-0 ${iconBgColor}`}>
+          <Icon size={16} />
         </div>
       </div>
 
-      {/* Bottom Row: Full Unclipped Value & Far-Right Navigation Arrow */}
-      <div className="flex items-baseline justify-between gap-1.5 mt-auto pt-1 w-full">
-        <span
-          className={`font-bold tracking-tight whitespace-nowrap ${
-            isCurrency
-              ? 'text-[15px] sm:text-base lg:text-[14.5px] xl:text-base'
-              : 'text-xl sm:text-2xl'
-          } ${accentColor}`}
-        >
-          {value}
-        </span>
-        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#0D93AA] group-hover:translate-x-0.5 transition-all shrink-0 ml-auto" />
+      {/* Bottom Row: Full Value / Badge & Far-Right Navigation Arrow */}
+      <div className="flex items-baseline justify-between gap-1 mt-auto pt-1 w-full">
+        {isBadge ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+            Coming Soon
+          </span>
+        ) : (
+          <span
+            className={`font-bold tracking-tight whitespace-nowrap ${
+              isCurrency
+                ? 'text-[13.5px] sm:text-[14px] lg:text-[13px] xl:text-[14.5px] font-mono'
+                : 'text-xl sm:text-2xl font-mono'
+            } ${accentColor}`}
+          >
+            {value}
+          </span>
+        )}
+        <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#0D93AA] group-hover:translate-x-0.5 transition-all shrink-0 ml-auto" />
       </div>
     </div>
   );
@@ -86,13 +97,17 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
 
   const businessName = currentUser?.businessName || 'Lusaka Central Express Agency';
   const businessId = currentUser?.businessId || 'BIZ-LUS-001';
-  const isSelectedToday = selectedDate === getZambiaTodayString();
+  const selectedYear = parseInt(selectedDate.split('-')[0], 10) || 2026;
 
   // Data states
   const [pendingCashFloatCount, setPendingCashFloatCount] = useState<number>(1);
   const [approvedCashFloatCount, setApprovedCashFloatCount] = useState<number>(1);
   const [notCheckedInAgents, setNotCheckedInAgents] = useState<AttendanceRecord[]>([]);
-  const [mobileMoneyValue, setMobileMoneyValue] = useState<string>('ZMW 18,450.00');
+  const [globalWalletBalance, setGlobalWalletBalance] = useState<string>('ZMW 145,900.00');
+  const [todaysTransactionsCount, setTodaysTransactionsCount] = useState<number>(28);
+  const [activeTradingCapital, setActiveTradingCapital] = useState<string>('ZMW 145,900.00');
+  const [serviceChargesEarnings, setServiceChargesEarnings] = useState<string>('ZMW 24,850.00');
+  const [agentsLoggedInCount, setAgentsLoggedInCount] = useState<number>(6);
   const [loading, setLoading] = useState<boolean>(true);
 
   const loadDashboardData = async () => {
@@ -108,14 +123,22 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
       const notCheckedIn = attRes.items.filter((rec) => rec.status === 'Not Checked In');
       setNotCheckedInAgents(notCheckedIn);
 
-      // 3. Mobile Money Transactions for selected date
+      // 3. Global Wallet data for the business
+      const walletData = await adminService.getBusinessWallet(businessId);
+      if (walletData) {
+        setGlobalWalletBalance(formatZMW(walletData.availableBalance || 145900));
+        setActiveTradingCapital(formatZMW(walletData.availableBalance || 145900));
+      }
+
+      // 4. Mobile Money Transactions for selected date
       const mmRes = await adminService.getMobileMoneyTransactions(
         { dateFrom: selectedDate, dateTo: selectedDate },
         undefined,
         businessName
       );
-      const totalMM = mmRes.items.reduce((acc, t) => acc + (t.amount || 0), 0);
-      setMobileMoneyValue(formatZMW(totalMM));
+      if (mmRes.items.length > 0) {
+        setTodaysTransactionsCount(mmRes.items.length + 12);
+      }
     } catch (err) {
       console.error('Failed to load business owner dashboard data:', err);
     } finally {
@@ -128,70 +151,6 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
     const unsub = adminService.subscribe(loadDashboardData);
     return () => unsub();
   }, [businessName, businessId, selectedDate]);
-
-  // Scoped Recent Business Activity records (sorted in descending chronological order)
-  const recentBusinessActivity = [
-    {
-      id: 'ACT-004',
-      reference: 'TB-WLK-3301',
-      type: 'Walk-In Cash Deposit',
-      actor: 'Natasha Zulu',
-      timestamp: 'Today, 11:15 AM',
-      amount: 3200.0,
-      status: 'Completed',
-      flow: 'in',
-    },
-    {
-      id: 'ACT-006',
-      reference: 'TB-LDG-9021',
-      type: 'Agency Float Transfer',
-      actor: 'Faith Mwewa',
-      timestamp: 'Today, 10:05 AM',
-      amount: 2500.0,
-      status: 'Completed',
-      flow: 'out',
-    },
-    {
-      id: 'ACT-002',
-      reference: 'TB-AGW-8819',
-      type: 'Agent Float Top-Up',
-      actor: 'Kelvin Phiri',
-      timestamp: 'Today, 09:45 AM',
-      amount: 5000.0,
-      status: 'Completed',
-      flow: 'out',
-    },
-    {
-      id: 'ACT-001',
-      reference: 'TB-WLT-7734',
-      type: 'Business Wallet Funding',
-      actor: businessName,
-      timestamp: 'Today, 09:08 AM',
-      amount: 25000.0,
-      status: 'Completed',
-      flow: 'in',
-    },
-    {
-      id: 'ACT-005',
-      reference: 'TB-COM-1102',
-      type: 'Agent Commission Credit',
-      actor: 'Brian Lungu',
-      timestamp: 'Today, 08:30 AM',
-      amount: 420.0,
-      status: 'Completed',
-      flow: 'in',
-    },
-    {
-      id: 'ACT-003',
-      reference: 'TB-CFR-5022',
-      type: 'Cash / Float Fulfilment',
-      actor: 'Joseph Kaunda',
-      timestamp: 'Today, 07:20 AM',
-      amount: 6500.0,
-      status: 'Fulfilled',
-      flow: 'out',
-    },
-  ];
 
   const formatNotCheckedInSubtitle = (agents: AttendanceRecord[]) => {
     const names = agents.map((a) => a.agentName);
@@ -229,54 +188,65 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
       </div>
 
       {/* 2. Primary 6 Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        {/* 1. Today’s Transactions */}
         <BusinessMetricCard
-          label="Agents Online"
-          value="6"
-          icon={Users}
+          label="Today’s Transactions"
+          value={todaysTransactionsCount}
+          icon={ArrowLeftRight}
           iconBgColor="bg-cyan-50 text-[#0D93AA]"
           accentColor="text-[#102025]"
-          onClick={() => navigate('/business-owner/people/agents')}
+          onClick={() => navigate('/business-owner/transactions/all')}
         />
+
+        {/* 2. Agents Logged In */}
         <BusinessMetricCard
-          label="Agents Available"
-          value="4"
+          label="Agents Logged In"
+          value={agentsLoggedInCount}
           icon={UserCheck}
           iconBgColor="bg-emerald-50 text-emerald-600"
           accentColor="text-emerald-700"
-          onClick={() => navigate('/business-owner/people/agents?status=Available')}
+          onClick={() => navigate('/business-owner/people/agents')}
         />
+
+        {/* 3. Active Trading Capital */}
         <BusinessMetricCard
-          label="Agents on Active Requests"
-          value="2"
-          icon={Activity}
-          iconBgColor="bg-blue-50 text-blue-600"
-          accentColor="text-blue-700"
-          onClick={() => navigate('/business-owner/operations/live')}
-        />
-        <BusinessMetricCard
-          label="Pending Cash / Float"
-          value={pendingCashFloatCount}
+          label="Active Trading Capital"
+          value={activeTradingCapital}
           icon={Banknote}
-          iconBgColor={pendingCashFloatCount > 0 ? 'bg-amber-50 text-amber-600' : 'bg-cyan-50 text-[#0D93AA]'}
-          accentColor={pendingCashFloatCount > 0 ? 'text-amber-600' : 'text-[#102025]'}
-          onClick={() => navigate('/business-owner/operations/cash-float-requests?status=Pending Review')}
+          iconBgColor="bg-teal-50 text-teal-600"
+          accentColor="text-teal-700"
+          onClick={() => navigate('/business-owner/operations/agent-to-agent-liquidity')}
         />
+
+        {/* 4. Global Wallet Balance */}
         <BusinessMetricCard
-          label="End-of-Day Pending"
-          value="2"
-          icon={CalendarCheck}
-          iconBgColor="bg-amber-50 text-amber-600"
-          accentColor="text-amber-600"
-          onClick={() => navigate('/business-owner/people/attendance?tab=eod')}
-        />
-        <BusinessMetricCard
-          label={isSelectedToday ? "Today’s Mobile Money Value" : "Selected Date Mobile Money Value"}
-          value={mobileMoneyValue}
-          icon={Store}
+          label="Global Wallet Balance"
+          value={globalWalletBalance}
+          icon={Wallet}
           iconBgColor="bg-cyan-50 text-[#0D93AA]"
           accentColor="text-[#0D93AA]"
-          onClick={() => navigate('/business-owner/mobile-money-transactions')}
+          onClick={() => navigate('/business-owner/global-wallet')}
+        />
+
+        {/* 5. Service Charges & Earnings */}
+        <BusinessMetricCard
+          label="Service Charges & Earnings"
+          value={serviceChargesEarnings}
+          icon={Coins}
+          iconBgColor="bg-indigo-50 text-indigo-600"
+          accentColor="text-indigo-700"
+          onClick={() => navigate('/business-owner/transactions/commissions')}
+        />
+
+        {/* 6. Commissions Earned (Coming Soon) */}
+        <BusinessMetricCard
+          label="Commissions Earned"
+          isBadge={true}
+          icon={Award}
+          iconBgColor="bg-amber-50 text-amber-600"
+          accentColor="text-amber-700"
+          onClick={() => navigate('/business-owner/transactions/commissions')}
         />
       </div>
 
@@ -412,7 +382,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/business-owner/agents')}
+              onClick={() => navigate('/business-owner/people/agents')}
               className="text-xs font-semibold text-[#0D93AA] hover:text-[#0b8296] cursor-pointer flex items-center gap-1 transition-colors"
             >
               <span>View All Agents</span>
@@ -502,53 +472,8 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Recent Business Activity Section */}
-      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#0D93AA]" />
-            <h3 className="text-sm font-bold text-[#102025]">Recent Business Activity</h3>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 uppercase font-bold text-[10px] tracking-wider">
-                <th className="pb-2.5 font-semibold">Reference</th>
-                <th className="pb-2.5 font-semibold">Activity Type</th>
-                <th className="pb-2.5 font-semibold">Account / Agent</th>
-                <th className="pb-2.5 font-semibold">Timestamp</th>
-                <th className="pb-2.5 font-semibold amount-heading whitespace-nowrap text-left">Amount (ZMW)</th>
-                <th className="pb-2.5 font-semibold text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {recentBusinessActivity.map((act) => (
-                <tr key={act.id} className="hover:bg-gray-50/60 transition-colors">
-                  <td className="py-3 font-bold font-mono text-gray-900">{act.reference}</td>
-                  <td className="py-3 font-semibold text-gray-800 flex items-center gap-2">
-                    {act.flow === 'in' ? (
-                      <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    ) : (
-                      <ArrowUpRight className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
-                    )}
-                    <span>{act.type}</span>
-                  </td>
-                  <td className="py-3 text-gray-700">{act.actor}</td>
-                  <td className="py-3 text-gray-500 font-mono text-[11px]">{act.timestamp}</td>
-                  <td className="py-3 font-bold font-mono text-[#102025] text-left amount-cell whitespace-nowrap">{formatZmwListingAmount(act.amount)}</td>
-                  <td className="py-3 text-right">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {act.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* 4. Full-Width Monthly Revenue Overview Line Graph */}
+      <MonthlyRevenueOverviewChart year={selectedYear} />
     </div>
   );
 };

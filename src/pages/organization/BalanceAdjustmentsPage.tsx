@@ -249,20 +249,14 @@ export const BalanceAdjustmentsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            <Scale className="w-3.5 h-3.5" />
-            <span>Organization Management</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-500">Financial Governance</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 mt-1">Balance Adjustments</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Audit-backed balance corrections, vault float adjustments, and float variance reconciliation.
-          </p>
+    <div className="space-y-3.5 pb-12">
+      {/* Page Header / Breadcrumb & Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-700">
+          <Scale className="w-3.5 h-3.5" />
+          <span>Organization Management</span>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-500">Financial Governance</span>
         </div>
 
         {/* Action Buttons */}
@@ -311,59 +305,77 @@ export const BalanceAdjustmentsPage: React.FC = () => {
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Total Adjustments</span>
-            <Scale className="w-4 h-4 text-emerald-600" />
+      {/* KPI Cards: Single Horizontal Line (Icon, Title, Value) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Total Adjustments */}
+        <div className="bg-white rounded-xl px-3.5 py-2.5 border border-slate-200/80 shadow-xs flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Scale className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-medium text-slate-500 truncate" title="Total Adjustments">
+              Total Adjustments
+            </span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">{totalAdjustments}</div>
-          <div className="text-xs text-emerald-700 font-medium mt-1">Audit-logged operations</div>
+          <div className="text-base font-bold font-mono text-slate-900 shrink-0">
+            {totalAdjustments}
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Total Injections (+)</span>
-            <ArrowUpRight className="w-4 h-4 text-teal-600" />
+        {/* Total Injections (+) */}
+        <div className="bg-white rounded-xl px-3.5 py-2.5 border border-slate-200/80 shadow-xs flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-medium text-slate-500 truncate" title="Total Injections (+)">
+              Total Injections (+)
+            </span>
           </div>
-          <div className="text-2xl font-bold text-teal-700 mt-2">
+          <div className="text-base font-bold font-mono text-teal-700 shrink-0">
             ZMW {netIncrease.toLocaleString('en-ZM', { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-teal-600 font-medium mt-1">Float increases</div>
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Total Deductions (-)</span>
-            <ArrowDownLeft className="w-4 h-4 text-amber-600" />
+        {/* Total Deductions (-) */}
+        <div className="bg-white rounded-xl px-3.5 py-2.5 border border-slate-200/80 shadow-xs flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <ArrowDownLeft className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-medium text-slate-500 truncate" title="Total Deductions (-)">
+              Total Deductions (-)
+            </span>
           </div>
-          <div className="text-2xl font-bold text-amber-700 mt-2">
+          <div className="text-base font-bold font-mono text-amber-700 shrink-0">
             ZMW {netDecrease.toLocaleString('en-ZM', { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-amber-600 font-medium mt-1">Settlements & vault drops</div>
         </div>
 
-        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Net Balance Shift</span>
-            <Layers className="w-4 h-4 text-indigo-600" />
+        {/* Net Balance Shift */}
+        <div className="bg-white rounded-xl px-3.5 py-2.5 border border-slate-200/80 shadow-xs flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <Layers className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-medium text-slate-500 truncate" title="Net Balance Shift">
+              Net Balance Shift
+            </span>
           </div>
           <div
-            className={`text-2xl font-bold mt-2 ${
+            className={`text-base font-bold font-mono shrink-0 ${
               netVariance >= 0 ? 'text-emerald-700' : 'text-rose-700'
             }`}
           >
             {netVariance >= 0 ? '+' : ''}ZMW{' '}
             {netVariance.toLocaleString('en-ZM', { minimumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-slate-500 font-medium mt-1">Cumulative agency variance</div>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1">
+      {/* Filter Bar: Compact Single Line */}
+      <div className="bg-white rounded-xl border border-slate-200/80 px-3.5 py-2.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <div className="relative flex-1 max-w-md">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -372,7 +384,7 @@ export const BalanceAdjustmentsPage: React.FC = () => {
               placeholder="Search reference, staff name, store, reason..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8.5 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white"
+              className="w-full h-8 pl-8.5 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white"
             />
           </div>
 
@@ -380,7 +392,7 @@ export const BalanceAdjustmentsPage: React.FC = () => {
             id="select-baltype-filter"
             value={balanceTypeFilter}
             onChange={(e) => setBalanceTypeFilter(e.target.value as any)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="h-8 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
             <option value="All">All Balance Types</option>
             <option value="Cash Balance">Cash Balance</option>
@@ -392,7 +404,7 @@ export const BalanceAdjustmentsPage: React.FC = () => {
             id="select-direction-filter"
             value={directionFilter}
             onChange={(e) => setDirectionFilter(e.target.value as any)}
-            className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="h-8 text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
             <option value="All">All Directions</option>
             <option value="Increase">Increase (+)</option>
@@ -400,7 +412,7 @@ export const BalanceAdjustmentsPage: React.FC = () => {
           </select>
         </div>
 
-        <div className="text-xs font-semibold text-slate-500">
+        <div className="text-xs font-semibold text-slate-500 shrink-0">
           Showing {filteredAdjustments.length} adjustment records
         </div>
       </div>
@@ -408,17 +420,27 @@ export const BalanceAdjustmentsPage: React.FC = () => {
       {/* Adjustments Table */}
       <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
+          <table className="w-full table-fixed text-left text-xs text-slate-600">
+            <colgroup>
+              <col className="w-[9%]" />
+              <col className="w-[10%]" />
+              <col className="w-[16%]" />
+              <col className="w-[12%]" />
+              <col className="w-[15%]" />
+              <col className="w-[17%]" />
+              <col className="w-[11%]" />
+              <col className="w-[10%]" />
+            </colgroup>
             <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
               <tr>
-                <th className="py-3 px-4">Adjustment Ref</th>
-                <th className="py-3 px-4">Date & Time</th>
-                <th className="py-3 px-4">Agent / Station</th>
-                <th className="py-3 px-4">Type & Provider</th>
-                <th className="py-3 px-4 text-left amount-heading">Adjustment Amount (ZMW)</th>
-                <th className="py-3 px-4 text-left amount-heading">Balance Delta (ZMW)</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Adjustment Ref</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Date & Time</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Agent / Station</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Type & Provider</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Adjustment Amount (ZMW)</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Balance Delta (ZMW)</th>
+                <th className="py-3 px-4 align-middle text-left whitespace-nowrap">Status</th>
+                <th className="py-3 px-4 align-middle text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -431,11 +453,11 @@ export const BalanceAdjustmentsPage: React.FC = () => {
               ) : (
                 filteredAdjustments.map((adj) => (
                   <tr key={adj.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                    <td className="py-3 px-4 align-middle font-mono font-bold text-slate-900 whitespace-nowrap">
                       {adj.adjustmentReference}
                     </td>
 
-                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                    <td className="py-3 px-4 align-middle text-slate-500 whitespace-nowrap">
                       {new Date(adj.createdAt).toLocaleDateString()}{' '}
                       <span className="text-[11px] text-slate-400">
                         {new Date(adj.createdAt).toLocaleTimeString([], {
@@ -445,30 +467,32 @@ export const BalanceAdjustmentsPage: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900">{adj.staffName || adj.staffUserId}</div>
-                      <div className="text-slate-400 text-[11px]">
-                        {adj.storeName} • {adj.boothName}
+                    <td className="py-3 px-4 align-middle">
+                      <div className="font-semibold text-slate-900 truncate">
+                        {adj.staffName || adj.staffUserId}
+                      </div>
+                      <div className="text-slate-400 text-[11px] truncate">
+                        {adj.storeName}
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4">
-                      <span className="font-medium text-slate-800">{adj.balanceType}</span>
+                    <td className="py-3 px-4 align-middle">
+                      <span className="font-medium text-slate-800 block truncate">{adj.balanceType}</span>
                       {adj.providerId && (
-                        <span className="block text-slate-400 text-[11px]">{adj.providerId}</span>
+                        <span className="block text-slate-400 text-[11px] truncate">{adj.providerId}</span>
                       )}
                     </td>
 
-                    <td className="py-3.5 px-4 text-left amount-cell">
+                    <td className="py-3 px-4 align-middle text-left">
                       <div
-                        className={`inline-flex items-center gap-1 font-bold ${
+                        className={`inline-flex items-center gap-1 font-bold whitespace-nowrap ${
                           adj.direction === 'Increase' ? 'text-emerald-700' : 'text-rose-700'
                         }`}
                       >
                         {adj.direction === 'Increase' ? (
-                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
                         ) : (
-                          <ArrowDownLeft className="w-3.5 h-3.5" />
+                          <ArrowDownLeft className="w-3.5 h-3.5 shrink-0" />
                         )}
                         <span>
                           {adj.direction === 'Increase' ? '+' : '-'}{formatZmwListingAmount(adj.amount)}
@@ -476,19 +500,21 @@ export const BalanceAdjustmentsPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-left amount-cell">
-                      <span className="text-slate-400">
-                        {formatZmwListingAmount(adj.previousBalance)}
-                      </span>
-                      <span className="text-slate-300 mx-1">→</span>
-                      <span className="font-semibold text-slate-800">
-                        {formatZmwListingAmount(adj.newBalance)}
-                      </span>
+                    <td className="py-3 px-4 align-middle font-mono text-[11px] text-left">
+                      <div className="whitespace-nowrap">
+                        <span className="text-slate-400">
+                          {formatZmwListingAmount(adj.previousBalance)}
+                        </span>
+                        <span className="text-slate-300 mx-1">→</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatZmwListingAmount(adj.newBalance)}
+                        </span>
+                      </div>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-3 px-4 align-middle">
                       <span
-                        className={`px-2 py-0.5 rounded-full font-semibold text-[11px] ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[11px] whitespace-nowrap ${
                           adj.status === 'Completed'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-amber-100 text-amber-800'
@@ -498,14 +524,14 @@ export const BalanceAdjustmentsPage: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3 px-4 align-middle text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => {
                             setSelectedAdjustment(adj);
                             setShowDetailModal(true);
                           }}
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors whitespace-nowrap shadow-2xs"
                         >
                           View
                         </button>

@@ -166,7 +166,11 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
                 >
                   {isCredit ? 'CREDIT' : isDebit ? 'DEBIT' : 'NO BALANCE CHANGE'}
                 </span>
-                <span className="text-xs font-medium text-slate-600">{activity.transactionType}</span>
+                <span className="text-xs font-medium text-slate-600">
+                  {activity.transactionType === 'Commission'
+                    ? 'Service Earnings'
+                    : activity.transactionType}
+                </span>
               </div>
             </div>
 
@@ -206,7 +210,11 @@ export const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 border border-slate-200 rounded-xl p-4">
               <div>
                 <span className="text-[11px] text-slate-400 block font-medium">Transaction Type</span>
-                <span className="text-xs font-semibold text-slate-800 block mt-0.5">{activity.transactionType}</span>
+                <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                  {activity.transactionType === 'Commission'
+                    ? 'Service Earnings'
+                    : activity.transactionType}
+                </span>
               </div>
 
               <div>

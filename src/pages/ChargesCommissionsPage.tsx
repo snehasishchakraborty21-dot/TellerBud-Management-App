@@ -6,20 +6,17 @@ import {
   Building2,
   Landmark,
   Clock,
-  Search,
   RotateCcw,
   Download,
   ChevronLeft,
   ChevronRight,
   Eye,
   Calendar,
-  Layers,
   FileCheck,
 } from 'lucide-react';
 import {
   MOCK_CHARGES_COMMISSIONS_KPIS,
   MOCK_CHARGE_RECORDS,
-  MOCK_COMMISSION_RECORDS,
   calculateRevenueKpis,
   MOCK_AGENT_TRANSACTION_REVENUE_RECORDS,
   calculateAgentRevenueBreakdown,
@@ -28,9 +25,7 @@ import {
 } from '../data/mockChargesCommissionsData';
 import {
   ChargeRecord,
-  CommissionRecord,
   ChargeStatus,
-  CommissionSettlementStatus,
   AgentRevenueFilters,
 } from '../types/chargesCommissions';
 import { formatZmwListingAmount } from '../utils/formatters';
@@ -86,12 +81,13 @@ export const ChargesCommissionsPage: React.FC = () => {
   const currentBusinessId = currentUser?.businessId || 'BIZ-LUS-001';
   const currentBusinessName = currentUser?.businessName || 'Lusaka Central Express Agency';
 
-  // Active Tab: 'agent-breakdown' (default for Business Owner) | 'charges' | 'commissions'
-  const [activeTab, setActiveTab] = useState<'agent-breakdown' | 'charges' | 'commissions'>(() => {
+  // Active Tab: 'charges' (default) | 'agent-breakdown'
+  const [activeTab, setActiveTab] = useState<'agent-breakdown' | 'charges'>(() => {
     if (location.state && (location.state as any).activeTab) {
-      return (location.state as any).activeTab;
+      const tab = (location.state as any).activeTab;
+      if (tab === 'agent-breakdown' || tab === 'charges') return tab;
     }
-    return 'agent-breakdown';
+    return 'charges';
   });
 
   // Agent Revenue Breakdown Filters
@@ -248,73 +244,8 @@ export const ChargesCommissionsPage: React.FC = () => {
     toDate,
   ]);
 
-  // Filter Commission Records (Strict tenant isolation to current business)
-  const filteredCommissionRecords = useMemo(() => {
-    return MOCK_COMMISSION_RECORDS.filter((rec) => {
-      // Business-level data isolation
-      if (
-        isBusinessOwner &&
-        rec.associatedBusiness &&
-        rec.associatedBusiness !== currentBusinessName &&
-        rec.associatedBusiness !== currentBusinessId
-      ) {
-        return false;
-      }
-
-      // Search
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchRef = rec.reference.toLowerCase().includes(q);
-        const matchTxn = rec.transactionReference.toLowerCase().includes(q);
-        const matchRecipient = rec.recipient.toLowerCase().includes(q);
-        const matchRecipientId = rec.recipientId.toLowerCase().includes(q);
-        const matchBiz = rec.associatedBusiness?.toLowerCase().includes(q) || false;
-        if (!matchRef && !matchTxn && !matchRecipient && !matchRecipientId && !matchBiz) {
-          return false;
-        }
-      }
-
-      // Service
-      if (selectedService !== 'All Services') {
-        if (rec.service !== selectedService) return false;
-      }
-
-      // Provider
-      if (selectedProvider !== 'All Providers') {
-        if (rec.provider && rec.provider !== selectedProvider) return false;
-      }
-
-      // Status
-      if (selectedStatus !== 'All Statuses') {
-        const recSt = rec.settlementStatus.toLowerCase();
-        const targetSt = selectedStatus.toLowerCase();
-        if (targetSt === 'pending' && recSt.includes('pending')) {
-          // match pending settlement
-        } else if (!recSt.includes(targetSt)) {
-          return false;
-        }
-      }
-
-      // Date Range
-      if (fromDate && rec.rawDate < fromDate) return false;
-      if (toDate && rec.rawDate > toDate) return false;
-
-      return true;
-    }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  }, [
-    isBusinessOwner,
-    currentBusinessName,
-    currentBusinessId,
-    searchQuery,
-    selectedService,
-    selectedProvider,
-    selectedStatus,
-    fromDate,
-    toDate,
-  ]);
-
-  // Active records based on tab (for charges / commissions tabs)
-  const activeRecords = activeTab === 'charges' ? filteredChargeRecords : filteredCommissionRecords;
+  // Active records for charges tab
+  const activeRecords = filteredChargeRecords;
   const totalRecordsCount = activeRecords.length;
   const totalPages = Math.max(1, Math.ceil(totalRecordsCount / rowsPerPage));
 
@@ -332,10 +263,10 @@ export const ChargesCommissionsPage: React.FC = () => {
     }
   };
 
-  // Dynamic revenue calculation for charges and commission records
+  // Dynamic revenue calculation for charge records
   const revenueKpis = useMemo(() => {
-    return calculateRevenueKpis(filteredChargeRecords, filteredCommissionRecords);
-  }, [filteredChargeRecords, filteredCommissionRecords]);
+    return calculateRevenueKpis(filteredChargeRecords, []);
+  }, [filteredChargeRecords]);
 
   // Active reconciling KPIs:
   // When viewing Agent Revenue Breakdown, use agentKpis which guarantees exact reconciliation
@@ -347,77 +278,41 @@ export const ChargesCommissionsPage: React.FC = () => {
     return revenueKpis;
   }, [activeTab, agentKpis, revenueKpis]);
 
-  // Export filtered records to CSV
+  // Export filtered charge records to CSV
   const handleExport = () => {
-    if (activeTab === 'charges') {
-      const headers = [
-        'Charge Record',
-        'Transaction Ref',
-        'Created At',
-        'Customer Name',
-        'Customer ID',
-        'Service',
-        'Provider',
-        'Transaction Amount (ZMW)',
-        'Reservation Charge (ZMW)',
-        'Status',
-      ];
-      const rows = (activeRecords as ChargeRecord[]).map((r) => [
-        r.reference,
-        r.transactionReference,
-        r.createdAt,
-        `"${r.customerName}"`,
-        r.customerId,
-        r.service,
-        r.provider,
-        r.transactionAmount.toFixed(2),
-        r.reservationCharge.toFixed(2),
-        r.status,
-      ]);
-      const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `tellerbud_charges_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const headers = [
-        'Revenue Record',
-        'Transaction Ref',
-        'Created At',
-        'Recipient',
-        'Recipient ID',
-        'Recipient Type',
-        'Associated Business',
-        'Calculation Basis',
-        'Commission Amount (ZMW)',
-        'Settlement Status',
-      ];
-      const rows = (activeRecords as CommissionRecord[]).map((r) => [
-        r.reference,
-        r.transactionReference,
-        r.createdAt,
-        `"${r.recipient}"`,
-        r.recipientId,
-        r.recipientType,
-        `"${r.associatedBusiness || ''}"`,
-        `"${r.calculationBasis}"`,
-        r.commissionAmount.toFixed(2),
-        r.settlementStatus,
-      ]);
-      const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `tellerbud_revenue_${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    const headers = [
+      'Charge Record',
+      'Transaction Ref',
+      'Created At',
+      'Customer Name',
+      'Customer ID',
+      'Service',
+      'Provider',
+      'Transaction Amount (ZMW)',
+      'Reservation Charge (ZMW)',
+      'Status',
+    ];
+    const rows = (activeRecords as ChargeRecord[]).map((r) => [
+      r.reference,
+      r.transactionReference,
+      r.createdAt,
+      `"${r.customerName}"`,
+      r.customerId,
+      r.service,
+      r.provider,
+      r.transactionAmount.toFixed(2),
+      r.reservationCharge.toFixed(2),
+      r.status,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tellerbud_charges_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Charge status pill styling
@@ -425,61 +320,25 @@ export const ChargesCommissionsPage: React.FC = () => {
     switch (status) {
       case 'Pending':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
             Pending
           </span>
         );
       case 'Posted':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
             Posted
           </span>
         );
       case 'Cancelled':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
             Cancelled
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 whitespace-nowrap">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  // Commission status pill styling
-  const renderCommissionStatus = (status: CommissionSettlementStatus) => {
-    switch (status) {
-      case 'Accrued':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/80 whitespace-nowrap">
-            Accrued
-          </span>
-        );
-      case 'Pending Settlement':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/80 whitespace-nowrap">
-            Pending Settlement
-          </span>
-        );
-      case 'Settled':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap">
-            Settled
-          </span>
-        );
-      case 'Cancelled':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
-            Cancelled
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 whitespace-nowrap">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-700 whitespace-nowrap">
             {status}
           </span>
         );
@@ -566,22 +425,22 @@ export const ChargesCommissionsPage: React.FC = () => {
       </div>
 
       {/* 2. TABS: Agent Revenue Breakdown (default), Charge Records & Revenue Records */}
-      <div id="tabs-header" className="border-b border-slate-200 bg-white px-2 rounded-t-xl">
-        <nav className="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+      <div id="tabs-header" className="border-b border-slate-200 bg-white px-2 sm:px-3 rounded-t-xl">
+        <nav className="flex items-center space-x-1 sm:space-x-3 overflow-x-auto" aria-label="Tabs">
           <button
             id="tab-agent-breakdown"
             type="button"
             onClick={() => setActiveTab('agent-breakdown')}
-            className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 py-2 px-3 sm:px-3.5 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'agent-breakdown'
                 ? 'border-[#0D93AA] text-[#0D93AA] bg-cyan-50/40 rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <Users size={16} />
+            <Users size={15} />
             <span>Agent Revenue Breakdown</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
+              className={`px-1.5 py-0.5 rounded-full text-xs font-mono font-medium ${
                 activeTab === 'agent-breakdown'
                   ? 'bg-[#0D93AA]/15 text-[#0D93AA]'
                   : 'bg-slate-100 text-slate-600'
@@ -598,48 +457,22 @@ export const ChargesCommissionsPage: React.FC = () => {
               setActiveTab('charges');
               setCurrentPage(1);
             }}
-            className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex items-center gap-2 py-2 px-3 sm:px-3.5 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'charges'
                 ? 'border-[#0D93AA] text-[#0D93AA] bg-cyan-50/40 rounded-t-lg'
                 : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
             }`}
           >
-            <Coins size={16} />
+            <Coins size={15} />
             <span>Charge Records</span>
             <span
-              className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
+              className={`px-1.5 py-0.5 rounded-full text-xs font-mono font-medium ${
                 activeTab === 'charges'
                   ? 'bg-[#0D93AA]/15 text-[#0D93AA]'
                   : 'bg-slate-100 text-slate-600'
               }`}
             >
               {filteredChargeRecords.length}
-            </span>
-          </button>
-
-          <button
-            id="tab-commission-records"
-            type="button"
-            onClick={() => {
-              setActiveTab('commissions');
-              setCurrentPage(1);
-            }}
-            className={`flex items-center gap-2 py-3 px-4 text-sm font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'commissions'
-                ? 'border-[#0D93AA] text-[#0D93AA] bg-cyan-50/40 rounded-t-lg'
-                : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
-            }`}
-          >
-            <Layers size={16} />
-            <span>Revenue Records</span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
-                activeTab === 'commissions'
-                  ? 'bg-[#0D93AA]/15 text-[#0D93AA]'
-                  : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              {filteredCommissionRecords.length}
             </span>
           </button>
         </nav>
@@ -667,168 +500,155 @@ export const ChargesCommissionsPage: React.FC = () => {
         />
       ) : (
         <>
-          {/* COMMON FILTERS SECTION (Organized into 2 clean, balanced rows) */}
+          {/* COMMON FILTERS SECTION (Compact single horizontal line layout) */}
           <div
             id="filter-controls-section"
-            className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3"
+            className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 sm:px-4 shadow-sm"
           >
-        {/* Row 1: Search, Service, Provider, Status */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
-          {/* Search */}
-          <div className="lg:col-span-6 relative">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              id="filter-search-input"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search record, transaction, customer, agent or business..."
-              className="w-full h-[38px] pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
-            />
-          </div>
+            <div className="flex flex-wrap xl:flex-nowrap items-center justify-between gap-2.5 sm:gap-3 w-full">
+              {/* Filter controls: From Date, To Date, All Services, All Providers, All Statuses, Clear Filters, Refresh */}
+              <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                {/* 1. From Date */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <label
+                    htmlFor="filter-from-date"
+                    className="text-xs font-semibold text-slate-700 whitespace-nowrap"
+                  >
+                    From Date
+                  </label>
+                  <input
+                    id="filter-from-date"
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => {
+                      setFromDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
+                    title="From Date"
+                  />
+                </div>
 
-          {/* Service Dropdown */}
-          <div className="lg:col-span-2">
-            <select
-              id="filter-service-select"
-              value={selectedService}
-              onChange={(e) => {
-                setSelectedService(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-[38px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
-            >
-              {SERVICES_OPTIONS.map((srv) => (
-                <option key={srv} value={srv}>
-                  {srv}
-                </option>
-              ))}
-            </select>
-          </div>
+                {/* 2. To Date */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <label
+                    htmlFor="filter-to-date"
+                    className="text-xs font-semibold text-slate-700 whitespace-nowrap"
+                  >
+                    To Date
+                  </label>
+                  <input
+                    id="filter-to-date"
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => {
+                      setToDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
+                    title="To Date"
+                  />
+                </div>
 
-          {/* Provider Dropdown */}
-          <div className="lg:col-span-2">
-            <select
-              id="filter-provider-select"
-              value={selectedProvider}
-              onChange={(e) => {
-                setSelectedProvider(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-[38px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
-            >
-              {PROVIDERS_OPTIONS.map((prv) => (
-                <option key={prv} value={prv}>
-                  {prv}
-                </option>
-              ))}
-            </select>
-          </div>
+                {/* 3. All Services */}
+                <div className="flex-1 min-w-[120px] max-w-[160px] flex-shrink-0">
+                  <select
+                    id="filter-service-select"
+                    value={selectedService}
+                    onChange={(e) => {
+                      setSelectedService(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
+                  >
+                    {SERVICES_OPTIONS.map((srv) => (
+                      <option key={srv} value={srv}>
+                        {srv}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          {/* Status Dropdown */}
-          <div className="lg:col-span-2">
-            <select
-              id="filter-status-select"
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-[38px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer"
-            >
-              {STATUSES_OPTIONS.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+                {/* 4. All Providers */}
+                <div className="flex-1 min-w-[120px] max-w-[155px] flex-shrink-0">
+                  <select
+                    id="filter-provider-select"
+                    value={selectedProvider}
+                    onChange={(e) => {
+                      setSelectedProvider(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
+                  >
+                    {PROVIDERS_OPTIONS.map((prv) => (
+                      <option key={prv} value={prv}>
+                        {prv}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-        {/* Row 2: From Date, To Date, Clear Filters, Refresh, Export Records */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2.5 border-t border-slate-100">
-          {/* Date Inputs without clipping */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <label htmlFor="filter-from-date" className="text-xs font-medium text-slate-500 whitespace-nowrap">
-                From:
-              </label>
-              <input
-                id="filter-from-date"
-                type="date"
-                value={fromDate}
-                onChange={(e) => {
-                  setFromDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="h-[38px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
-                title="From Date"
-              />
+                {/* 5. All Statuses */}
+                <div className="flex-1 min-w-[110px] max-w-[140px] flex-shrink-0">
+                  <select
+                    id="filter-status-select"
+                    value={selectedStatus}
+                    onChange={(e) => {
+                      setSelectedStatus(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
+                  >
+                    {STATUSES_OPTIONS.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 6. Clear Filters */}
+                <button
+                  id="btn-clear-filters"
+                  type="button"
+                  onClick={handleClearFilters}
+                  className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+                >
+                  <RotateCcw size={13} />
+                  <span>Clear Filters</span>
+                </button>
+
+                {/* 7. Refresh */}
+                <button
+                  id="btn-refresh"
+                  type="button"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap flex-shrink-0"
+                  title="Refresh records"
+                >
+                  <RotateCcw
+                    size={13}
+                    className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''}
+                  />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {/* 8. Export Records Button aligned at far right */}
+              <div className="flex-shrink-0">
+                <button
+                  id="btn-export-records"
+                  type="button"
+                  onClick={handleExport}
+                  className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3.5 sm:px-4 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <Download size={13} />
+                  <span>Export Records</span>
+                </button>
+              </div>
             </div>
-
-            <div className="flex items-center gap-1.5">
-              <label htmlFor="filter-to-date" className="text-xs font-medium text-slate-500 whitespace-nowrap">
-                To:
-              </label>
-              <input
-                id="filter-to-date"
-                type="date"
-                value={toDate}
-                onChange={(e) => {
-                  setToDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="h-[38px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
-                title="To Date"
-              />
-            </div>
           </div>
-
-          {/* Action buttons with consistent heights and clear spacing */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              id="btn-clear-filters"
-              type="button"
-              onClick={handleClearFilters}
-              className="inline-flex items-center gap-1.5 h-[38px] px-3.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <RotateCcw size={13} />
-              <span>Clear Filters</span>
-            </button>
-
-            <button
-              id="btn-refresh"
-              type="button"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 h-[38px] px-3.5 text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-              title="Refresh records"
-            >
-              <RotateCcw
-                size={13}
-                className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''}
-              />
-              <span>Refresh</span>
-            </button>
-
-            <button
-              id="btn-export-records"
-              type="button"
-              onClick={handleExport}
-              className="inline-flex items-center gap-1.5 h-[38px] px-4 text-xs sm:text-sm font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] rounded-lg shadow-sm transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <Download size={14} />
-              <span>Export Records</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* 4. TABLE SECTION */}
       <div
@@ -836,233 +656,118 @@ export const ChargesCommissionsPage: React.FC = () => {
         className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-0"
       >
         <div className="overflow-x-auto">
-          {activeTab === 'charges' ? (
-            /* ========================================================================= */
-            /* CHARGE RECORDS TABLE                                                      */
-            /* ========================================================================= */
-            <table id="charge-records-table" className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[12px] font-semibold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Charge Record</th>
-                  <th className="py-3.5 px-4">Transaction</th>
-                  <th className="py-3.5 px-4">Charged Customer</th>
-                  <th className="py-3.5 px-4">Service</th>
-                  <th className="py-3.5 px-4 text-left amount-heading">Transaction Amount (ZMW)</th>
-                  <th className="py-3.5 px-4 text-left amount-heading">Reservation Charge (ZMW)</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {paginatedRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-500">
-                      No charge records matching your criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  (paginatedRecords as ChargeRecord[]).map((row) => (
-                    <tr
-                      key={row.id}
-                      id={`charge-row-${row.id}`}
-                      className="hover:bg-slate-50/70 transition-colors"
-                    >
-                      {/* 1. Charge Record */}
-                      <td className="py-3 px-4">
-                        <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap">
-                          {row.reference}
-                        </div>
-                        <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.createdAt}
-                        </div>
-                      </td>
+          {/* ========================================================================= */
+          /* CHARGE RECORDS TABLE (Uniform 16px column spacing & balanced proportions) */
+          /* ========================================================================= */}
+          <div id="charge-records-table" className="w-full min-w-[860px]">
+            {/* Table Heading */}
+            <div className="grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center bg-slate-50/80 border-b border-slate-200 py-2.5 px-4 text-[11px] font-bold text-slate-600 uppercase tracking-wider text-left">
+              <div className="text-left whitespace-nowrap">Charge Record</div>
+              <div className="text-left whitespace-nowrap">Transaction</div>
+              <div className="text-left whitespace-nowrap">Charged Customer</div>
+              <div className="text-left whitespace-nowrap">Service</div>
+              <div className="text-left leading-tight">
+                <div className="whitespace-nowrap">Transaction Amount</div>
+                <div className="whitespace-nowrap">(ZMW)</div>
+              </div>
+              <div className="text-left leading-tight">
+                <div className="whitespace-nowrap">Reservation Charge</div>
+                <div className="whitespace-nowrap">(ZMW)</div>
+              </div>
+              <div className="text-left whitespace-nowrap">Status</div>
+              <div className="text-left whitespace-nowrap">Action</div>
+            </div>
 
-                      {/* 2. Transaction */}
-                      <td className="py-3 px-4">
-                        <div className="font-mono font-medium text-slate-800 whitespace-nowrap">
-                          {row.transactionReference}
-                        </div>
-                        <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.transactionType}
-                        </div>
-                      </td>
+            {/* Table Body */}
+            <div className="divide-y divide-slate-100 text-xs">
+              {paginatedRecords.length === 0 ? (
+                <div className="py-10 text-center text-slate-500">
+                  No charge records matching your criteria.
+                </div>
+              ) : (
+                (paginatedRecords as ChargeRecord[]).map((row) => (
+                  <div
+                    key={row.id}
+                    id={`charge-row-${row.id}`}
+                    className="grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center py-2.5 px-4 hover:bg-slate-50/70 transition-colors text-left"
+                  >
+                    {/* 1. Charge Record */}
+                    <div className="text-left min-w-0">
+                      <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap text-xs truncate">
+                        {row.reference}
+                      </div>
+                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
+                        {row.createdAt}
+                      </div>
+                    </div>
 
-                      {/* 3. Charged Customer (IDs on one line, no hyphens break) */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-900 whitespace-nowrap">
-                          {row.customerName}
-                        </div>
-                        <div className="text-xs font-mono text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.customerId}
-                        </div>
-                      </td>
+                    {/* 2. Transaction */}
+                    <div className="text-left min-w-0">
+                      <div className="font-mono font-medium text-slate-800 whitespace-nowrap text-xs truncate">
+                        {row.transactionReference}
+                      </div>
+                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
+                        {row.transactionType}
+                      </div>
+                    </div>
 
-                      {/* 4. Service & Provider stacked */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800 whitespace-nowrap">
-                          {row.service}
-                        </div>
-                        <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.provider}
-                        </div>
-                      </td>
+                    {/* 3. Charged Customer */}
+                    <div className="text-left min-w-0">
+                      <div className="font-medium text-slate-900 whitespace-nowrap text-xs truncate">
+                        {row.customerName}
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500 whitespace-nowrap mt-0.5 truncate">
+                        {row.customerId}
+                      </div>
+                    </div>
 
-                      {/* 5. Transaction Amount (ZMW) */}
-                      <td className="py-3 px-4 text-left amount-cell">
-                        <div className="font-mono font-medium text-slate-700 whitespace-nowrap">
-                          {formatZmwListingAmount(row.transactionAmount)}
-                        </div>
-                      </td>
+                    {/* 4. Service & Provider stacked */}
+                    <div className="text-left min-w-0">
+                      <div className="font-medium text-slate-800 whitespace-nowrap text-xs truncate">
+                        {row.service}
+                      </div>
+                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5 truncate">
+                        {row.provider}
+                      </div>
+                    </div>
 
-                      {/* 6. Reservation Charge (ZMW) */}
-                      <td className="py-3 px-4 text-left amount-cell">
-                        <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {formatZmwListingAmount(row.reservationCharge)}
-                        </div>
-                      </td>
+                    {/* 5. Transaction Amount (ZMW) */}
+                    <div className="text-left min-w-0">
+                      <div className="font-mono font-medium text-slate-700 whitespace-nowrap text-xs">
+                        {formatZmwListingAmount(row.transactionAmount)}
+                      </div>
+                    </div>
 
-                      {/* 7. Status */}
-                      <td className="py-3 px-4">{renderChargeStatus(row.status)}</td>
+                    {/* 6. Reservation Charge (ZMW) */}
+                    <div className="text-left min-w-0">
+                      <div className="font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
+                        {formatZmwListingAmount(row.reservationCharge)}
+                      </div>
+                    </div>
 
-                      {/* 8. Action (One-line View Details button) */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <button
-                          id={`btn-view-details-${row.id}`}
-                          type="button"
-                          onClick={() => handleViewDetails(row.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#0D93AA] hover:text-white hover:bg-[#0D93AA] bg-cyan-50/60 border border-[#0D93AA]/30 rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                        >
-                          <Eye size={13} />
-                          <span>View Details</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          ) : (
-            /* ========================================================================= */
-            /* COMMISSION RECORDS TABLE                                                  */
-            /* ========================================================================= */
-            <table id="commission-records-table" className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[12px] font-semibold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Revenue Record</th>
-                  <th className="py-3.5 px-4">Transaction</th>
-                  <th className="py-3.5 px-4">Recipient</th>
-                  <th className="py-3.5 px-4">Recipient Type</th>
-                  <th className="py-3.5 px-4">Calculation Basis</th>
-                  <th className="py-3.5 px-4 text-left amount-heading">Commission Amount (ZMW)</th>
-                  <th className="py-3.5 px-4">Settlement Status</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {paginatedRecords.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-500">
-                      No revenue records matching your criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  (paginatedRecords as CommissionRecord[]).map((row) => (
-                    <tr
-                      key={row.id}
-                      id={`commission-row-${row.id}`}
-                      className="hover:bg-slate-50/70 transition-colors"
-                    >
-                      {/* 1. Revenue Record */}
-                      <td className="py-3 px-4">
-                        <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap">
-                          {row.reference}
-                        </div>
-                        <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.createdAt}
-                        </div>
-                      </td>
+                    {/* 7. Status */}
+                    <div className="text-left min-w-0">{renderChargeStatus(row.status)}</div>
 
-                      {/* 2. Transaction */}
-                      <td className="py-3 px-4">
-                        <div className="font-mono font-medium text-slate-800 whitespace-nowrap">
-                          {row.transactionReference}
-                        </div>
-                        <div className="text-xs text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.transactionType}
-                        </div>
-                      </td>
-
-                      {/* 3. Recipient */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-900 whitespace-nowrap">
-                          {row.recipient}
-                        </div>
-                        <div className="text-xs font-mono text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.recipientId}
-                        </div>
-                        {row.associatedBusiness && (
-                          <div className="text-[11px] text-slate-400 whitespace-nowrap mt-0.5">
-                            {row.associatedBusiness}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* 4. Recipient Type */}
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
-                            row.recipientType === 'Agent'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/70'
-                              : row.recipientType === 'Business Owner'
-                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/70'
-                              : 'bg-cyan-50 text-cyan-800 border border-cyan-200/70'
-                          }`}
-                        >
-                          {row.recipientType}
-                        </span>
-                      </td>
-
-                      {/* 5. Calculation Basis (Read-only) */}
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-slate-800 text-xs whitespace-nowrap">
-                          {row.calculationBasis}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-500 whitespace-nowrap mt-0.5">
-                          {row.rateRuleVersion}
-                        </div>
-                      </td>
-
-                      {/* 6. Commission Amount (ZMW) */}
-                      <td className="py-3 px-4 text-left amount-cell">
-                        <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {formatZmwListingAmount(row.commissionAmount)}
-                        </div>
-                      </td>
-
-                      {/* 7. Settlement Status */}
-                      <td className="py-3 px-4">{renderCommissionStatus(row.settlementStatus)}</td>
-
-                      {/* 8. Action (One-line View Details button) */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <button
-                          id={`btn-view-details-${row.id}`}
-                          type="button"
-                          onClick={() => handleViewDetails(row.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium text-[#0D93AA] hover:text-white hover:bg-[#0D93AA] bg-cyan-50/60 border border-[#0D93AA]/30 rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                        >
-                          <Eye size={13} />
-                          <span>View Details</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
+                    {/* 8. Action (Details button) */}
+                    <div className="text-left whitespace-nowrap">
+                      <button
+                        id={`btn-details-${row.id}`}
+                        type="button"
+                        onClick={() => handleViewDetails(row.id)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[#0D93AA] hover:text-white hover:bg-[#0D93AA] bg-cyan-50/60 border border-[#0D93AA]/30 rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        <Eye size={13} />
+                        <span>Details</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* 5. PAGINATION SECTION (Strictly Conforming to User Spec) */}
+        {/* 5. PAGINATION SECTION */}
         <div
           id="table-pagination-controls"
           className="bg-slate-50/80 px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600"
@@ -1070,8 +775,7 @@ export const ChargesCommissionsPage: React.FC = () => {
           {/* Status Text: e.g. "Showing 1 to 20 of 369 charge records" */}
           <div className="flex items-center gap-4">
             <span id="pagination-record-count-text" className="font-medium text-slate-700">
-              Showing {startRecordNum} to {endRecordNum} of {totalRecordsCount}{' '}
-              {activeTab === 'charges' ? 'charge records' : 'revenue records'}
+              Showing {startRecordNum} to {endRecordNum} of {totalRecordsCount} charge records
             </span>
 
             {/* Rows Per Page Selector */}

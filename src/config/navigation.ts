@@ -340,12 +340,6 @@ export const BUSINESS_OWNER_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/business-owner/organization/devices',
         icon: Smartphone,
       },
-      {
-        id: 'organization-audit-trail',
-        label: 'Organization Audit Trail',
-        path: '/business-owner/organization/audit-trail',
-        icon: History,
-      },
     ],
   },
   {

@@ -5,7 +5,6 @@ import {
   Search,
   X,
   FileText,
-  Building2,
   PlusCircle,
   ArrowUpRight,
   Calendar,
@@ -140,7 +139,9 @@ export const GlobalWalletPage: React.FC = () => {
           return false;
         } else if (selectedType === 'Charge' && act.transactionType !== 'Charge' && act.transactionType !== 'TellerBud Charge') {
           return false;
-        } else if (selectedType !== 'Funding' && selectedType !== 'Charge' && act.transactionType !== selectedType) {
+        } else if ((selectedType === 'Commission' || selectedType === 'Service Earnings') && act.transactionType !== 'Commission') {
+          return false;
+        } else if (selectedType !== 'Funding' && selectedType !== 'Charge' && selectedType !== 'Commission' && selectedType !== 'Service Earnings' && act.transactionType !== selectedType) {
           return false;
         }
       }
@@ -253,92 +254,68 @@ export const GlobalWalletPage: React.FC = () => {
       {/* Full-width Global Wallet Summary Card */}
       <div
         id="global-wallet-summary-card"
-        className="w-full bg-white border border-slate-200 rounded-2xl shadow-xs p-5 sm:p-6 transition-all"
+        className="w-full bg-white border border-slate-200 rounded-2xl shadow-xs px-5 sm:px-6 py-4 sm:py-5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-h-[88px]"
       >
-        {/* Card Header: Business Identity, Status & Refresh */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center shrink-0 border border-sky-100 shadow-xs">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">{wallet.businessName}</h2>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
-                {wallet.businessId}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {wallet.walletStatus}
-            </span>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-mono">
-              {wallet.currency}
-            </span>
-            <button
-              id="refresh-global-wallet-btn"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs disabled:opacity-60 cursor-pointer"
-              aria-label="Refresh wallet balances"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
-          </div>
+        {/* Available Balance: Single Horizontal Line (Label + Amount) */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+            Available Balance
+          </span>
+          <span className="text-xl sm:text-2xl lg:text-[26px] font-extrabold text-slate-900 tracking-tight font-mono whitespace-nowrap">
+            {formatZMW(currentAvailableBalance)}
+          </span>
         </div>
 
-        {/* Available Balance Display & Actions */}
-        <div className="pt-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-              Available Balance
-            </span>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight font-mono">
-              {formatZMW(currentAvailableBalance)}
-            </div>
-          </div>
+        {/* Primary Action Buttons & Refresh */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {/* Add Funds: Primary Button */}
+          <button
+            ref={addFundsBtnRef}
+            id="wallet-add-funds-btn"
+            type="button"
+            onClick={openAddFunds}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-sky-800 hover:bg-sky-900 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98 whitespace-nowrap"
+          >
+            <PlusCircle className="w-4 h-4 text-sky-200" />
+            <span>Add Funds</span>
+          </button>
 
-          {/* Primary Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Add Funds: Oceanic Blue Primary Button */}
-            <button
-              ref={addFundsBtnRef}
-              id="wallet-add-funds-btn"
-              type="button"
-              onClick={openAddFunds}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-sky-800 hover:bg-sky-900 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98"
-            >
-              <PlusCircle className="w-4 h-4 text-sky-200" />
-              <span>Add Funds</span>
-            </button>
+          {/* Request Withdrawal: Outlined Button */}
+          <button
+            ref={withdrawalBtnRef}
+            id="wallet-request-withdrawal-btn"
+            type="button"
+            onClick={openWithdrawal}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98 whitespace-nowrap"
+          >
+            <ArrowUpRight className="w-4 h-4 text-slate-500" />
+            <span>Request Withdrawal</span>
+          </button>
 
-            {/* Request Withdrawal: Outlined Button */}
-            <button
-              ref={withdrawalBtnRef}
-              id="wallet-request-withdrawal-btn"
-              type="button"
-              onClick={openWithdrawal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98"
-            >
-              <ArrowUpRight className="w-4 h-4 text-slate-500" />
-              <span>Request Withdrawal</span>
-            </button>
+          {/* View Wallet Ledger: Outlined Button */}
+          <button
+            ref={ledgerBtnRef}
+            id="wallet-view-ledger-btn"
+            type="button"
+            onClick={openLedger}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98 whitespace-nowrap"
+          >
+            <FileText className="w-4 h-4 text-slate-500" />
+            <span>View Wallet Ledger</span>
+          </button>
 
-            {/* View Wallet Ledger: Outlined Button */}
-            <button
-              ref={ledgerBtnRef}
-              id="wallet-view-ledger-btn"
-              type="button"
-              onClick={openLedger}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-xs cursor-pointer active:scale-98"
-            >
-              <FileText className="w-4 h-4 text-slate-500" />
-              <span>View Wallet Ledger</span>
-            </button>
-          </div>
+          {/* Refresh Button */}
+          <button
+            id="refresh-global-wallet-btn"
+            type="button"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all shadow-xs disabled:opacity-60 cursor-pointer active:scale-98 whitespace-nowrap"
+            aria-label="Refresh wallet balances"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -409,7 +386,7 @@ export const GlobalWalletPage: React.FC = () => {
               <option value="ALL">All Types</option>
               <option value="Funding">Funding</option>
               <option value="Charge">Charge</option>
-              <option value="Commission">Commission</option>
+              <option value="Commission">Service Earnings</option>
               <option value="Withdrawal">Withdrawal</option>
             </select>
 
@@ -451,20 +428,31 @@ export const GlobalWalletPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Compact Table (Fits desktop without horizontal scroll) */}
+        {/* Compact Table (Fits desktop with uniform spacing and 100% left-alignment) */}
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
+          <table className="w-full table-fixed text-left text-xs text-slate-600">
+            <colgroup>
+              <col className="w-[12%]" />
+              <col className="w-[9%]" />
+              <col className="w-[10%]" />
+              <col className="w-[7%]" />
+              <col className="w-[12%]" />
+              <col className="w-[13%]" />
+              <col className="w-[16%]" />
+              <col className="w-[9%]" />
+              <col className="w-[12%]" />
+            </colgroup>
             <thead className="bg-slate-50/80 text-[11px] font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap">Date &amp; Time</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Reference</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Activity / Type</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap">Direction</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-left amount-heading">Amount (ZMW)</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-left amount-heading">Balance After (ZMW)</th>
-                <th scope="col" className="px-3.5 py-3">Attribution / Source</th>
-                <th scope="col" className="px-3.5 py-3 whitespace-nowrap text-center">Status</th>
-                <th scope="col" className="px-4 py-3 whitespace-nowrap text-right">Action</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Date &amp; Time</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Reference</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Activity / Type</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Direction</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Amount (ZMW)</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Balance After (ZMW)</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Attribution / Source</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Status</th>
+                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -495,19 +483,19 @@ export const GlobalWalletPage: React.FC = () => {
                   return (
                     <tr key={act.id} className="hover:bg-slate-50/80 transition-colors">
                       {/* Date & Time */}
-                      <td className="px-4 py-3.5 whitespace-nowrap text-slate-700 font-medium">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle text-slate-700 font-medium">
                         {act.dateTime}
                       </td>
 
                       {/* Reference */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
                         <span className="font-mono font-medium text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
                           {act.reference}
                         </span>
                       </td>
 
                       {/* Activity / Type */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getTypeBadge(
                             act.transactionType
@@ -517,12 +505,14 @@ export const GlobalWalletPage: React.FC = () => {
                             ? 'Funding'
                             : act.transactionType === 'TellerBud Charge'
                             ? 'Charge'
+                            : act.transactionType === 'Commission'
+                            ? 'Service Earnings'
                             : act.transactionType}
                         </span>
                       </td>
 
                       {/* Direction */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
                         {isCredit ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Credit
@@ -535,7 +525,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Amount (ZMW) */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left font-mono font-bold amount-cell">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle font-mono font-bold">
                         {isCredit ? (
                           <span className="text-emerald-600">+{formatZmwListingAmount(displayAmount)}</span>
                         ) : (
@@ -544,14 +534,14 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Balance After (ZMW) */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left font-mono font-bold text-slate-900 amount-cell">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle font-mono font-bold text-slate-900">
                         {formatZmwListingAmount(act.balanceAfter)}
                       </td>
 
                       {/* Attribution / Source */}
-                      <td className="px-3.5 py-3.5">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
                         {isFundingOrWithdrawal ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center justify-start gap-1.5">
                             <div className="w-5 h-5 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center text-[9px] font-bold shrink-0">
                               CM
                             </div>
@@ -560,7 +550,7 @@ export const GlobalWalletPage: React.FC = () => {
                             </span>
                           </div>
                         ) : act.agent ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center justify-start gap-1.5">
                             <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[9px] font-bold shrink-0">
                               {act.agent.avatarInitials || act.agent.name.slice(0, 2).toUpperCase()}
                             </div>
@@ -577,7 +567,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Status */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-center">
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(
                             act.status
@@ -588,14 +578,16 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Action */}
-                      <td className="px-4 py-3.5 whitespace-nowrap text-right">
-                        <button
-                          id={`view-activity-details-btn-${act.id}`}
-                          onClick={(e) => openActivityDetails(act, e)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-sky-800 bg-sky-50 hover:bg-sky-100 rounded-lg border border-sky-200 transition-colors cursor-pointer"
-                        >
-                          <span>View Details</span>
-                        </button>
+                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                        <div className="flex items-center justify-start">
+                          <button
+                            id={`view-activity-details-btn-${act.id}`}
+                            onClick={(e) => openActivityDetails(act, e)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-sky-800 bg-sky-50 hover:bg-sky-100 rounded-lg border border-sky-200 transition-colors cursor-pointer whitespace-nowrap"
+                          >
+                            <span>View Details</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -729,7 +721,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
-                          {entry.type}
+                          {entry.type === 'Commission' ? 'Service Earnings' : entry.type}
                         </span>
                       </td>
                       <td className="px-4 py-3 max-w-xs text-slate-600">
