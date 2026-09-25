@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   RotateCw,
@@ -40,9 +40,22 @@ export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
+  const [searchParams] = useSearchParams();
+
   // Primary Data State
   const [transactions, setTransactions] = useState<AllTransactionRecord[]>(MOCK_ALL_TRANSACTIONS);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  const parseStatusParam = (param: string | null): string => {
+    if (!param) return 'ALL';
+    if (param.toLowerCase() === 'pending confirmation' || param.toLowerCase() === 'pending_confirmation') {
+      return 'Pending Confirmation';
+    }
+    if (param.toLowerCase() === 'pending') {
+      return 'Pending';
+    }
+    return param;
+  };
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -50,9 +63,16 @@ export const AllTransactionsPage: React.FC = () => {
   const [serviceFilter, setServiceFilter] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [vendorFilter, setVendorFilter] = useState<string>('ALL');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>(() => parseStatusParam(searchParams.get('status')));
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setStatusFilter(parseStatusParam(status));
+    }
+  }, [searchParams]);
 
   // Pagination State (Default 20 per specification)
   const [currentPage, setCurrentPage] = useState<number>(1);

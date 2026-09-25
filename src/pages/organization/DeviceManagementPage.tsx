@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Smartphone,
   Search,
@@ -32,15 +33,36 @@ import {
 
 export const DeviceManagementPage: React.FC = () => {
   const { currentUser } = useAuth();
+  const [searchParams] = useSearchParams();
   const [devices, setDevices] = useState<DeviceWithDetails[]>([]);
   const [stores, setStores] = useState<StoreWithStats[]>([]);
   const [booths, setBooths] = useState<BoothWithDetails[]>([]);
   const [users, setUsers] = useState<OrgUser[]>([]);
 
+  // Parse initial status from search params if provided
+  const parseStatusParam = (param: string | null): 'All' | DeviceStatus => {
+    if (!param) return 'All';
+    const lower = param.toLowerCase();
+    if (lower.includes('avail') || lower.includes('unmap')) return 'Available';
+    if (lower.includes('assign')) return 'Assigned';
+    if (lower.includes('decomm')) return 'Decommissioned';
+    return 'All';
+  };
+
   // Filters
-  const [statusFilter, setStatusFilter] = useState<'All' | DeviceStatus>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | DeviceStatus>(() =>
+    parseStatusParam(searchParams.get('status'))
+  );
   const [storeFilter, setStoreFilter] = useState<string>('All');
   const [boothFilter, setBoothFilter] = useState<string>('All');
+
+  // Sync if searchParams changes
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setStatusFilter(parseStatusParam(status));
+    }
+  }, [searchParams]);
 
   // Modals
   const [showAssignModal, setShowAssignModal] = useState(false);

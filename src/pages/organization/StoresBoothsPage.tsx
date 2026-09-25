@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Store,
   Plus,
@@ -39,17 +40,38 @@ import { City, formatStoreLocation } from '../../data/mockCityData';
 export const StoresBoothsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const isBusinessOwner = currentUser?.role === 'business_owner';
+  const [searchParams] = useSearchParams();
+
+  const parseTabParam = (param: string | null): 'hierarchy' | 'booths' | 'assignments' => {
+    if (param === 'booths' || param === 'booth') return 'booths';
+    if (param === 'assignments' || param === 'assignment') return 'assignments';
+    return 'hierarchy';
+  };
 
   const [stores, setStores] = useState<StoreWithStats[]>([]);
   const [booths, setBooths] = useState<BoothWithDetails[]>([]);
   const [users, setUsers] = useState<OrgUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'hierarchy' | 'booths' | 'assignments'>('hierarchy');
+  const [activeTab, setActiveTab] = useState<'hierarchy' | 'booths' | 'assignments'>(() =>
+    parseTabParam(searchParams.get('tab'))
+  );
 
   // Filters
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive' | 'Archived'>('All');
   const [selectedStoreFilter, setSelectedStoreFilter] = useState<string>('All');
   const [expandedStoreIds, setExpandedStoreIds] = useState<Set<string>>(new Set());
+
+  // Sync params if they change
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(parseTabParam(tab));
+    }
+    const search = searchParams.get('search');
+    if (search !== null) {
+      setSearchQuery(search);
+    }
+  }, [searchParams]);
 
   // Modals state
   const [showStoreModal, setShowStoreModal] = useState(false);

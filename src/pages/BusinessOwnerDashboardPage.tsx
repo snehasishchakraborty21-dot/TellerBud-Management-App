@@ -18,6 +18,7 @@ import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
 import { toDisplayDate, getZambiaTodayString } from '../utils/dateUtils';
 import { formatZMW } from '../utils/formatters';
 import { AttendanceRecord } from '../types/attendance';
+import { BusinessProfile } from '../types/businessProfile';
 import { MonthlyRevenueOverviewChart } from '../components/dashboard/MonthlyRevenueOverviewChart';
 
 interface BusinessMetricCardProps {
@@ -95,11 +96,12 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { selectedDate } = useBusinessOwnerDate();
 
-  const businessName = currentUser?.businessName || 'Lusaka Central Express Agency';
   const businessId = currentUser?.businessId || 'BIZ-LUS-001';
   const selectedYear = parseInt(selectedDate.split('-')[0], 10) || 2026;
 
-  // Data states
+  // Profile and Data states
+  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+  const [logoLoadFailed, setLogoLoadFailed] = useState<boolean>(false);
   const [pendingCashFloatCount, setPendingCashFloatCount] = useState<number>(1);
   const [approvedCashFloatCount, setApprovedCashFloatCount] = useState<number>(1);
   const [notCheckedInAgents, setNotCheckedInAgents] = useState<AttendanceRecord[]>([]);
@@ -110,9 +112,61 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
   const [agentsLoggedInCount, setAgentsLoggedInCount] = useState<number>(6);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const businessName =
+    businessProfile?.businessName ||
+    currentUser?.businessName ||
+    'Lusaka Central Express Agency';
+  const logoUrl = businessProfile?.logoUrl;
+
+  // Dynamic Height Synchronization for Requires Attention card matching Agent Availability card
+  const agentAvailabilityRef = React.useRef<HTMLDivElement>(null);
+  const [maxAttentionHeight, setMaxAttentionHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (agentAvailabilityRef.current) {
+        if (window.innerWidth >= 1024) {
+          const height = agentAvailabilityRef.current.offsetHeight;
+          if (height > 0) {
+            setMaxAttentionHeight(height);
+          }
+        } else {
+          // On stacked tablet/mobile viewports, retain a sensible maximum height with internal scrolling
+          setMaxAttentionHeight(450);
+        }
+      }
+    };
+
+    updateHeight();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && agentAvailabilityRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        updateHeight();
+      });
+      resizeObserver.observe(agentAvailabilityRef.current);
+    }
+
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, []);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      // 0. Business Profile
+      const prof = await adminService.getBusinessProfile(businessId);
+      if (prof) {
+        setBusinessProfile(prof);
+        setLogoLoadFailed(false);
+      }
+
       // 1. Scoped Cash / Float request status counts
       const cfRes = await adminService.getCashFloatRequests({}, undefined, businessName);
       setPendingCashFloatCount(cfRes.summary.pendingReview);
@@ -169,8 +223,24 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
       {/* 1. Business Identification Bar */}
       <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-xl bg-cyan-50 border border-[#0D93AA]/15 text-[#0D93AA] flex items-center justify-center shrink-0">
-            <Building2 className="w-5 h-5" />
+          {/* Business Logo Container: 48px x 48px */}
+          <div className="w-12 h-12 rounded-xl border border-gray-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+            {logoUrl && !logoLoadFailed ? (
+              <img
+                src={logoUrl}
+                alt={`${businessName} logo`}
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+                onError={() => setLogoLoadFailed(true)}
+              />
+            ) : (
+              <div
+                className="w-full h-full rounded-lg bg-cyan-50 border border-[#0D93AA]/15 text-[#0D93AA] flex items-center justify-center"
+                title={`${businessName} placeholder logo`}
+              >
+                <Building2 className="w-5 h-5 text-[#0D93AA]" aria-hidden="true" />
+              </div>
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2.5">
@@ -252,21 +322,34 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
 
       {/* 3. Two-Column Middle Grid: Requires Attention & Agent Availability */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Requires Attention */}
-        <div className="lg:col-span-6 bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+        {/* Left Column: Requires Attention (Dynamic Height up to Agent Availability + Internal Scrolling) */}
+        <div
+          style={{
+            maxHeight: maxAttentionHeight ? `${maxAttentionHeight}px` : undefined,
+          }}
+          className="lg:col-span-6 bg-white border border-gray-100 rounded-xl p-5 shadow-xs flex flex-col min-h-0"
+        >
+          {/* Fixed Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100 shrink-0">
             <h3 className="text-sm font-bold text-[#102025] flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               <span>Requires Attention</span>
             </h3>
           </div>
 
-          <div className="space-y-2.5">
+          {/* Internal Scrollable Records Area */}
+          <div className="space-y-2.5 overflow-y-auto pr-1 -mr-1 pt-3 min-h-0 flex-1 attention-records-scroll">
             {/* Cash/Float Awaiting Review */}
             <div
               onClick={() => navigate('/business-owner/operations/cash-float-requests?status=Pending Review')}
               role="button"
               tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/operations/cash-float-requests?status=Pending Review');
+                }
+              }}
               className="p-3 bg-amber-50/70 hover:bg-amber-50 border border-amber-200/80 hover:border-amber-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -288,6 +371,12 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
               onClick={() => navigate('/business-owner/operations/cash-float-requests?status=Approved')}
               role="button"
               tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/operations/cash-float-requests?status=Approved');
+                }
+              }}
               className="p-3 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/80 hover:border-blue-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -304,25 +393,112 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-blue-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
 
-            {/* End of Day Submissions */}
+            {/* 1. Agents have not submitted End-of-Day reports */}
             <div
               onClick={() => navigate('/business-owner/people/attendance?tab=eod')}
               role="button"
               tabIndex={0}
-              className="p-3 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/people/attendance?tab=eod');
+                }
+              }}
+              className="p-3 bg-amber-50/70 hover:bg-amber-50 border border-amber-200/80 hover:border-amber-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 <div>
-                  <div className="text-xs font-bold text-gray-900 group-hover:text-gray-950 transition-colors">
-                    2 End-of-Day submissions awaiting review
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-amber-900 transition-colors">
+                    3 Agents have not submitted End-of-Day reports
                   </div>
                   <div className="text-[11px] text-gray-600">
-                    Brian Lungu, Faith Mwewa • Reconciliation pending
+                    Kelvin Phiri, Natasha Zulu and Mwansa Tembo
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <ChevronRight className="w-4 h-4 text-amber-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+
+            {/* 2. Devices available but not assigned */}
+            <div
+              onClick={() => navigate('/business-owner/organization/devices?status=Available')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/organization/devices?status=Available');
+                }
+              }}
+              className="p-3 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/80 hover:border-blue-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-blue-900 transition-colors">
+                    2 Devices are available but not assigned
+                  </div>
+                  <div className="text-[11px] text-gray-600">
+                    PAX A920 Smart POS B2 and Samsung Galaxy XCover Pro
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+
+            {/* 3. Booth has no assigned Agent */}
+            <div
+              onClick={() => navigate('/business-owner/organization/stores?tab=booths&search=Booth%203')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/organization/stores?tab=booths&search=Booth%203');
+                }
+              }}
+              className="p-3 bg-amber-50/70 hover:bg-amber-50 border border-amber-200/80 hover:border-amber-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-amber-900 transition-colors">
+                    1 Booth has no assigned Agent
+                  </div>
+                  <div className="text-[11px] text-gray-600">
+                    Booth 3 – Express Walk-in Desk
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-amber-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+
+            {/* 4. Transactions awaiting confirmation */}
+            <div
+              onClick={() => navigate('/business-owner/transactions/all?status=Pending%20Confirmation')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/transactions/all?status=Pending%20Confirmation');
+                }
+              }}
+              className="p-3 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/80 hover:border-blue-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-blue-900 transition-colors">
+                    3 Transactions are awaiting confirmation
+                  </div>
+                  <div className="text-[11px] text-gray-600">
+                    Total transaction value: ZMW 12,500.00
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
 
             {/* Attendance Status Alert */}
@@ -331,6 +507,12 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
                 onClick={() => navigate('/business-owner/people/attendance?tab=attendance')}
                 role="button"
                 tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/business-owner/people/attendance?tab=attendance');
+                  }
+                }}
                 className="p-3 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
               >
                 <div className="flex items-center gap-3">
@@ -355,6 +537,12 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
               onClick={() => navigate('/business-owner/operations/live')}
               role="button"
               tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/business-owner/operations/live');
+                }
+              }}
               className="p-3 bg-blue-50/60 hover:bg-blue-50 border border-blue-200/80 hover:border-blue-300 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -374,7 +562,7 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
         </div>
 
         {/* Right Column: Agent Availability */}
-        <div className="lg:col-span-6 bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
+        <div ref={agentAvailabilityRef} className="lg:col-span-6 bg-white border border-gray-100 rounded-xl p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-[#0D93AA]" />
