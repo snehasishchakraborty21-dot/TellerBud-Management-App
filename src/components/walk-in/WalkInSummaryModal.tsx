@@ -13,10 +13,45 @@ import {
   Store,
 } from 'lucide-react';
 import { WalkInTransaction } from '../../types/admin';
-import { VendorLogo } from './VendorLogo';
 import { WalkInStatusBadge } from './WalkInStatusBadge';
 import { WalkInTypeBadge } from './WalkInTypeBadge';
 import { formatZMW } from '../../config/appConfig';
+
+const getVendorDisplayName = (vendor?: string): string => {
+  if (!vendor || vendor === '—') return '—';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 interface WalkInSummaryModalProps {
   transaction: WalkInTransaction | null;
@@ -128,7 +163,9 @@ export const WalkInSummaryModal: React.FC<WalkInSummaryModalProps> = ({
               </div>
               <div className="flex items-center gap-2 pt-0.5">
                 <WalkInTypeBadge type={transaction.transactionType} />
-                <VendorLogo vendor={transaction.vendor} size="detail" showName={true} />
+                <span className="text-xs font-semibold text-gray-700">
+                  {getVendorDisplayName(transaction.vendor)}
+                </span>
               </div>
             </div>
 

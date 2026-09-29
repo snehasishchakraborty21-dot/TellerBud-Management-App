@@ -121,7 +121,7 @@ export const LedgerEntryDetailPage: React.FC = () => {
       : 'Automated Clearing Engine (SYS-REC-01)';
 
   return (
-    <div className="max-w-[1536px] mx-auto p-4 sm:p-5 space-y-4 pb-28">
+    <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-4 pb-28">
       {/* Top navigation */}
       <div>
         <Link

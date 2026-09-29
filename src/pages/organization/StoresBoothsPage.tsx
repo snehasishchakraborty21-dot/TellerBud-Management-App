@@ -302,20 +302,16 @@ export const StoresBoothsPage: React.FC = () => {
     const errors: {
       cityId?: string;
       storeName?: string;
-      storeNumber?: string;
       physicalAddress?: string;
       general?: string;
     } = {};
 
-    // Validate in required field order: City, Store Name, Store Code, Physical Location
+    // Validate in required field order: City, Store Name, Physical Location
     if (!storeForm.cityId.trim()) {
       errors.cityId = 'Please select a city.';
     }
     if (!storeForm.storeName.trim()) {
       errors.storeName = 'Store name is required.';
-    }
-    if (!storeForm.storeNumber.trim()) {
-      errors.storeNumber = 'Store code or number is required.';
     }
     if (!storeForm.physicalAddress.trim()) {
       errors.physicalAddress = 'Physical location is required.';
@@ -328,27 +324,9 @@ export const StoresBoothsPage: React.FC = () => {
         cityDropdownTriggerRef.current?.focus();
       } else if (errors.storeName) {
         storeNameInputRef.current?.focus();
-      } else if (errors.storeNumber) {
-        storeNumberInputRef.current?.focus();
       } else if (errors.physicalAddress) {
         physicalAddressInputRef.current?.focus();
       }
-      return;
-    }
-
-    // Check unique store code within business
-    const duplicate = stores.some(
-      (s) =>
-        (!editingStore || s.id !== editingStore.id) &&
-        s.businessId === currentUser.businessId &&
-        s.storeNumber.trim().toLowerCase() === storeForm.storeNumber.trim().toLowerCase() &&
-        s.status !== 'Archived'
-    );
-    if (duplicate) {
-      setStoreFormErrors({
-        storeNumber: `Store code or number "${storeForm.storeNumber}" already exists in this business.`,
-      });
-      storeNumberInputRef.current?.focus();
       return;
     }
 
@@ -358,8 +336,6 @@ export const StoresBoothsPage: React.FC = () => {
     if (editingStore) {
       const res = organizationService.updateStore(currentUser, editingStore.id, {
         storeName: storeForm.storeName,
-        storeNumber: storeForm.storeNumber,
-        storeCode: storeForm.storeNumber,
         cityId: storeForm.cityId,
         cityName: storeForm.cityName,
         province: storeForm.province,
@@ -371,14 +347,13 @@ export const StoresBoothsPage: React.FC = () => {
         setStoreFormErrors({ general: res.error || 'Failed to update store.' });
         return;
       }
-      setFeedback({ type: 'success', message: 'Store updated successfully.' });
+      const code = res.store?.storeNumber || editingStore.storeNumber;
+      setFeedback({ type: 'success', message: `Store "${storeForm.storeName}" (${code}) updated successfully.` });
       setShowStoreModal(false);
       loadData();
     } else {
       const res = organizationService.createStore(currentUser, {
         storeName: storeForm.storeName,
-        storeNumber: storeForm.storeNumber,
-        storeCode: storeForm.storeNumber,
         cityId: storeForm.cityId,
         cityName: storeForm.cityName,
         province: storeForm.province,
@@ -389,7 +364,8 @@ export const StoresBoothsPage: React.FC = () => {
         setStoreFormErrors({ general: res.error || 'Failed to create store.' });
         return;
       }
-      setFeedback({ type: 'success', message: 'Store created successfully.' });
+      const code = res.store?.storeNumber || res.store?.storeCode || 'TB-STR-000001';
+      setFeedback({ type: 'success', message: `Store "${res.store?.storeName}" (${code}) created successfully.` });
       setShowStoreModal(false);
       loadData();
     }
@@ -423,29 +399,38 @@ export const StoresBoothsPage: React.FC = () => {
     if (!currentUser) return;
     setFeedback(null);
 
+    if (!boothForm.storeId) {
+      setFeedback({ type: 'error', message: 'Please select a branch store.' });
+      return;
+    }
+    if (!boothForm.boothName.trim()) {
+      setFeedback({ type: 'error', message: 'Booth name is required.' });
+      return;
+    }
+
     if (editingBooth) {
       const res = organizationService.updateBooth(currentUser, editingBooth.id, {
         boothName: boothForm.boothName,
-        boothNumber: boothForm.boothNumber,
         status: boothForm.status,
       });
       if (!res.success) {
         setFeedback({ type: 'error', message: res.error || 'Failed to update booth.' });
         return;
       }
-      setFeedback({ type: 'success', message: `Booth "${boothForm.boothName}" successfully updated.` });
+      const code = res.booth?.boothNumber || editingBooth.boothNumber;
+      setFeedback({ type: 'success', message: `Booth "${boothForm.boothName}" (${code}) successfully updated.` });
       loadData();
     } else {
       const res = organizationService.createBooth(currentUser, {
         storeId: boothForm.storeId,
         boothName: boothForm.boothName,
-        boothNumber: boothForm.boothNumber,
       });
       if (!res.success) {
         setFeedback({ type: 'error', message: res.error || 'Failed to create booth.' });
         return;
       }
-      setFeedback({ type: 'success', message: `Booth "${boothForm.boothName}" successfully registered.` });
+      const code = res.booth?.boothNumber || 'TB-BTH-000001';
+      setFeedback({ type: 'success', message: `Booth "${res.booth?.boothName}" (${code}) successfully registered.` });
       loadData();
     }
     setShowBoothModal(false);
@@ -1312,43 +1297,20 @@ export const StoresBoothsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* 3. Store Code / Number * */}
-              <div>
-                <label htmlFor="store-number-input" className="block text-slate-700 font-semibold mb-1">
-                  Store Code / Number <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  ref={storeNumberInputRef}
-                  id="store-number-input"
-                  type="text"
-                  disabled={!storeForm.cityId || isSubmittingStore}
-                  placeholder={storeForm.cityId ? "e.g. STR-004" : "Select city first..."}
-                  value={storeForm.storeNumber}
-                  onChange={(e) => {
-                    setStoreForm({ ...storeForm, storeNumber: e.target.value });
-                    if (storeFormErrors.storeNumber) {
-                      setStoreFormErrors((prev) => ({ ...prev, storeNumber: undefined }));
-                    }
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 min-h-[38px] text-xs font-mono transition-colors ${
-                    !storeForm.cityId
-                      ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
-                      : storeFormErrors.storeNumber
-                      ? 'border-rose-400 focus:ring-rose-500 bg-rose-50/20 text-slate-900'
-                      : 'border-slate-300 focus:ring-emerald-500 bg-white text-slate-900'
-                  }`}
-                />
-                {storeFormErrors.storeNumber ? (
-                  <p className="text-[11px] text-rose-600 mt-1 font-medium flex items-center gap-1 animate-fadeIn">
-                    <AlertCircle className="w-3 h-3 shrink-0" />
-                    <span>{storeFormErrors.storeNumber}</span>
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-slate-400 mt-1">Unique store identifier within your agency business.</p>
-                )}
-              </div>
+              {/* Store Code (Read-Only when editing) */}
+              {editingStore && (
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Store Code
+                  </label>
+                  <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-semibold text-slate-800 select-all flex items-center justify-between min-h-[38px]">
+                    <span>{storeForm.storeNumber}</span>
+                    <span className="text-[10px] text-slate-400 font-sans font-normal uppercase tracking-wider">System Generated (Read-only)</span>
+                  </div>
+                </div>
+              )}
 
-              {/* 4. Physical Location * */}
+              {/* 3. Physical Location * */}
               <div>
                 <label htmlFor="store-address-input" className="block text-slate-700 font-semibold mb-1">
                   Physical Location <span className="text-rose-500">*</span>
@@ -1484,23 +1446,22 @@ export const StoresBoothsPage: React.FC = () => {
                   placeholder="e.g. Counter 1 - Cash & Float Desk"
                   value={boothForm.boothName}
                   onChange={(e) => setBoothForm({ ...boothForm, boothName: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[38px] text-xs"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">
-                  Booth Code / Till Number <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. BTH-004"
-                  value={boothForm.boothNumber}
-                  onChange={(e) => setBoothForm({ ...boothForm, boothNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                />
-              </div>
+              {/* Booth Code (Read-Only when editing) */}
+              {editingBooth && (
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Booth Code
+                  </label>
+                  <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-semibold text-slate-800 select-all flex items-center justify-between min-h-[38px]">
+                    <span>{boothForm.boothNumber}</span>
+                    <span className="text-[10px] text-slate-400 font-sans font-normal uppercase tracking-wider">System Generated (Read-only)</span>
+                  </div>
+                </div>
+              )}
 
               {editingBooth && (
                 <div>

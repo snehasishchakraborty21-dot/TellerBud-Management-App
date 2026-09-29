@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowUpDown,
   ArrowUp,
@@ -30,6 +30,7 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
   totalEntriesCount = 1248,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Sorting state: default newest first (by rawDate desc)
   const [sortField, setSortField] = useState<SortField>('date');
@@ -143,17 +144,17 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200/90 rounded-xl shadow-xs overflow-hidden flex flex-col">
-      {/* Table Container */}
-      <div className="overflow-x-auto">
+    <div className="bg-white border border-gray-200/90 rounded-xl shadow-xs overflow-hidden flex flex-col flex-1 min-h-0">
+      {/* Scrollable Table Area */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[1050px]">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-gray-200 text-[11.5px] font-semibold text-slate-600 tracking-wider">
+          <thead className="sticky top-0 z-10 bg-[#F8FAFC] shadow-[0_1px_0_0_#E2E8F0]">
+            <tr className="border-b border-gray-200 text-[11.5px] font-semibold text-slate-600 tracking-wider">
               {/* 1. Ledger Entry (18%) */}
               <th
                 scope="col"
                 onClick={() => handleSort('date')}
-                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[18%] min-w-[170px]"
+                className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[18%] min-w-[170px]"
               >
                 <div className="flex items-center justify-start">
                   <span>Ledger Entry</span>
@@ -162,12 +163,12 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
               </th>
 
               {/* 2. Wallet (22%) */}
-              <th scope="col" className="py-2.5 px-3.5 text-left w-[22%] min-w-[200px]">
+              <th scope="col" className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left w-[22%] min-w-[200px]">
                 <span>Wallet</span>
               </th>
 
               {/* 3. Entry Details (19%) */}
-              <th scope="col" className="py-2.5 px-3.5 text-left w-[19%] min-w-[180px]">
+              <th scope="col" className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left w-[19%] min-w-[180px]">
                 <span>Entry Details</span>
               </th>
 
@@ -175,7 +176,7 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
               <th
                 scope="col"
                 onClick={() => handleSort('debit')}
-                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
+                className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
               >
                 <div className="flex items-center justify-start">
                   <span>Debit (ZMW)</span>
@@ -187,7 +188,7 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
               <th
                 scope="col"
                 onClick={() => handleSort('credit')}
-                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
+                className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[9%] min-w-[90px]"
               >
                 <div className="flex items-center justify-start">
                   <span>Credit (ZMW)</span>
@@ -199,7 +200,7 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
               <th
                 scope="col"
                 onClick={() => handleSort('balance')}
-                className="py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[11%] min-w-[110px]"
+                className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left cursor-pointer hover:bg-slate-100/80 transition-colors select-none w-[11%] min-w-[110px]"
               >
                 <div className="flex items-center justify-start">
                   <span>Balance After (ZMW)</span>
@@ -208,12 +209,12 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
               </th>
 
               {/* 7. Reconciliation (11%) */}
-              <th scope="col" className="py-2.5 px-3.5 text-left w-[11%] min-w-[100px]">
+              <th scope="col" className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left w-[11%] min-w-[100px]">
                 <span>Reconciliation</span>
               </th>
 
               {/* 8. Action (11%) */}
-              <th scope="col" className="py-2.5 px-3.5 text-left w-[11%] min-w-[105px]">
+              <th scope="col" className="sticky top-0 z-10 bg-[#F8FAFC] py-2.5 px-3.5 text-left w-[11%] min-w-[105px]">
                 <span>Action</span>
               </th>
             </tr>
@@ -311,7 +312,13 @@ export const WalletLedgerTable: React.FC<WalletLedgerTableProps> = ({
                   <td className="py-2.5 px-3.5 text-left align-middle whitespace-nowrap">
                     <button
                       type="button"
-                      onClick={() => navigate(`/wallet-ledger/${item.ledgerEntry}`)}
+                      onClick={() => {
+                        const isBO = location.pathname.includes('/business-owner');
+                        const detailPath = isBO
+                          ? `/business-owner/wallets/ledger/${item.ledgerEntry}`
+                          : `/super-admin/wallets/ledger/${item.ledgerEntry}`;
+                        navigate(detailPath);
+                      }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                       title={`View Details for ${item.ledgerEntry}`}
                     >

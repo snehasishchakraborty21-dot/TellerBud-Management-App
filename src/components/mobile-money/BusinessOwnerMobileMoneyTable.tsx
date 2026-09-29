@@ -17,7 +17,6 @@ import {
 } from '../../types/mobileMoney';
 import { formatZmwListingAmount } from '../../utils/formatters';
 import { formatZambianPhone } from '../../utils/customerUtils';
-import { VENDOR_LOGO_MAP } from '../walk-in/VendorLogo';
 
 interface BusinessOwnerMobileMoneyTableProps {
   transactions: MobileMoneyTransaction[];
@@ -30,6 +29,42 @@ interface BusinessOwnerMobileMoneyTableProps {
   highlightedReference?: string;
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }
+
+const getVendorDisplayName = (vendor: string): string => {
+  if (!vendor) return '';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 // 2. Service Channel Badge (11px, compact, semibold)
 const ChannelBadge: React.FC<{ channel: ServiceChannel }> = ({ channel }) => {
@@ -179,28 +214,17 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
       className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA]"
     >
       <table className="business-mobile-money-table w-full table-fixed text-left border-collapse min-w-[960px]">
-        {/* Single shared column definition with recommended proportional widths totaling 100% */}
-        <colgroup>
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '12%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '6%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '8%' }} />
-        </colgroup>
+        {/* Single shared column definition totaling 100% */}
+        <colgroup><col style={{ width: '13%' }} /><col style={{ width: '7.5%' }} /><col style={{ width: '8.5%' }} /><col style={{ width: '10.5%' }} /><col style={{ width: '11.5%' }} /><col style={{ width: '13%' }} /><col style={{ width: '11.5%' }} /><col style={{ width: '8.5%' }} /><col style={{ width: '8.5%' }} /><col style={{ width: '7.5%' }} /></colgroup>
 
         {/* Table Header: Exactly 10 columns in strict order, 11px font size, sticky top-0 */}
         <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
-          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none bg-[#F9FAFB] h-[44px]">
-            {/* 1. Ref/Date (10%) */}
+          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-700 uppercase tracking-wider select-none bg-[#F9FAFB] h-[42px]">
+            {/* 1. Ref/Date (13%) */}
             <th
               scope="col"
-              style={{ width: '10%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '13%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               <button
                 type="button"
@@ -213,56 +237,56 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
               </button>
             </th>
 
-            {/* 2. Service Channel (10%) */}
+            {/* 2. Service (7.5%) */}
             <th
               scope="col"
-              style={{ width: '10%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '7.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
-              Service Channel
+              Service
             </th>
 
-            {/* 3. Transaction Type (11%) */}
+            {/* 3. Txn Type (8.5%) */}
             <th
               scope="col"
-              style={{ width: '11%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '8.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
-              Transaction Type
+              Txn Type
             </th>
 
-            {/* 4. CUST/TB ID (12%) */}
+            {/* 4. CUST/TB ID (10.5%) */}
             <th
               scope="col"
-              style={{ width: '12%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '10.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               CUST/TB ID
             </th>
 
-            {/* 5. Customer # (11%) */}
+            {/* 5. Customer # (11.5%) */}
             <th
               scope="col"
-              style={{ width: '11%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '11.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               Customer #
             </th>
 
-            {/* 6. Vendor (6%) */}
+            {/* 6. Vendor (13%) */}
             <th
               scope="col"
-              style={{ width: '6%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '13%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               Vendor
             </th>
 
-            {/* 7. Amount (ZMW) (11%) */}
+            {/* 7. Amount (ZMW) (11.5%) */}
             <th
               scope="col"
-              style={{ width: '11%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle amount-heading"
+              style={{ width: '11.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle amount-heading"
             >
               <button
                 type="button"
@@ -275,11 +299,11 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
               </button>
             </th>
 
-            {/* 8. Commission (10%) */}
+            {/* 8. Commission (8.5%) */}
             <th
               scope="col"
-              style={{ width: '10%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '8.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               <div className="inline-flex items-center gap-1 justify-start">
                 <span>Commission</span>
@@ -295,11 +319,11 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
               </div>
             </th>
 
-            {/* 9. Balance (ZMW) (11%) */}
+            {/* 9. Balance (ZMW) (8.5%) */}
             <th
               scope="col"
-              style={{ width: '11%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle"
+              style={{ width: '8.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle"
             >
               <div className="inline-flex items-center gap-1 justify-start">
                 <span>Balance (ZMW)</span>
@@ -315,27 +339,23 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
               </div>
             </th>
 
-            {/* 10. Action (8%) */}
+            {/* 10. Action (7.5%) */}
             <th
               scope="col"
-              style={{ width: '8%' }}
-              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-2.5 whitespace-nowrap text-left align-middle action-heading"
+              style={{ width: '7.5%' }}
+              className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-2.5 px-3 whitespace-nowrap text-left align-middle action-heading"
             >
               Action
             </th>
           </tr>
         </thead>
 
-        {/* Table Body: 10 columns, left-aligned, vertical centering, clean padding */}
+        {/* Table Body: 10 columns, left-aligned, uniform padding */}
         <tbody className="divide-y divide-gray-100">
           {transactions.map((tx) => {
             const isHighlighted = highlightedReference === tx.reference;
             const isUnregistered = !tx.isRegisteredCustomer || !tx.customerId;
-            const vendorConfig = VENDOR_LOGO_MAP[tx.vendor] || {
-              name: tx.vendor,
-              assetPath: `/assets/vendors/${String(tx.vendor).toLowerCase()}.svg`,
-              alt: `${tx.vendor} logo`,
-            };
+            const vendorName = getVendorDisplayName(tx.vendor);
 
             return (
               <tr
@@ -357,28 +377,28 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
                     : 'hover:bg-slate-50/90 focus:bg-slate-50'
                 }`}
               >
-                {/* 1. Ref/Date */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
-                  <div className="font-mono text-xs font-bold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-tight truncate">
+                {/* 1. Ref/Date: Full reference without truncation, date & time underneath */}
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
+                  <div className="font-mono text-[11.5px] font-bold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-tight whitespace-nowrap">
                     {tx.reference}
                   </div>
-                  <div className="text-[10.5px] text-gray-500 mt-0.5 leading-tight truncate">
+                  <div className="text-[10.5px] text-gray-500 mt-0.5 leading-tight whitespace-nowrap">
                     {tx.formattedDate}
                   </div>
                 </td>
 
-                {/* 2. Service Channel */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                {/* 2. Service */}
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
                   <ChannelBadge channel={tx.serviceChannel} />
                 </td>
 
-                {/* 3. Transaction Type */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                {/* 3. Txn Type */}
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
                   <TransactionTypeBadge type={tx.transactionType} />
                 </td>
 
                 {/* 4. CUST/TB ID */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
                   {isUnregistered ? (
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-gray-900 leading-tight truncate">Walk-In Customer</div>
@@ -393,54 +413,34 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
                 </td>
 
                 {/* 5. Customer # */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle font-mono text-xs font-medium text-gray-700 leading-tight">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle font-mono text-xs font-medium text-gray-700 leading-tight">
                   {formatZambianPhone(tx.customerPhone)}
                 </td>
 
-                {/* 6. Vendor */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
-                  <div className="flex items-center justify-start">
-                    <div className="relative group/vendor inline-flex items-center justify-start">
-                      <div
-                        className="w-7 h-7 flex items-center justify-center p-0.5 rounded transition-transform group-hover/vendor:scale-105"
-                        role="img"
-                        aria-label={vendorConfig.name}
-                      >
-                        <img
-                          src={vendorConfig.assetPath}
-                          alt={vendorConfig.alt || vendorConfig.name}
-                          className="max-h-full max-w-full object-contain select-none"
-                          loading="lazy"
-                        />
-                      </div>
-                      {/* Accessible Hover Tooltip */}
-                      <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover/vendor:flex flex-col items-start z-30 pointer-events-none">
-                        <div className="bg-gray-900 text-white text-[11px] font-medium rounded px-2.5 py-1 whitespace-nowrap shadow-lg">
-                          {vendorConfig.name}
-                        </div>
-                        <div className="w-1.5 h-1.5 -mt-1 rotate-45 bg-gray-900 ml-2.5" />
-                      </div>
-                    </div>
-                  </div>
+                {/* 6. Vendor: Text only, left-aligned, no logos */}
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
+                  <span className="text-xs font-semibold text-gray-800 leading-tight">
+                    {vendorName}
+                  </span>
                 </td>
 
                 {/* 7. Amount (ZMW) */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left font-mono text-xs font-bold text-gray-900 leading-tight align-middle amount-cell">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left font-mono text-xs font-bold text-gray-900 leading-tight align-middle amount-cell">
                   {formatZmwListingAmount(tx.amount)}
                 </td>
 
                 {/* 8. Commission */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
                   <ComingSoonBadge tooltip="MNO commission will be available in Phase 2." />
                 </td>
 
                 {/* 9. Balance (ZMW) */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle">
                   <ComingSoonBadge tooltip="Balance information will be available in a future release." />
                 </td>
 
                 {/* 10. Action */}
-                <td className="py-2.5 px-2.5 whitespace-nowrap text-left align-middle action-cell">
+                <td className="py-2.5 px-3 whitespace-nowrap text-left align-middle action-cell">
                   <div className="flex items-center justify-start">
                     <button
                       type="button"
@@ -453,10 +453,10 @@ export const BusinessOwnerMobileMoneyTable: React.FC<BusinessOwnerMobileMoneyTab
                           onRowClick(tx);
                         }
                       }}
-                      className="inline-flex items-center justify-start gap-1 h-[32px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer shadow-2xs whitespace-nowrap"
+                      className="inline-flex items-center justify-start gap-1 h-[30px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 cursor-pointer shadow-2xs whitespace-nowrap"
                       aria-label={`View transaction ${tx.reference}`}
                     >
-                      <Eye size={13} className="shrink-0" />
+                      <Eye size={12} className="shrink-0" />
                       <span>View</span>
                     </button>
                   </div>

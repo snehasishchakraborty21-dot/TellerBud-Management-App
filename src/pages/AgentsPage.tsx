@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/mockAdminService';
 import {
@@ -10,15 +10,15 @@ import {
   AgentSortDirection,
 } from '../types/admin';
 import { AgentMetricCards } from '../components/agents/AgentMetricCards';
-import { AgentStatusTabs } from '../components/agents/AgentStatusTabs';
 import { AgentFilterBar } from '../components/agents/AgentFilterBar';
 import { AgentTable } from '../components/agents/AgentTable';
 import { AgentPagination } from '../components/agents/AgentPagination';
-import { AgentSummaryModal } from '../components/agents/AgentSummaryModal';
 
 export const AgentsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Business Owner scoping rule
   const businessScope =
@@ -37,11 +37,8 @@ export const AgentsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Tab and Filters State from URL or defaults
-  const activeTab = searchParams.get('tab') || 'ALL';
-
   const [filters, setFilters] = useState<AgentFilters>({
-    search: searchParams.get('search') || '',
+    search: '',
     availability: (searchParams.get('availability') as any) || 'ALL',
     assignment: (searchParams.get('assignment') as any) || 'ALL',
     attendance: (searchParams.get('attendance') as any) || 'ALL',
@@ -53,24 +50,11 @@ export const AgentsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(8);
 
-  // Selected Agent for Summary Modal
-  const [selectedAgent, setSelectedAgent] = useState<AgentRecord | null>(null);
-  const [isSummaryOpen, setIsSummaryOpen] = useState<boolean>(false);
-
   // Load Agents data with business scoping
   const loadData = async () => {
     try {
-      // Effective availability query filter combined with status tab
-      let effectiveAvailability = filters.availability;
-      if (activeTab !== 'ALL' && filters.availability === 'ALL') {
-        effectiveAvailability = activeTab as any;
-      }
-
       const res = await adminService.getAgents(
-        {
-          ...filters,
-          availability: effectiveAvailability,
-        },
+        filters,
         { field: sortField, direction: sortDirection },
         businessIdScope
       );
@@ -89,21 +73,7 @@ export const AgentsPage: React.FC = () => {
     loadData();
     const unsub = adminService.subscribe(loadData);
     return () => unsub();
-  }, [businessIdScope, activeTab, filters, sortField, sortDirection]);
-
-  // Tab change handler
-  const handleTabChange = (tabId: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tabId === 'ALL') {
-      newParams.delete('tab');
-    } else {
-      newParams.set('tab', tabId);
-    }
-    setSearchParams(newParams);
-
-    // Reset pagination to page 1
-    setCurrentPage(1);
-  };
+  }, [businessIdScope, filters, sortField, sortDirection]);
 
   // Filter change handler
   const handleFilterChange = (newFilters: AgentFilters) => {
@@ -111,9 +81,6 @@ export const AgentsPage: React.FC = () => {
     setCurrentPage(1);
 
     const newParams = new URLSearchParams(searchParams);
-    if (newFilters.search) newParams.set('search', newFilters.search);
-    else newParams.delete('search');
-
     if (newFilters.availability !== 'ALL')
       newParams.set('availability', newFilters.availability);
     else newParams.delete('availability');
@@ -129,7 +96,7 @@ export const AgentsPage: React.FC = () => {
     setSearchParams(newParams);
   };
 
-  // Clear all filters & search & tabs
+  // Clear all filters
   const handleClearFilters = () => {
     const emptyFilters: AgentFilters = {
       search: '',
@@ -149,11 +116,9 @@ export const AgentsPage: React.FC = () => {
 
   // Filter active check
   const isFiltered =
-    filters.search.trim() !== '' ||
     filters.availability !== 'ALL' ||
     filters.assignment !== 'ALL' ||
-    filters.attendance !== 'ALL' ||
-    activeTab !== 'ALL';
+    filters.attendance !== 'ALL';
 
   // Client-side pagination slice for display
   const paginatedAgents = useMemo(() => {
@@ -161,32 +126,20 @@ export const AgentsPage: React.FC = () => {
     return agents.slice(startIndex, startIndex + pageSize);
   }, [agents, currentPage, pageSize]);
 
-  // Modal handlers
-  const handleOpenSummary = (agent: AgentRecord) => {
-    setSelectedAgent(agent);
-    setIsSummaryOpen(true);
-  };
-
-  const handleCloseSummary = () => {
-    setIsSummaryOpen(false);
-    setSelectedAgent(null);
+  // Direct page navigation handler on View or row select
+  const handleSelectAgent = (agent: AgentRecord) => {
+    navigate(`/business-owner/agents/${agent.id}`);
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* 1. Compact 5 Metric Cards */}
-      <AgentMetricCards summary={statusSummary} />
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-4">
+      {/* 1. Five compact KPI cards (Frozen upper section) */}
+      <div className="shrink-0">
+        <AgentMetricCards summary={statusSummary} />
+      </div>
 
-      {/* 2. Main Content Container */}
-      <div className="space-y-4">
-        {/* Status Tabs */}
-        <AgentStatusTabs
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          summary={statusSummary}
-        />
-
-        {/* Filter Bar */}
+      {/* 2. Filter Bar: Dropdowns & Action Buttons (Frozen upper section) */}
+      <div className="shrink-0">
         <AgentFilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -195,32 +148,44 @@ export const AgentsPage: React.FC = () => {
           isRefreshing={isRefreshing}
           isFiltered={isFiltered}
         />
-
-        {/* Agents Table */}
-        <AgentTable
-          agents={paginatedAgents}
-          onSelectAgent={handleOpenSummary}
-          loading={loading}
-        />
-
-        {/* Pagination */}
-        {agents.length > 0 && (
-          <AgentPagination
-            currentPage={currentPage}
-            totalItems={agents.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-          />
-        )}
       </div>
 
-      {/* 4. Agent Summary Modal */}
-      <AgentSummaryModal
-        agent={selectedAgent}
-        isOpen={isSummaryOpen}
-        onClose={handleCloseSummary}
-      />
+      {/* 3. Table Card: Flexible container with Sticky Header, Scrollable Rows, and Fixed Pagination */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl border border-gray-200 shadow-2xs overflow-hidden">
+        {/* Scrollable Agent Listing Table */}
+        <AgentTable
+          agents={paginatedAgents}
+          onSelectAgent={handleSelectAgent}
+          loading={loading}
+          containerRef={tableContainerRef}
+        />
+
+        {/* 4. Fixed Pagination Area at Bottom */}
+        {agents.length > 0 && (
+          <div className="shrink-0 border-t border-gray-100 bg-white px-3 sm:px-4 py-2.5">
+            <AgentPagination
+              currentPage={currentPage}
+              totalItems={agents.length}
+              pageSize={pageSize}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                if (tableContainerRef.current) {
+                  tableContainerRef.current.scrollTop = 0;
+                }
+              }}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+                if (tableContainerRef.current) {
+                  tableContainerRef.current.scrollTop = 0;
+                }
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
+

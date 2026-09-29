@@ -593,17 +593,17 @@ export const MobileMoneyDetailsDrawer: React.FC<MobileMoneyDetailsDrawerProps> =
                 </span>
               </div>
               <div>
-                <span className="text-gray-500 block text-[11px]">Vendor / Rail</span>
+                <span className="text-gray-500 block text-[11px]">Vendor</span>
                 <span className="font-medium text-gray-900">
-                  {transaction.vendor} ({transaction.vendorType})
+                  {transaction.vendor}
                 </span>
               </div>
               <div className="sm:col-span-3">
                 <span className="text-gray-500 block text-[11px]">
-                  Principal Processing Method
+                  Processing Method
                 </span>
                 <span className="font-medium text-gray-900">
-                  {transaction.principalProcessingMethod}
+                  Customer & Agent Dual Confirmation
                 </span>
               </div>
             </div>

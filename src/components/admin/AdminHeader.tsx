@@ -7,6 +7,7 @@ import {
   X,
   Building2,
   Calendar as CalendarIcon,
+  Info,
 } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -171,9 +172,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <Menu size={20} />
           </button>
 
-          <h1 className="text-lg sm:text-xl font-bold text-[#102025] truncate">
-            {pageTitle}
-          </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-[#102025] truncate">
+              {pageTitle}
+            </h1>
+            {(pageTitle === 'Users & Roles' || location.pathname.includes('/users-roles')) && (
+              <button
+                type="button"
+                id="btn-roles-info-header"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-roles-info-modal'))}
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-300 hover:border-emerald-300 transition-colors cursor-pointer shrink-0"
+                title="View Roles & Permissions"
+                aria-label="Roles & Permissions Information"
+              >
+                <Info className="w-3 h-3 text-slate-500 hover:text-emerald-700" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, or MobileMoneyDatePicker on admin mobile-money pages) */}

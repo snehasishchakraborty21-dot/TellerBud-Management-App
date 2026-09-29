@@ -55,34 +55,35 @@ export const AgentMetricCards: React.FC<AgentMetricCardsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
           <div
             key={card.id}
-            className="flex flex-col justify-between p-4 rounded-xl border border-gray-100 shadow-2xs bg-white"
+            className="bg-white rounded-xl border border-gray-200/90 px-3.5 sm:px-4 py-3 shadow-2xs h-[66px] flex items-center justify-between gap-2.5"
           >
-            <div className="flex items-center justify-between w-full mb-3">
-              <span className="text-xs font-semibold text-gray-500 tracking-tight">
-                {card.label}
-              </span>
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg}`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg}`}
               >
                 <Icon className="w-4 h-4" />
               </div>
-            </div>
-
-            <div className="flex items-baseline justify-between w-full">
-              <span className={`text-2xl font-bold tracking-tight ${card.accentColor}`}>
-                {card.value}
+              <span className="text-xs sm:text-[12.5px] font-semibold text-gray-700 whitespace-nowrap">
+                {card.label}
               </span>
             </div>
+
+            <span
+              className={`text-xl sm:text-2xl font-bold font-mono tracking-tight shrink-0 ${card.accentColor}`}
+            >
+              {card.value}
+            </span>
           </div>
         );
       })}
     </div>
   );
 };
+

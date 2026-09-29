@@ -37,6 +37,12 @@ export const AdminDeviceAllocationPage: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [targetBusinessId, setTargetBusinessId] = useState('BIZ-LUS-001');
 
+  // Decommission Modal
+  const [showDecommissionModal, setShowDecommissionModal] = useState(false);
+  const [selectedDeviceForDecommission, setSelectedDeviceForDecommission] = useState<Device | null>(null);
+  const [decommissionReason, setDecommissionReason] = useState('');
+  const [isDecommissioning, setIsDecommissioning] = useState(false);
+
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const loadData = () => {
@@ -60,8 +66,13 @@ export const AdminDeviceAllocationPage: React.FC = () => {
 
   // KPIs
   const totalHardware = devices.length;
-  const allocatedCount = devices.filter((d) => d.allocatedBusinessId && d.allocatedBusinessId !== 'UNALLOCATED').length;
-  const depotCount = devices.filter((d) => !d.allocatedBusinessId || d.allocatedBusinessId === 'UNALLOCATED').length;
+  const allocatedCount = devices.filter(
+    (d) => d.allocatedBusinessId && d.allocatedBusinessId !== 'UNALLOCATED' && d.status !== 'Decommissioned'
+  ).length;
+  const depotCount = devices.filter(
+    (d) => (!d.allocatedBusinessId || d.allocatedBusinessId === 'UNALLOCATED') && d.status !== 'Decommissioned'
+  ).length;
+  const decommissionedCount = devices.filter((d) => d.status === 'Decommissioned').length;
 
   const filteredDevices = devices.filter((d) => {
     if (statusFilter !== 'All' && d.status !== statusFilter) return false;
@@ -131,6 +142,44 @@ export const AdminDeviceAllocationPage: React.FC = () => {
     setShowAllocateModal(false);
   };
 
+  const openDecommissionModal = (dev: Device) => {
+    setSelectedDeviceForDecommission(dev);
+    setDecommissionReason('');
+    setShowDecommissionModal(true);
+  };
+
+  const handleConfirmDecommission = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDeviceForDecommission || !currentUser) return;
+    if (!decommissionReason.trim()) {
+      setFeedback({ type: 'error', message: 'Decommission reason is required.' });
+      return;
+    }
+
+    setIsDecommissioning(true);
+    setFeedback(null);
+
+    const res = organizationService.decommissionDevice(
+      currentUser,
+      selectedDeviceForDecommission.id,
+      decommissionReason.trim()
+    );
+
+    setIsDecommissioning(false);
+
+    if (!res.success) {
+      setFeedback({ type: 'error', message: res.error || 'Failed to decommission device.' });
+      return;
+    }
+
+    loadData();
+    setFeedback({
+      type: 'success',
+      message: `Device ${selectedDeviceForDecommission.deviceName} (${selectedDeviceForDecommission.serialNumber}) has been decommissioned and recorded in the audit trail.`,
+    });
+    setShowDecommissionModal(false);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Page Header */}
@@ -184,7 +233,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
             <span>Global Enrolled Hardware</span>
@@ -211,12 +260,21 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           <div className="text-2xl font-bold text-cyan-700 mt-2">{depotCount}</div>
           <div className="text-xs text-slate-500 font-medium mt-1">Available for allocation</div>
         </div>
+
+        <div className="bg-white rounded-xl p-4.5 border border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Decommissioned Hardware</span>
+            <XCircle className="w-4 h-4 text-rose-500" />
+          </div>
+          <div className="text-2xl font-bold text-rose-700 mt-2">{decommissionedCount}</div>
+          <div className="text-xs text-slate-500 font-medium mt-1">Permanently retired</div>
+        </div>
       </div>
 
       {/* Filter Bar */}
       <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex items-center gap-2 flex-1 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -253,7 +311,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           </select>
         </div>
 
-        <div className="text-xs font-semibold text-slate-500">
+        <div className="text-xs font-semibold text-slate-500 shrink-0">
           Showing {filteredDevices.length} of {devices.length} hardware units
         </div>
       </div>
@@ -268,61 +326,89 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <th className="py-3 px-4">Type & Serial</th>
                 <th className="py-3 px-4">Allocated Business</th>
                 <th className="py-3 px-4">Device Status</th>
-                <th className="py-3 px-4 text-right">Allocation Actions</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredDevices.map((d) => {
-                const b = registeredBusinesses.find((biz) => biz.id === d.allocatedBusinessId);
-                return (
-                  <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900 text-sm">{d.deviceName}</div>
-                      <span className="text-slate-400 font-mono text-[11px]">{d.id}</span>
-                    </td>
+              {filteredDevices.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-slate-400 italic">
+                    No hardware units found matching current filter criteria.
+                  </td>
+                </tr>
+              ) : (
+                filteredDevices.map((d) => {
+                  const b = registeredBusinesses.find((biz) => biz.id === d.allocatedBusinessId);
+                  return (
+                    <tr key={d.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-slate-900 text-sm">{d.deviceName}</div>
+                        <span className="text-slate-400 font-mono text-[11px]">{d.deviceId || d.id}</span>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <div className="font-medium text-slate-800">{d.deviceType}</div>
-                      <span className="text-slate-400 font-mono text-[11px]">{d.serialNumber}</span>
-                    </td>
+                      <td className="py-3.5 px-4">
+                        <div className="font-medium text-slate-800">{d.deviceType}</div>
+                        <span className="text-slate-400 font-mono text-[11px]">{d.serialNumber}</span>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      {b ? (
-                        <div>
-                          <div className="font-semibold text-slate-900">{b.name}</div>
-                          <span className="text-slate-400 font-mono text-[10px]">{d.allocatedBusinessId}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic">Depot Inventory</span>
-                      )}
-                    </td>
+                      <td className="py-3.5 px-4">
+                        {b && d.allocatedBusinessId && d.allocatedBusinessId !== 'UNALLOCATED' ? (
+                          <div>
+                            <div className="font-semibold text-slate-900">{b.name}</div>
+                            <span className="text-slate-400 font-mono text-[10px]">{d.allocatedBusinessId}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">Depot Inventory</span>
+                        )}
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-full font-semibold text-[11px] ${
-                          d.status === 'Assigned'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : d.status === 'Available' || d.status === 'Unmapped'
-                            ? 'bg-cyan-100 text-cyan-800'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {d.status}
-                      </span>
-                    </td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[11px] border ${
+                            d.status === 'Assigned'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              : d.status === 'Available' || d.status === 'Unmapped'
+                              ? 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                              : d.status === 'Decommissioned'
+                              ? 'bg-rose-100 text-rose-800 border-rose-200'
+                              : 'bg-slate-100 text-slate-600 border-slate-200'
+                          }`}
+                        >
+                          {d.status}
+                        </span>
+                      </td>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => openAllocate(d)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors"
-                      >
-                        <ArrowRightLeft className="w-3.5 h-3.5" />
-                        Reallocate
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        {d.status !== 'Decommissioned' ? (
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openAllocate(d)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors cursor-pointer"
+                              title="Reallocate hardware unit to another business or central depot"
+                            >
+                              <ArrowRightLeft className="w-3.5 h-3.5" />
+                              Reallocate
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => openDecommissionModal(d)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 rounded-md transition-colors cursor-pointer"
+                              title="Decommission hardware unit"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Decommission
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic font-medium">Decommissioned (Read-Only)</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -483,6 +569,98 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   className="px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold shadow-xs"
                 >
                   Save Allocation
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL: DECOMMISSION HARDWARE */}
+      {/* ========================================== */}
+      {showDecommissionModal && selectedDeviceForDecommission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2.5 bg-rose-50 rounded-xl text-rose-600">
+                <XCircle className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-slate-900 text-lg">Decommission Device</h3>
+                <p className="text-xs text-slate-500 truncate">
+                  {selectedDeviceForDecommission.deviceName} ({selectedDeviceForDecommission.serialNumber})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDecommissionModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Device Details Summary */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Device Name:</span>
+                <span className="font-semibold text-slate-900">{selectedDeviceForDecommission.deviceName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Device ID:</span>
+                <span className="font-mono text-slate-700">{selectedDeviceForDecommission.deviceId || selectedDeviceForDecommission.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Serial Number:</span>
+                <span className="font-mono text-slate-700">{selectedDeviceForDecommission.serialNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Assigned Business:</span>
+                <span className="font-semibold text-slate-800">
+                  {registeredBusinesses.find((b) => b.id === selectedDeviceForDecommission.allocatedBusinessId)?.name || 'Platform Inventory (Depot)'}
+                </span>
+              </div>
+            </div>
+
+            {/* Permanent Warning */}
+            <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p>
+                <strong>Warning:</strong> Decommissioning permanently marks this device as retired or returned for warranty/repair. It will be unmapped from any active station, store, and business, and permanently barred from transacting on the network.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmDecommission} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Decommission Reason <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="e.g. Touchscreen failure, battery swelling, hardware returned to vendor under warranty..."
+                  value={decommissionReason}
+                  onChange={(e) => setDecommissionReason(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowDecommissionModal(false)}
+                  disabled={isDecommissioning}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-semibold cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!decommissionReason.trim() || isDecommissioning}
+                  className="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-lg font-semibold shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  {isDecommissioning ? 'Decommissioning...' : 'Confirm Decommission'}
                 </button>
               </div>
             </form>

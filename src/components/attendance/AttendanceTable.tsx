@@ -98,16 +98,19 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <col className="w-[7%] min-w-[92px]" style={{ minWidth: 92 }} />
         </colgroup>
         <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
-          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Agent</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Agent ID</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Phone</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Check In</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Check Out</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Duration</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Attendance</th>
-            <th className="py-3 px-3.5 text-left bg-[#F9FAFB]">Current Activity</th>
-            <th className="py-3 pl-3.5 pr-4 text-left bg-[#F9FAFB] min-w-[92px]">Action</th>
+          <tr className="border-b border-gray-200 text-[11px] font-bold text-gray-500 uppercase tracking-wider h-[44px]">
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Agent</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Agent ID</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Phone</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Check In</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Check Out</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Duration</th>
+            <th className="py-2 px-3.5 text-left bg-[#F9FAFB] align-middle whitespace-nowrap">Attendance</th>
+            <th className="py-1 px-3.5 text-left bg-[#F9FAFB] align-middle leading-tight">
+              <div>Current</div>
+              <div>Activity</div>
+            </th>
+            <th className="py-2 pl-3.5 pr-4 text-left bg-[#F9FAFB] min-w-[92px] align-middle whitespace-nowrap">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 text-xs bg-white">

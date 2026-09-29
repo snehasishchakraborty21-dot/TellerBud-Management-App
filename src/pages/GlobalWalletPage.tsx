@@ -17,8 +17,6 @@ import {
   GlobalWalletTransactionType,
 } from '../types/admin';
 import { formatZMW, formatZmwListingAmount } from '../utils/formatters';
-import { AddFundsDrawer } from '../components/wallet/AddFundsDrawer';
-import { RequestWithdrawalDrawer } from '../components/wallet/RequestWithdrawalDrawer';
 import { ActivityDetailsModal } from '../components/wallet/ActivityDetailsModal';
 
 // Allowed transaction types in the Global Wallet
@@ -47,9 +45,7 @@ export const GlobalWalletPage: React.FC = () => {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
 
-  // Drawers and Modals
-  const [isAddFundsOpen, setIsAddFundsOpen] = useState<boolean>(false);
-  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState<boolean>(false);
+  // Modals
   const [selectedActivity, setSelectedActivity] = useState<GlobalWalletActivity | null>(null);
   const [isLedgerOpen, setIsLedgerOpen] = useState<boolean>(false);
 
@@ -58,17 +54,25 @@ export const GlobalWalletPage: React.FC = () => {
   const withdrawalBtnRef = useRef<HTMLButtonElement | null>(null);
   const ledgerBtnRef = useRef<HTMLButtonElement | null>(null);
   const lastActiveTriggerRef = useRef<HTMLElement | null>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prevent background scrolling while any modal or drawer is active
+  // Reset scroll to top when filters change
   useEffect(() => {
-    if (isAddFundsOpen || isWithdrawalOpen || selectedActivity || isLedgerOpen) {
+    if (tableScrollRef.current) {
+      tableScrollRef.current.scrollTop = 0;
+    }
+  }, [searchQuery, selectedType, selectedDirection, selectedStatus, fromDate, toDate]);
+
+  // Prevent background scrolling while any modal is active
+  useEffect(() => {
+    if (selectedActivity || isLedgerOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [isAddFundsOpen, isWithdrawalOpen, selectedActivity, isLedgerOpen]);
+  }, [selectedActivity, isLedgerOpen]);
 
   const loadData = async () => {
     try {
@@ -189,13 +193,11 @@ export const GlobalWalletPage: React.FC = () => {
   };
 
   const openAddFunds = () => {
-    lastActiveTriggerRef.current = addFundsBtnRef.current;
-    setIsAddFundsOpen(true);
+    navigate('/business-owner/global-wallet/add-funds');
   };
 
   const openWithdrawal = () => {
-    lastActiveTriggerRef.current = withdrawalBtnRef.current;
-    setIsWithdrawalOpen(true);
+    navigate('/business-owner/global-wallet/request-withdrawal');
   };
 
   const openLedger = () => {
@@ -250,24 +252,24 @@ export const GlobalWalletPage: React.FC = () => {
   const currentAvailableBalance = wallet.currentBalance ?? 164350.0;
 
   return (
-    <div id="global-wallet-page" className="max-w-7xl mx-auto space-y-5 pb-12">
-      {/* Full-width Global Wallet Summary Card */}
+    <div id="global-wallet-page" className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-2 w-full max-w-none select-none box-border">
+      {/* 1. Full-width Global Wallet Summary Card: Target height ~72-78px (Frozen) */}
       <div
         id="global-wallet-summary-card"
-        className="w-full bg-white border border-slate-200 rounded-2xl shadow-xs px-5 sm:px-6 py-4 sm:py-5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 min-h-[88px]"
+        className="shrink-0 w-full bg-white border border-slate-200 rounded-2xl shadow-xs px-5 sm:px-6 py-3 sm:py-3.5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-h-[72px] lg:h-[76px]"
       >
         {/* Available Balance: Single Horizontal Line (Label + Amount) */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">
             Available Balance
           </span>
-          <span className="text-xl sm:text-2xl lg:text-[26px] font-extrabold text-slate-900 tracking-tight font-mono whitespace-nowrap">
+          <span className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-mono whitespace-nowrap">
             {formatZMW(currentAvailableBalance)}
           </span>
         </div>
 
-        {/* Primary Action Buttons & Refresh */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+        {/* Primary Action Buttons & Refresh: Vertically Centred */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Add Funds: Primary Button */}
           <button
             ref={addFundsBtnRef}
@@ -319,31 +321,34 @@ export const GlobalWalletPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Wallet Activity Table Section */}
+      {/* 2. Recent Wallet Activity Table Section (Flex-1 min-h-0 with sticky header & scrollable records) */}
       <div
         id="recent-wallet-activity-section"
-        className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden"
+        className="flex-1 min-h-0 flex flex-col bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden w-full"
       >
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 shrink-0">Recent Wallet Activity</h2>
+        {/* Compact Title & Filter Bar: Height 34-36px controls, single horizontal row on desktop (Frozen) */}
+        <div className="shrink-0 px-4 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-white">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 shrink-0 whitespace-nowrap">
+            Recent Wallet Activity
+          </h2>
 
           {/* Search & Filters */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
-            <div className="relative min-w-[180px] sm:min-w-[210px]">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="relative min-w-[160px] sm:min-w-[190px]">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 id="activity-search-input"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search reference..."
-                className="w-full pl-8.5 pr-8 py-1.5 text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 focus:bg-white transition-colors"
+                className="w-full h-[34px] pl-8 pr-7 py-1 text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 focus:bg-white transition-colors"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -351,7 +356,7 @@ export const GlobalWalletPage: React.FC = () => {
             </div>
 
             {/* Date Range: From Date */}
-            <div className="flex items-center gap-1.5 text-xs bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+            <div className="h-[34px] flex items-center gap-1.5 text-xs bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="text-[10px] font-semibold text-slate-500 uppercase">From:</span>
               <input
@@ -364,7 +369,7 @@ export const GlobalWalletPage: React.FC = () => {
             </div>
 
             {/* Date Range: To Date */}
-            <div className="flex items-center gap-1.5 text-xs bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+            <div className="h-[34px] flex items-center gap-1.5 text-xs bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="text-[10px] font-semibold text-slate-500 uppercase">To:</span>
               <input
@@ -381,7 +386,7 @@ export const GlobalWalletPage: React.FC = () => {
               id="activity-type-filter"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600"
+              className="h-[34px] px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 cursor-pointer"
             >
               <option value="ALL">All Types</option>
               <option value="Funding">Funding</option>
@@ -395,7 +400,7 @@ export const GlobalWalletPage: React.FC = () => {
               id="activity-direction-filter"
               value={selectedDirection}
               onChange={(e) => setSelectedDirection(e.target.value as 'ALL' | 'Credit' | 'Debit')}
-              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600"
+              className="h-[34px] px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 cursor-pointer"
             >
               <option value="ALL">All Directions</option>
               <option value="Credit">Credit (+)</option>
@@ -407,7 +412,7 @@ export const GlobalWalletPage: React.FC = () => {
               id="activity-status-filter"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600"
+              className="h-[34px] px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 cursor-pointer"
             >
               <option value="ALL">All Statuses</option>
               <option value="Completed">Completed</option>
@@ -419,7 +424,7 @@ export const GlobalWalletPage: React.FC = () => {
             {hasActiveFilters && (
               <button
                 onClick={resetFilters}
-                className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                className="h-[34px] px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                 title="Reset filters"
               >
                 Clear
@@ -428,37 +433,43 @@ export const GlobalWalletPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Compact Table (Fits desktop with uniform spacing and 100% left-alignment) */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-full table-fixed text-left text-xs text-slate-600">
+        {/* Scrollable Table Area (Rows scroll vertically below sticky header) */}
+        <div
+          ref={tableScrollRef}
+          tabIndex={0}
+          role="region"
+          aria-label="Recent Wallet Activity Table"
+          className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto focus:outline-none"
+        >
+          <table className="w-full table-fixed text-left text-xs text-slate-600 min-w-[960px] border-collapse">
             <colgroup>
-              <col className="w-[12%]" />
-              <col className="w-[9%]" />
-              <col className="w-[10%]" />
-              <col className="w-[7%]" />
-              <col className="w-[12%]" />
-              <col className="w-[13%]" />
-              <col className="w-[16%]" />
-              <col className="w-[9%]" />
-              <col className="w-[12%]" />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '12%' }} />
             </colgroup>
-            <thead className="bg-slate-50/80 text-[11px] font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200">
-              <tr>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Date &amp; Time</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Reference</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Activity / Type</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Direction</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Amount (ZMW)</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Balance After (ZMW)</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Attribution / Source</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Status</th>
-                <th scope="col" className="px-3.5 py-3 text-left align-middle whitespace-nowrap">Action</th>
+            <thead className="sticky top-0 z-10 bg-[#F9FAFB] shadow-[0_1px_0_0_#E2E8F0]">
+              <tr className="border-b border-slate-200 text-slate-700 font-semibold uppercase tracking-wider text-[11px] bg-[#F9FAFB] h-[40px]">
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Date &amp; Time</th>
+                <th scope="col" style={{ width: '9%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Reference</th>
+                <th scope="col" style={{ width: '10%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Activity / Type</th>
+                <th scope="col" style={{ width: '7%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Direction</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Amount (ZMW)</th>
+                <th scope="col" style={{ width: '13%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Balance After (ZMW)</th>
+                <th scope="col" style={{ width: '16%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Attribution / Source</th>
+                <th scope="col" style={{ width: '9%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Status</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-10 bg-[#F9FAFB] border-b border-slate-200 px-3.5 py-2 text-left align-middle whitespace-nowrap">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {filteredActivities.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                     <p className="text-sm font-medium">No wallet activity records found matching criteria.</p>
                     {hasActiveFilters && (
                       <button
@@ -481,21 +492,21 @@ export const GlobalWalletPage: React.FC = () => {
                   const displayAmount = isCredit ? act.credit! : (act.debit || 0);
 
                   return (
-                    <tr key={act.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={act.id} className="h-[50px] hover:bg-slate-50/80 transition-colors">
                       {/* Date & Time */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle text-slate-700 font-medium">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle text-slate-700 font-medium">
                         {act.dateTime}
                       </td>
 
                       {/* Reference */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         <span className="font-mono font-medium text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
                           {act.reference}
                         </span>
                       </td>
 
                       {/* Activity / Type */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${getTypeBadge(
                             act.transactionType
@@ -512,7 +523,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Direction */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         {isCredit ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Credit
@@ -525,7 +536,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Amount (ZMW) */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle font-mono font-bold">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle font-mono font-bold">
                         {isCredit ? (
                           <span className="text-emerald-600">+{formatZmwListingAmount(displayAmount)}</span>
                         ) : (
@@ -534,12 +545,12 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Balance After (ZMW) */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle font-mono font-bold text-slate-900">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle font-mono font-bold text-slate-900">
                         {formatZmwListingAmount(act.balanceAfter)}
                       </td>
 
                       {/* Attribution / Source */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         {isFundingOrWithdrawal ? (
                           <div className="flex items-center justify-start gap-1.5">
                             <div className="w-5 h-5 rounded-full bg-sky-100 text-sky-800 flex items-center justify-center text-[9px] font-bold shrink-0">
@@ -567,7 +578,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Status */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${getStatusBadge(
                             act.status
@@ -578,7 +589,7 @@ export const GlobalWalletPage: React.FC = () => {
                       </td>
 
                       {/* Action */}
-                      <td className="px-3.5 py-3.5 whitespace-nowrap text-left align-middle">
+                      <td className="px-3.5 py-2.5 whitespace-nowrap text-left align-middle">
                         <div className="flex items-center justify-start">
                           <button
                             id={`view-activity-details-btn-${act.id}`}
@@ -597,8 +608,8 @@ export const GlobalWalletPage: React.FC = () => {
           </table>
         </div>
 
-        {/* Footer Summary */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+        {/* Footer Summary (Sticky/Fixed at bottom of table container) */}
+        <div className="shrink-0 px-4 py-2.5 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
           <div>
             Showing <span className="font-semibold text-slate-700">{filteredActivities.length}</span> of{' '}
             <span className="font-semibold text-slate-700">{validWalletActivities.length}</span> recorded activities
@@ -614,27 +625,9 @@ export const GlobalWalletPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DRAWERS & MODALS */}
+      {/* MODALS */}
 
-      {/* 1. Add Funds Drawer */}
-      <AddFundsDrawer
-        isOpen={isAddFundsOpen}
-        onClose={() => setIsAddFundsOpen(false)}
-        availableBalance={currentAvailableBalance}
-        onViewActivityDetails={(act) => setSelectedActivity(act)}
-        triggerButtonRef={addFundsBtnRef}
-      />
-
-      {/* 2. Request Withdrawal Drawer */}
-      <RequestWithdrawalDrawer
-        isOpen={isWithdrawalOpen}
-        onClose={() => setIsWithdrawalOpen(false)}
-        availableBalance={currentAvailableBalance}
-        onViewActivityDetails={(act) => setSelectedActivity(act)}
-        triggerButtonRef={withdrawalBtnRef}
-      />
-
-      {/* 3. Activity Details Modal */}
+      {/* 1. Activity Details Modal */}
       <ActivityDetailsModal
         activity={selectedActivity}
         isOpen={Boolean(selectedActivity)}

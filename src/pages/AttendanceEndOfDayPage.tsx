@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useBusinessOwnerDate } from '../context/BusinessOwnerDateContext';
 import { adminService } from '../services/mockAdminService';
@@ -19,8 +19,6 @@ import { AttendanceFilterBar } from '../components/attendance/AttendanceFilterBa
 import { EndOfDayFilterBar } from '../components/attendance/EndOfDayFilterBar';
 import { AttendanceTable } from '../components/attendance/AttendanceTable';
 import { EndOfDayTable } from '../components/attendance/EndOfDayTable';
-import { AttendanceSummaryModal } from '../components/attendance/AttendanceSummaryModal';
-import { EndOfDaySummaryModal } from '../components/attendance/EndOfDaySummaryModal';
 import { exportAttendanceToCsv, exportEndOfDayToCsv } from '../utils/attendanceExport';
 import { ChevronLeft, ChevronRight, CalendarCheck, FileCheck2 } from 'lucide-react';
 
@@ -28,6 +26,7 @@ export const AttendanceEndOfDayPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { selectedDate } = useBusinessOwnerDate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const currentHeaderDate = toDisplayDate(selectedDate) || TODAY_DATE;
 
@@ -97,8 +96,6 @@ export const AttendanceEndOfDayPage: React.FC = () => {
   const [isAttendanceRefreshing, setIsAttendanceRefreshing] = useState<boolean>(false);
   const [attendancePage, setAttendancePage] = useState<number>(1);
   const [attendancePageSize, setAttendancePageSize] = useState<number>(10);
-  const [selectedAttendance, setSelectedAttendance] = useState<AttendanceRecord | null>(null);
-  const [isAttendanceSummaryOpen, setIsAttendanceSummaryOpen] = useState<boolean>(false);
 
   // =========================================================================
   // 2. End-of-Day Tab State
@@ -123,8 +120,6 @@ export const AttendanceEndOfDayPage: React.FC = () => {
   const [isEodRefreshing, setIsEodRefreshing] = useState<boolean>(false);
   const [eodPage, setEodPage] = useState<number>(1);
   const [eodPageSize, setEodPageSize] = useState<number>(10);
-  const [selectedEod, setSelectedEod] = useState<EndOfDayRecord | null>(null);
-  const [isEodSummaryOpen, setIsEodSummaryOpen] = useState<boolean>(false);
 
   // Sync date range whenever header date changes
   useEffect(() => {
@@ -386,8 +381,7 @@ export const AttendanceEndOfDayPage: React.FC = () => {
               records={paginatedAttendance}
               isLoading={isAttendanceLoading}
               onView={(record) => {
-                setSelectedAttendance(record);
-                setIsAttendanceSummaryOpen(true);
+                navigate(`/business-owner/attendance-end-of-day/attendance/${record.agentId}/${encodeURIComponent(record.date || currentHeaderDate)}`);
               }}
               containerRef={attendanceScrollRef}
             />
@@ -474,8 +468,7 @@ export const AttendanceEndOfDayPage: React.FC = () => {
               records={paginatedEod}
               isLoading={isEodLoading}
               onView={(record) => {
-                setSelectedEod(record);
-                setIsEodSummaryOpen(true);
+                navigate(`/business-owner/attendance-end-of-day/end-of-day/${record.reference}`);
               }}
               containerRef={eodScrollRef}
             />
@@ -558,19 +551,6 @@ export const AttendanceEndOfDayPage: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Summary Modals */}
-      <AttendanceSummaryModal
-        record={selectedAttendance}
-        isOpen={isAttendanceSummaryOpen}
-        onClose={() => setIsAttendanceSummaryOpen(false)}
-      />
-
-      <EndOfDaySummaryModal
-        record={selectedEod}
-        isOpen={isEodSummaryOpen}
-        onClose={() => setIsEodSummaryOpen(false)}
-      />
     </div>
   );
 };

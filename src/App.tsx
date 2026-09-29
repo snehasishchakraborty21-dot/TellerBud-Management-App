@@ -25,6 +25,8 @@ import { EndOfDayDetailPage } from './pages/EndOfDayDetailPage';
 import { BusinessProfilePage } from './pages/BusinessProfilePage';
 import { EditBusinessProfilePage } from './pages/EditBusinessProfilePage';
 import { GlobalWalletPage } from './pages/GlobalWalletPage';
+import { GlobalWalletAddFundsPage } from './pages/GlobalWalletAddFundsPage';
+import { GlobalWalletRequestWithdrawalPage } from './pages/GlobalWalletRequestWithdrawalPage';
 import { WalletLedgerPage } from './pages/WalletLedgerPage';
 import { LedgerEntryDetailPage } from './pages/LedgerEntryDetailPage';
 import { AllTransactionsPage } from './pages/AllTransactionsPage';
@@ -232,6 +234,11 @@ function AppRoutes() {
     '/business-owner/organization/devices',
     '/business-owner/organization/audit-trail',
     '/business-owner/wallets/global-wallet',
+    '/business-owner/global-wallet',
+    '/business-owner/global-wallet/add-funds',
+    '/business-owner/wallets/global-wallet/add-funds',
+    '/business-owner/global-wallet/request-withdrawal',
+    '/business-owner/wallets/global-wallet/request-withdrawal',
     '/business-owner/wallets/ledger',
     '/business-owner/wallets/business-agent',
     '/business-owner/transactions/all',
@@ -473,9 +480,11 @@ function AppRoutes() {
         {/* Attendance & End-of-Day (Scoped to Business) */}
         <Route path="attendance-end-of-day" element={<AttendanceEndOfDayPage />} />
         <Route path="attendance-end-of-day/attendance/:agentId/:date" element={<AttendanceDetailPage />} />
+        <Route path="attendance-end-of-day/attendance/:agentId" element={<AttendanceDetailPage />} />
         <Route path="attendance-end-of-day/end-of-day/:reference" element={<EndOfDayDetailPage />} />
         <Route path="people/attendance" element={<AttendanceEndOfDayPage />} />
         <Route path="people/attendance/attendance/:agentId/:date" element={<AttendanceDetailPage />} />
+        <Route path="people/attendance/attendance/:agentId" element={<AttendanceDetailPage />} />
         <Route path="people/attendance/end-of-day/:reference" element={<EndOfDayDetailPage />} />
 
         {/* Business Profile (Scoped to Business) */}
@@ -494,7 +503,11 @@ function AppRoutes() {
 
         {/* Global Wallet (Lusaka Central Express Agency Shared Wallet) */}
         <Route path="wallets/global-wallet" element={<GlobalWalletPage />} />
-        <Route path="global-wallet" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
+        <Route path="global-wallet" element={<GlobalWalletPage />} />
+        <Route path="global-wallet/add-funds" element={<GlobalWalletAddFundsPage />} />
+        <Route path="wallets/global-wallet/add-funds" element={<GlobalWalletAddFundsPage />} />
+        <Route path="global-wallet/request-withdrawal" element={<GlobalWalletRequestWithdrawalPage />} />
+        <Route path="wallets/global-wallet/request-withdrawal" element={<GlobalWalletRequestWithdrawalPage />} />
         {/* Legacy redirects */}
         <Route path="wallets/business-agent" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
         <Route path="wallets/business-agent/:agentId" element={<Navigate to="/business-owner/wallets/global-wallet" replace />} />
@@ -502,6 +515,7 @@ function AppRoutes() {
 
         {/* Global Wallet Ledger */}
         <Route path="wallets/ledger" element={<WalletLedgerPage />} />
+        <Route path="wallets/ledger/:ledgerEntryId" element={<LedgerEntryDetailPage />} />
         <Route path="ledger" element={<Navigate to="/business-owner/wallets/ledger" replace />} />
 
         {/* All Transactions (Scoped to Business) */}

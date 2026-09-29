@@ -22,12 +22,47 @@ import { BusinessTransactionRecord } from '../types/admin';
 import { adminService } from '../services/mockAdminService';
 import { formatZMW } from '../utils/formatters';
 import { StatusChip } from '../components/shared/StatusChip';
-import { VendorLogo } from '../components/walk-in/VendorLogo';
 import {
   buildNormalizedLifecycleTimeline,
   buildNormalizedWalletImpact,
 } from '../utils/transactionLifecycle';
 import { MOCK_ALL_TRANSACTIONS } from '../data/mockAllTransactionsData';
+
+const getVendorDisplayName = (vendor?: string): string => {
+  if (!vendor || vendor === '—') return '—';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 export const TransactionDetailPage: React.FC = () => {
   const { reference, transactionId } = useParams<{ reference?: string; transactionId?: string }>();
@@ -126,7 +161,7 @@ export const TransactionDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto py-16 text-center space-y-3">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 py-16 text-center space-y-3">
         <RotateCw size={24} className="animate-spin text-[#0D93AA] mx-auto" />
         <p className="text-sm font-medium text-slate-600">Loading transaction details...</p>
       </div>
@@ -135,8 +170,8 @@ export const TransactionDetailPage: React.FC = () => {
 
   if (error || !transaction) {
     return (
-      <div className="max-w-3xl mx-auto py-12 space-y-4">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center space-y-3">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 py-12 space-y-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center space-y-3 max-w-2xl mx-auto">
           <AlertCircle size={32} className="text-red-500 mx-auto" />
           <h2 className="text-base font-bold text-red-900">Transaction Not Found</h2>
           <p className="text-sm text-red-700">{error || 'Unable to locate transaction record.'}</p>
@@ -148,7 +183,7 @@ export const TransactionDetailPage: React.FC = () => {
                 navigate('/transactions/all');
               }
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors cursor-pointer"
           >
             <ArrowLeft size={14} />
             <span>Back to All Transactions</span>
@@ -197,7 +232,7 @@ export const TransactionDetailPage: React.FC = () => {
   });
 
   return (
-    <div id="transaction-detail-page" className="max-w-5xl mx-auto space-y-6 pb-16">
+    <div id="transaction-detail-page" className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-6 pb-16">
       {/* 1. Working Back Navigation Control */}
       <div className="flex items-center justify-between">
         <button
@@ -250,7 +285,7 @@ export const TransactionDetailPage: React.FC = () => {
       </div>
 
       {/* 3. Core Information Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* Business Information Card */}
         <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -360,13 +395,9 @@ export const TransactionDetailPage: React.FC = () => {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center py-1">
               <span className="text-slate-500 font-medium">Vendor</span>
-              <div>
-                {transaction.vendor ? (
-                  <VendorLogo vendor={transaction.vendor} size="detail" showName={true} />
-                ) : (
-                  <span className="text-slate-400 font-medium">— (Internal Transfer)</span>
-                )}
-              </div>
+              <span className="font-semibold text-slate-900 text-right">
+                {transaction.vendor ? getVendorDisplayName(transaction.vendor) : '— (Internal Transfer)'}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1 border-t border-slate-50">
               <span className="text-slate-500 font-medium">Channel / Terminal</span>

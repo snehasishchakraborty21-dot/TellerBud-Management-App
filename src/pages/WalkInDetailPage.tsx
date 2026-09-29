@@ -15,10 +15,45 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { adminService } from '../services/mockAdminService';
 import { WalkInTransaction } from '../types/admin';
-import { VendorLogo } from '../components/walk-in/VendorLogo';
 import { WalkInStatusBadge } from '../components/walk-in/WalkInStatusBadge';
 import { WalkInTypeBadge } from '../components/walk-in/WalkInTypeBadge';
 import { formatZMW } from '../config/appConfig';
+
+const getVendorDisplayName = (vendor?: string): string => {
+  if (!vendor || vendor === '—') return '—';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 export const WalkInDetailPage: React.FC = () => {
   const { reference } = useParams<{ reference: string }>();
@@ -118,7 +153,7 @@ export const WalkInDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-12 max-w-5xl mx-auto">
+    <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-6 pb-16">
       {/* Top Breadcrumb / Back Link */}
       <div className="flex items-center justify-between gap-4">
         <Link
@@ -147,7 +182,9 @@ export const WalkInDetailPage: React.FC = () => {
               {formatZMW(transaction.amount)}
             </h1>
             <div className="flex items-center gap-2 pt-1">
-              <VendorLogo vendor={transaction.vendor} size="detail" showName={true} />
+              <span className="text-xs font-semibold text-gray-700">
+                {getVendorDisplayName(transaction.vendor)}
+              </span>
             </div>
           </div>
 

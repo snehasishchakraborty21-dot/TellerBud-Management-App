@@ -390,19 +390,19 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-2xs p-3 sm:p-3.5">
-      {/* Controls arranged in one clean desktop row: [From Date] [To Date] [Export] [Clear] [Refresh] */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
-        {/* Left/Center: Equal-width Date Range Fields */}
-        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 max-w-2xl lg:max-w-3xl">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-2xs px-3.5 sm:px-4 py-2 sm:py-2.5">
+      {/* Controls arranged in one compact row: [From Date] [To Date] [Export] [Clear Date Range] [Refresh] */}
+      <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 sm:gap-3">
+        {/* Left: Date Range Fields */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
           {/* From Date Input */}
           <div
             ref={fromContainerRef}
-            className="flex-1 flex items-center gap-2.5 min-w-0"
+            className="flex items-center gap-2 min-w-0 flex-1 max-w-[240px]"
           >
             <label
               htmlFor="bo-date-from-input"
-              className="text-xs font-bold text-gray-700 whitespace-nowrap min-w-[64px]"
+              className="text-xs font-bold text-gray-700 whitespace-nowrap shrink-0"
             >
               From Date
             </label>
@@ -414,7 +414,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
                 onChange={(e) => handleDateInputChange(e.target.value, 'from')}
                 placeholder="dd-mm-yyyy"
                 maxLength={10}
-                className="w-full h-[38px] pl-3 pr-9 text-xs sm:text-sm bg-gray-50/70 border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 font-mono focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
+                className="w-full h-[36px] pl-3 pr-8 text-xs bg-gray-50/70 border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 font-mono focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
                 aria-label="From Date (dd-mm-yyyy)"
               />
               <button
@@ -424,11 +424,11 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
                   setIsFromOpen((prev) => !prev);
                   setIsToOpen(false);
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0D93AA] transition-colors p-1 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0D93AA] transition-colors p-1 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] rounded"
                 aria-label="Open From Date calendar"
                 aria-expanded={isFromOpen}
               >
-                <CalendarIcon size={16} />
+                <CalendarIcon size={14} />
               </button>
 
               {isFromOpen && renderCalendar('from')}
@@ -438,11 +438,11 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
           {/* To Date Input */}
           <div
             ref={toContainerRef}
-            className="flex-1 flex items-center gap-2.5 min-w-0"
+            className="flex items-center gap-2 min-w-0 flex-1 max-w-[240px]"
           >
             <label
               htmlFor="bo-date-to-input"
-              className="text-xs font-bold text-gray-700 whitespace-nowrap min-w-[52px]"
+              className="text-xs font-bold text-gray-700 whitespace-nowrap shrink-0"
             >
               To Date
             </label>
@@ -454,7 +454,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
                 onChange={(e) => handleDateInputChange(e.target.value, 'to')}
                 placeholder="dd-mm-yyyy"
                 maxLength={10}
-                className="w-full h-[38px] pl-3 pr-9 text-xs sm:text-sm bg-gray-50/70 border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 font-mono focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
+                className="w-full h-[36px] pl-3 pr-8 text-xs bg-gray-50/70 border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 font-mono focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] focus:bg-white transition-all"
                 aria-label="To Date (dd-mm-yyyy)"
               />
               <button
@@ -464,11 +464,11 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
                   setIsToOpen((prev) => !prev);
                   setIsFromOpen(false);
                 }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0D93AA] transition-colors p-1 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0D93AA] transition-colors p-1 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] rounded"
                 aria-label="Open To Date calendar"
                 aria-expanded={isToOpen}
               >
-                <CalendarIcon size={16} />
+                <CalendarIcon size={14} />
               </button>
 
               {isToOpen && renderCalendar('to')}
@@ -477,14 +477,14 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
         </div>
 
         {/* Right: Action Buttons aligned towards the right */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 self-end lg:self-center ml-auto">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 ml-auto">
           {/* Export Button (Oceanic-green #0D93AA) */}
           <button
             type="button"
             id="bo-export-btn"
             onClick={onExport}
             disabled={!isRangeValid || isExporting}
-            className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3.5 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
+            className={`inline-flex items-center justify-center gap-1.5 h-[36px] px-3.5 text-xs font-semibold rounded-lg border transition-all ${
               isRangeValid && !isExporting
                 ? 'bg-[#0D93AA] hover:bg-[#0B7A8D] active:bg-[#096677] text-white border-[#0D93AA] shadow-2xs cursor-pointer'
                 : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed shadow-none'
@@ -496,7 +496,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
                 : 'Download Mobile Money transactions within selected date range'
             }
           >
-            <Download size={15} className="flex-shrink-0" />
+            <Download size={14} className="shrink-0" />
             <span>{isExporting ? 'Exporting...' : 'Export'}</span>
           </button>
 
@@ -506,7 +506,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
             id="bo-clear-date-range-btn"
             onClick={handleClear}
             disabled={!hasAnyDate}
-            className={`inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border transition-all ${
+            className={`inline-flex items-center justify-center gap-1.5 h-[36px] px-3 text-xs font-semibold rounded-lg border transition-all ${
               hasAnyDate
                 ? 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 cursor-pointer shadow-2xs'
                 : 'border-gray-200 text-gray-300 bg-gray-50 cursor-not-allowed shadow-none'
@@ -514,7 +514,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
             aria-label="Clear Date Range"
             title="Clear Date Range and restore latest transactions"
           >
-            <RotateCcw size={14} className="flex-shrink-0" />
+            <RotateCcw size={13} className="shrink-0" />
             <span className="hidden sm:inline">Clear Date Range</span>
             <span className="sm:hidden">Clear</span>
           </button>
@@ -525,7 +525,7 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
             id="bo-refresh-btn"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 text-xs sm:text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer shadow-2xs disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1"
+            className="inline-flex items-center justify-center gap-1.5 h-[36px] px-3 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 transition-all cursor-pointer shadow-2xs disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] focus-visible:ring-offset-1"
             aria-label="Refresh transactions"
             title={
               isCompleteRange
@@ -534,8 +534,8 @@ export const BusinessOwnerMobileMoneyFilterBar: React.FC<BusinessOwnerMobileMone
             }
           >
             <RefreshCw
-              size={14}
-              className={`flex-shrink-0 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : 'text-gray-500'}`}
+              size={13}
+              className={`shrink-0 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : 'text-gray-500'}`}
             />
             <span>Refresh</span>
           </button>

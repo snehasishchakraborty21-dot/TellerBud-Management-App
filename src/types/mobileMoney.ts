@@ -27,7 +27,7 @@ export interface MobileMoneyTransaction {
   serviceChannel: ServiceChannel;
   transactionType: MobileMoneyTransactionType;
   vendor: ApprovedVendor;
-  vendorType: 'MNO Mobile Money' | 'Bank API';
+  vendorType?: string;
   
   // Customer Information
   isRegisteredCustomer: boolean;

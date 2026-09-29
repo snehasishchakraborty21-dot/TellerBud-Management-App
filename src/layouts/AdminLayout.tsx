@@ -276,6 +276,20 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
+      pathname.includes('/global-wallet/add-funds') ||
+      pathname.includes('/wallets/global-wallet/add-funds')
+    ) {
+      return 'Add Funds';
+    }
+
+    if (
+      pathname.includes('/global-wallet/request-withdrawal') ||
+      pathname.includes('/wallets/global-wallet/request-withdrawal')
+    ) {
+      return 'Request Withdrawal';
+    }
+
+    if (
       pathname === '/business-owner/wallets/global-wallet' ||
       pathname === '/business-owner/global-wallet' ||
       pathname === '/business-owner/wallets/business-agent'
@@ -525,13 +539,137 @@ export const AdminLayout: React.FC = () => {
     !location.pathname.includes('/people/attendance/attendance/') &&
     !location.pathname.includes('/people/attendance/end-of-day/');
 
+  const isBODeviceManagementListing =
+    location.pathname === '/business-owner/organization/devices' ||
+    location.pathname === '/business-owner/organization/devices/' ||
+    location.pathname === '/business-owner/devices' ||
+    location.pathname === '/business-owner/devices/' ||
+    location.pathname === '/business-owner/organization/hardware-terminals' ||
+    location.pathname === '/business-owner/hardware-terminals' ||
+    location.pathname.endsWith('/organization/devices') ||
+    location.pathname.endsWith('/devices');
+
+  const isBOBalanceAdjustmentsListing =
+    location.pathname === '/business-owner/organization/balance-adjustments' ||
+    location.pathname === '/business-owner/organization/balance-adjustments/' ||
+    location.pathname === '/business-owner/balance-adjustments' ||
+    location.pathname === '/business-owner/balance-adjustments/' ||
+    location.pathname.endsWith('/organization/balance-adjustments') ||
+    location.pathname.endsWith('/balance-adjustments');
+
+  const isBOUsersRolesListing =
+    location.pathname === '/business-owner/organization/users' ||
+    location.pathname === '/business-owner/organization/users/' ||
+    location.pathname === '/business-owner/organization/users-roles' ||
+    location.pathname === '/business-owner/organization/users-roles/' ||
+    location.pathname === '/business-owner/users' ||
+    location.pathname === '/business-owner/users/' ||
+    location.pathname.endsWith('/organization/users') ||
+    location.pathname.endsWith('/organization/users-roles') ||
+    location.pathname.endsWith('/users-roles');
+
+  const isBOGlobalWalletListing =
+    location.pathname === '/business-owner/wallets/global-wallet' ||
+    location.pathname === '/business-owner/wallets/global-wallet/' ||
+    location.pathname === '/business-owner/global-wallet' ||
+    location.pathname === '/business-owner/global-wallet/' ||
+    location.pathname.endsWith('/wallets/global-wallet') ||
+    location.pathname.endsWith('/global-wallet');
+
+  const isBOAgentsListing =
+    (location.pathname === '/business-owner/agents' ||
+      location.pathname === '/business-owner/agents/' ||
+      location.pathname === '/business-owner/people/agents' ||
+      location.pathname === '/business-owner/people/agents/' ||
+      location.pathname === '/agents' ||
+      (currentUser?.role === 'business_owner' &&
+        (location.pathname.endsWith('/agents') ||
+          location.pathname.endsWith('/people/agents')))) &&
+    !location.pathname.includes('/agents/') &&
+    !location.pathname.includes('/people/agents/');
+
+  const isBOWalletLedgerListing =
+    (location.pathname === '/business-owner/wallets/ledger' ||
+      location.pathname === '/business-owner/wallets/ledger/' ||
+      location.pathname === '/business-owner/ledger' ||
+      location.pathname === '/business-owner/ledger/' ||
+      location.pathname === '/super-admin/wallets/ledger' ||
+      location.pathname === '/super-admin/wallets/ledger/' ||
+      location.pathname === '/super-admin/wallet-ledger' ||
+      location.pathname === '/super-admin/wallet-ledger/' ||
+      location.pathname === '/wallet-ledger' ||
+      location.pathname === '/wallet-ledger/' ||
+      location.pathname.endsWith('/wallets/ledger') ||
+      location.pathname.endsWith('/wallet-ledger')) &&
+    !location.pathname.includes('/wallets/ledger/') &&
+    !location.pathname.includes('/wallet-ledger/');
+
+  const isBOChargesCommissionsListing =
+    (location.pathname === '/business-owner/transactions/charges-commissions' ||
+      location.pathname === '/business-owner/transactions/charges-commissions/' ||
+      location.pathname === '/business-owner/charges-commissions' ||
+      location.pathname === '/business-owner/charges-commissions/' ||
+      location.pathname === '/business-owner/transactions/charges-revenue' ||
+      location.pathname === '/business-owner/transactions/charges-revenue/' ||
+      location.pathname === '/business-owner/charges-revenue' ||
+      location.pathname === '/business-owner/charges-revenue/' ||
+      location.pathname === '/business-owner/transactions/commissions' ||
+      location.pathname === '/business-owner/transactions/commissions/' ||
+      location.pathname === '/super-admin/transactions/charges-commissions' ||
+      location.pathname === '/super-admin/transactions/charges-commissions/' ||
+      location.pathname === '/super-admin/charges-commissions' ||
+      location.pathname === '/super-admin/charges-commissions/' ||
+      location.pathname === '/super-admin/transactions/charges-revenue' ||
+      location.pathname === '/super-admin/transactions/charges-revenue/' ||
+      location.pathname === '/super-admin/charges-revenue' ||
+      location.pathname === '/super-admin/charges-revenue/' ||
+      location.pathname === '/charges-commissions' ||
+      location.pathname === '/charges-revenue' ||
+      location.pathname.endsWith('/transactions/charges-commissions') ||
+      location.pathname.endsWith('/charges-commissions') ||
+      location.pathname.endsWith('/transactions/charges-revenue') ||
+      location.pathname.endsWith('/charges-revenue')) &&
+    !location.pathname.includes('/charges-commissions/agents/') &&
+    !location.pathname.includes('/charges-revenue/agents/') &&
+    !location.pathname.includes('/commissions/agents/') &&
+    !location.pathname.includes('/charges-commissions/') &&
+    !location.pathname.includes('/charges-revenue/') &&
+    !location.pathname.includes('/commissions/');
+
+  const isBONotificationsListing =
+    (location.pathname === '/business-owner/communication/notifications' ||
+      location.pathname === '/business-owner/communication/notifications/' ||
+      location.pathname === '/business-owner/notifications' ||
+      location.pathname === '/business-owner/notifications/' ||
+      location.pathname === '/super-admin/configuration/notifications' ||
+      location.pathname === '/super-admin/configuration/notifications/' ||
+      location.pathname === '/super-admin/notifications' ||
+      location.pathname === '/super-admin/notifications/' ||
+      location.pathname === '/notifications' ||
+      location.pathname === '/notifications/' ||
+      location.pathname.endsWith('/communication/notifications') ||
+      location.pathname.endsWith('/configuration/notifications') ||
+      location.pathname.endsWith('/notifications')) &&
+    !location.pathname.includes('/communication/notifications/') &&
+    !location.pathname.includes('/configuration/notifications/') &&
+    !location.pathname.includes('/notifications/');
+
   const isFrozenLayout =
     isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||
     isBOCashFloatListing ||
     isBOAllTransactionsListing ||
-    isBOAttendanceListing;
+    isBOAttendanceListing ||
+    isBODeviceManagementListing ||
+    isBOBalanceAdjustmentsListing ||
+    isBOUsersRolesListing ||
+    isBOGlobalWalletListing ||
+    isBOAgentsListing ||
+    isBOWalletLedgerListing ||
+    isBOChargesCommissionsListing ||
+    isBONotificationsListing;
+
 
   return (
     <div className="h-screen h-[100dvh] bg-[#FAFAFA] flex flex-row overflow-hidden">

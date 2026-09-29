@@ -17,10 +17,8 @@ import { WalletLedgerTable } from '../components/wallet-ledger/WalletLedgerTable
 export const WalletLedgerPage: React.FC = () => {
   // Filter state
   const [filters, setFilters] = useState<WalletLedgerFilterState>({
-    search: '',
     walletType: 'ALL',
     entryType: 'ALL',
-    direction: 'ALL',
     reconciliation: 'ALL',
     dateFrom: '',
     dateTo: '',
@@ -39,10 +37,8 @@ export const WalletLedgerPage: React.FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters({
-      search: '',
       walletType: 'ALL',
       entryType: 'ALL',
-      direction: 'ALL',
       reconciliation: 'ALL',
       dateFrom: '',
       dateTo: '',
@@ -59,51 +55,28 @@ export const WalletLedgerPage: React.FC = () => {
   // Filtered dataset
   const filteredRecords = useMemo(() => {
     return MOCK_AUTHORITATIVE_LEDGER.filter((item) => {
-      // 1. Search: ledger reference, wallet ID, holder or source reference
-      if (filters.search.trim() !== '') {
-        const query = filters.search.toLowerCase().trim();
-        const matchesRef = item.ledgerEntry.toLowerCase().includes(query);
-        const matchesWallet = item.walletId.toLowerCase().includes(query);
-        const matchesHolder = item.holderName.toLowerCase().includes(query);
-        const matchesSource = item.sourceReference.toLowerCase().includes(query);
-        const matchesOrig = item.originalLedgerReference
-          ? item.originalLedgerReference.toLowerCase().includes(query)
-          : false;
-
-        if (!matchesRef && !matchesWallet && !matchesHolder && !matchesSource && !matchesOrig) {
-          return false;
-        }
-      }
-
-      // 2. Wallet Type
+      // 1. Wallet Type
       if (filters.walletType !== 'ALL') {
         if (item.walletType !== filters.walletType) {
           return false;
         }
       }
 
-      // 3. Entry Type
+      // 2. Entry Type
       if (filters.entryType !== 'ALL') {
         if (item.entryType !== filters.entryType) {
           return false;
         }
       }
 
-      // 4. Direction
-      if (filters.direction !== 'ALL') {
-        if (item.direction !== filters.direction) {
-          return false;
-        }
-      }
-
-      // 5. Reconciliation State
+      // 3. Reconciliation State
       if (filters.reconciliation !== 'ALL') {
         if (item.reconciliation !== filters.reconciliation) {
           return false;
         }
       }
 
-      // 6. Date Range
+      // 4. Date Range
       if (filters.dateFrom) {
         const itemTime = new Date(item.rawDate).getTime();
         const fromTime = new Date(filters.dateFrom).getTime();
@@ -181,22 +154,26 @@ export const WalletLedgerPage: React.FC = () => {
   }, [filteredRecords]);
 
   return (
-    <div className="max-w-[1536px] mx-auto p-4 sm:p-5 space-y-3.5 pb-20">
-      {/* 1. Five compact KPI Cards */}
-      <WalletLedgerKPICards kpis={MOCK_LEDGER_KPIS} />
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-3.5 max-w-[1600px] w-full mx-auto select-none">
+      {/* 1. Five compact KPI Cards (Frozen upper section) */}
+      <div className="shrink-0">
+        <WalletLedgerKPICards kpis={MOCK_LEDGER_KPIS} />
+      </div>
 
-      {/* 2. Compact Filter Section */}
-      <WalletLedgerFilters
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-        onRefresh={handleRefresh}
-        onExport={handleExport}
-        isRefreshing={isRefreshing}
-        filteredCount={filteredRecords.length}
-      />
+      {/* 2. Compact Search & Filter Section (Frozen upper section) */}
+      <div className="shrink-0">
+        <WalletLedgerFilters
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          onRefresh={handleRefresh}
+          onExport={handleExport}
+          isRefreshing={isRefreshing}
+          filteredCount={filteredRecords.length}
+        />
+      </div>
 
-      {/* 3. Read-Only Ledger Table */}
+      {/* 3. Read-Only Ledger Table (Flex-1 container with sticky thead, scrollable rows, and fixed pagination) */}
       <WalletLedgerTable
         records={filteredRecords}
         totalEntriesCount={MOCK_LEDGER_KPIS.totalLedgerEntries}

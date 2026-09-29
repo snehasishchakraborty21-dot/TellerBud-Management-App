@@ -31,6 +31,7 @@ import {
 } from '../data/mockOrganizationData';
 import { City, CENTRAL_CITY_MASTER_LIST, formatStoreLocation } from '../data/mockCityData';
 import { MOCK_AGENTS } from '../data/mockAgentData';
+import { sequenceService } from './sequenceService';
 
 const STORAGE_KEYS = {
   STORES: 'tellerbud_org_stores_v1',
@@ -42,6 +43,24 @@ const STORAGE_KEYS = {
   ADJUSTMENTS: 'tellerbud_org_adjustments_v1',
   AUDIT_LOGS: 'tellerbud_org_audit_logs_v1',
 };
+
+function migrateStoreCode(code: string | undefined, fallbackIndex: number): string {
+  if (code && /^TB-STR-\d{6}$/.test(code)) return code;
+  if (code && /^STR-\d+$/.test(code)) {
+    const num = parseInt(code.replace(/\D/g, ''), 10) || (fallbackIndex + 1);
+    return `TB-STR-${String(num).padStart(6, '0')}`;
+  }
+  return `TB-STR-${String(fallbackIndex + 1).padStart(6, '0')}`;
+}
+
+function migrateBoothCode(code: string | undefined, fallbackIndex: number): string {
+  if (code && /^TB-BTH-\d{6}$/.test(code)) return code;
+  if (code && /^BTH-\d+$/.test(code)) {
+    const num = parseInt(code.replace(/\D/g, ''), 10) || (fallbackIndex + 1);
+    return `TB-BTH-${String(num).padStart(6, '0')}`;
+  }
+  return `TB-BTH-${String(fallbackIndex + 1).padStart(6, '0')}`;
+}
 
 class OrganizationService {
   private stores: Store[] = [];
@@ -63,13 +82,15 @@ class OrganizationService {
     try {
       const sStores = localStorage.getItem(STORAGE_KEYS.STORES);
       const rawStores: Store[] = sStores ? JSON.parse(sStores) : [...INITIAL_STORES];
-      this.stores = rawStores.map((s) => {
+      this.stores = rawStores.map((s, idx) => {
         const cityId = s.cityId || 'CITY-LUS';
         const cityName = s.cityName || 'Lusaka';
         const physicalAddress = s.physicalAddress || s.location || 'Plot 4821, Cairo Road';
+        const storeCode = migrateStoreCode(s.storeCode || s.storeNumber, idx);
         return {
           ...s,
-          storeCode: s.storeCode || s.storeNumber,
+          storeNumber: storeCode,
+          storeCode: storeCode,
           cityId,
           cityName,
           physicalAddress,
@@ -78,10 +99,20 @@ class OrganizationService {
       });
 
       const sBooths = localStorage.getItem(STORAGE_KEYS.BOOTHS);
-      this.booths = sBooths ? JSON.parse(sBooths) : [...INITIAL_BOOTHS];
+      const rawBooths: Booth[] = sBooths ? JSON.parse(sBooths) : [...INITIAL_BOOTHS];
+      this.booths = rawBooths.map((b, idx) => ({
+        ...b,
+        boothNumber: migrateBoothCode(b.boothNumber, idx),
+      }));
 
       const sUsers = localStorage.getItem(STORAGE_KEYS.USERS);
-      this.users = sUsers ? JSON.parse(sUsers) : [...INITIAL_USERS];
+      const rawUsers: OrgUser[] = sUsers ? JSON.parse(sUsers) : [...INITIAL_USERS];
+      this.users = rawUsers.map((u) => {
+        if (u.role === 'business_admin' || u.role === 'business_owner') {
+          return { ...u, storeId: undefined, boothId: undefined };
+        }
+        return u;
+      });
 
       const sStaff = localStorage.getItem(STORAGE_KEYS.STAFF_ASSIGNMENTS);
       this.staffAssignments = sStaff ? JSON.parse(sStaff) : [...INITIAL_STAFF_ASSIGNMENTS];
@@ -93,7 +124,12 @@ class OrganizationService {
       this.deviceAssignments = sDevAss ? JSON.parse(sDevAss) : [...INITIAL_DEVICE_ASSIGNMENTS];
 
       const sAdj = localStorage.getItem(STORAGE_KEYS.ADJUSTMENTS);
-      this.balanceAdjustments = sAdj ? JSON.parse(sAdj) : [...INITIAL_BALANCE_ADJUSTMENTS];
+      const rawAdj: BalanceAdjustment[] = sAdj ? JSON.parse(sAdj) : [];
+      if (!sAdj || rawAdj.length < INITIAL_BALANCE_ADJUSTMENTS.length) {
+        this.balanceAdjustments = [...INITIAL_BALANCE_ADJUSTMENTS];
+      } else {
+        this.balanceAdjustments = rawAdj;
+      }
 
       const sAudit = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
       this.auditLogs = sAudit ? JSON.parse(sAudit) : [...INITIAL_AUDIT_LOGS];
@@ -259,7 +295,7 @@ class OrganizationService {
     actor: AuthenticatedUser,
     data: {
       storeName: string;
-      storeNumber: string;
+      storeNumber?: string;
       storeCode?: string;
       cityId: string;
       cityName?: string;
@@ -277,10 +313,6 @@ class OrganizationService {
     }
     if (!data.storeName?.trim()) {
       return { success: false, error: 'Store name is required.' };
-    }
-    const storeNum = (data.storeNumber || data.storeCode || '').trim();
-    if (!storeNum) {
-      return { success: false, error: 'Store code or number is required.' };
     }
     if (!data.physicalAddress?.trim()) {
       return { success: false, error: 'Physical address is required.' };
@@ -303,15 +335,10 @@ class OrganizationService {
     const resolvedProvince = data.province?.trim() || cityMatch.province;
     const combinedLocation = formatStoreLocation(data.physicalAddress, resolvedCityName);
 
-    // Check unique storeNumber within business
-    const exists = this.stores.some(
-      (s) =>
-        s.businessId === businessId &&
-        s.storeNumber.trim().toLowerCase() === storeNum.toLowerCase() &&
-        s.status !== 'Archived'
-    );
-    if (exists) {
-      return { success: false, error: `Store code or number "${storeNum}" already exists in this business.` };
+    // Atomically generate unique 6-digit TellerBud Store Code: TB-STR-000001
+    let storeNum = sequenceService.nextStoreCode();
+    while (this.stores.some((s) => s.storeNumber === storeNum || s.storeCode === storeNum)) {
+      storeNum = sequenceService.nextStoreCode();
     }
 
     const newStore: Store = {
@@ -356,7 +383,7 @@ class OrganizationService {
     storeId: string,
     data: {
       storeName: string;
-      storeNumber: string;
+      storeNumber?: string;
       storeCode?: string;
       cityId: string;
       cityName?: string;
@@ -382,10 +409,6 @@ class OrganizationService {
     if (!data.storeName?.trim()) {
       return { success: false, error: 'Store name is required.' };
     }
-    const storeNum = (data.storeNumber || data.storeCode || '').trim();
-    if (!storeNum) {
-      return { success: false, error: 'Store code or number is required.' };
-    }
     if (!data.physicalAddress?.trim()) {
       return { success: false, error: 'Physical address is required.' };
     }
@@ -403,24 +426,15 @@ class OrganizationService {
       return { success: false, error: `Operating in ${cityMatch.cityName} is not permitted for your business.` };
     }
 
-    // Check duplicate storeNumber
-    const duplicate = this.stores.some(
-      (s) =>
-        s.id !== storeId &&
-        s.businessId === businessId &&
-        s.storeNumber.trim().toLowerCase() === storeNum.toLowerCase() &&
-        s.status !== 'Archived'
-    );
-    if (duplicate) {
-      return { success: false, error: `Store number "${storeNum}" is already in use by another store.` };
-    }
-
     const resolvedCityName = data.cityName?.trim() || cityMatch.cityName;
     const resolvedProvince = data.province?.trim() || cityMatch.province;
     const combinedLocation = formatStoreLocation(data.physicalAddress, resolvedCityName);
 
     const cityChanged = current.cityId !== data.cityId || current.cityName !== resolvedCityName;
     const addressChanged = current.physicalAddress?.trim() !== data.physicalAddress.trim();
+
+    // Store Code is system-generated and strictly read-only after creation
+    const storeNum = current.storeNumber || current.storeCode || 'TB-STR-000001';
 
     let previousValue = `Name: ${current.storeName}, Code: ${current.storeNumber}, Status: ${current.status}`;
     let newValue = `Name: ${data.storeName.trim()}, Code: ${storeNum}, Status: ${data.status || current.status}`;
@@ -635,7 +649,7 @@ class OrganizationService {
 
   public createBooth(
     actor: AuthenticatedUser,
-    data: { storeId: string; boothName: string; boothNumber: string }
+    data: { storeId: string; boothName: string; boothNumber?: string }
   ): { success: boolean; error?: string; booth?: Booth } {
     if (actor.role !== 'business_owner') {
       return { success: false, error: 'Forbidden: Only Business Owner can create booths.' };
@@ -648,27 +662,16 @@ class OrganizationService {
     if (!data.boothName.trim()) {
       return { success: false, error: 'Booth Name is required.' };
     }
-    if (!data.boothNumber.trim()) {
-      return { success: false, error: 'Booth Number is required.' };
-    }
 
     const store = this.stores.find((s) => s.id === data.storeId && s.businessId === businessId);
     if (!store) {
       return { success: false, error: 'Selected Store not found.' };
     }
 
-    // Unique boothNumber within store
-    const duplicate = this.booths.some(
-      (b) =>
-        b.storeId === data.storeId &&
-        b.boothNumber.trim().toLowerCase() === data.boothNumber.trim().toLowerCase() &&
-        b.status !== 'Archived'
-    );
-    if (duplicate) {
-      return {
-        success: false,
-        error: `Booth number "${data.boothNumber}" already exists in ${store.storeName}.`,
-      };
+    // Atomically generate unique 6-digit TellerBud Booth Code: TB-BTH-000001
+    let boothNum = sequenceService.nextBoothCode();
+    while (this.booths.some((b) => b.boothNumber === boothNum)) {
+      boothNum = sequenceService.nextBoothCode();
     }
 
     const newBooth: Booth = {
@@ -676,7 +679,7 @@ class OrganizationService {
       businessId,
       storeId: data.storeId,
       boothName: data.boothName.trim(),
-      boothNumber: data.boothNumber.trim(),
+      boothNumber: boothNum,
       status: 'Active',
       createdAt: new Date().toISOString(),
       createdBy: actor.uid,
@@ -708,7 +711,7 @@ class OrganizationService {
   public updateBooth(
     actor: AuthenticatedUser,
     boothId: string,
-    data: { boothName: string; boothNumber: string; status?: BoothStatus }
+    data: { boothName: string; boothNumber?: string; status?: BoothStatus }
   ): { success: boolean; error?: string; booth?: Booth } {
     if (actor.role !== 'business_owner') {
       return { success: false, error: 'Forbidden: Only Business Owner can update booths.' };
@@ -722,23 +725,14 @@ class OrganizationService {
     const current = this.booths[index];
     const store = this.stores.find((s) => s.id === current.storeId);
 
-    // Check duplicate
-    const duplicate = this.booths.some(
-      (b) =>
-        b.id !== boothId &&
-        b.storeId === current.storeId &&
-        b.boothNumber.trim().toLowerCase() === data.boothNumber.trim().toLowerCase() &&
-        b.status !== 'Archived'
-    );
-    if (duplicate) {
-      return { success: false, error: `Booth number "${data.boothNumber}" is already in use in this store.` };
-    }
+    // Booth code is system-generated and immutable after creation
+    const boothNum = current.boothNumber || 'TB-BTH-000001';
 
     const previousValue = `Name: ${current.boothName}, Number: ${current.boothNumber}, Status: ${current.status}`;
     const updatedBooth: Booth = {
       ...current,
       boothName: data.boothName.trim() || current.boothName,
-      boothNumber: data.boothNumber.trim() || current.boothNumber,
+      boothNumber: boothNum,
       status: data.status || current.status,
       updatedAt: new Date().toISOString(),
       updatedBy: actor.uid,
@@ -1027,10 +1021,11 @@ class OrganizationService {
   ): { success: boolean; error?: string; user?: OrgUser } {
     // Permission checks
     if (actor.role === 'business_admin') {
-      return { success: false, error: 'Forbidden: Business Admins cannot create users.' };
-    }
-    if (actor.role !== 'business_owner') {
-      return { success: false, error: 'Forbidden: Only Business Owner can create users.' };
+      if (data.role !== 'agent') {
+        return { success: false, error: 'Forbidden: Business Admins can only create Agent accounts.' };
+      }
+    } else if (actor.role !== 'business_owner' && actor.role !== 'super_admin') {
+      return { success: false, error: 'Forbidden: Insufficient privileges to create users.' };
     }
     if (data.role !== 'business_admin' && data.role !== 'agent') {
       return { success: false, error: 'Invalid role. Auditor is reserved for a future release.' };
@@ -1072,6 +1067,10 @@ class OrganizationService {
         ? `USR-BA-${Date.now().toString().slice(-4)}`
         : `TB-AGT-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const isBA = data.role === 'business_admin';
+    const storeId = isBA ? undefined : (data.storeId || undefined);
+    const boothId = isBA ? undefined : (data.boothId || undefined);
+
     const newUser: OrgUser = {
       id: userId,
       businessId,
@@ -1083,8 +1082,8 @@ class OrganizationService {
       role: data.role,
       passcodeHash: hashPasscode(data.passcode),
       status: data.status || 'Active',
-      storeId: data.storeId || undefined,
-      boothId: data.boothId || undefined,
+      storeId,
+      boothId,
       createdAt: new Date().toISOString(),
       createdBy: actor.uid,
       updatedAt: new Date().toISOString(),
@@ -1093,14 +1092,14 @@ class OrganizationService {
 
     this.users.push(newUser);
 
-    // If assigned to a booth at creation
-    if (data.storeId && data.boothId) {
+    // If assigned to a booth at creation (Agents only)
+    if (!isBA && storeId && boothId) {
       const assignment: StaffBoothAssignment = {
         id: `SBA-${Date.now()}`,
         businessId,
         userId: newUser.id,
-        storeId: data.storeId,
-        boothId: data.boothId,
+        storeId,
+        boothId,
         effectiveFrom: new Date().toISOString(),
         effectiveTo: null,
         isActive: true,
@@ -1110,8 +1109,8 @@ class OrganizationService {
       this.staffAssignments.push(assignment);
     }
 
-    const store = data.storeId ? this.stores.find((s) => s.id === data.storeId) : undefined;
-    const booth = data.boothId ? this.booths.find((b) => b.id === data.boothId) : undefined;
+    const store = storeId ? this.stores.find((s) => s.id === storeId) : undefined;
+    const booth = boothId ? this.booths.find((b) => b.id === boothId) : undefined;
 
     this.logAuditEvent({
       businessId,
@@ -1120,7 +1119,7 @@ class OrganizationService {
       entityId: newUser.id,
       affectedName: `${newUser.firstName} ${newUser.lastName} (${newUser.username})`,
       previousValue: 'None',
-      newValue: `Role: ${data.role === 'business_admin' ? 'Business Admin' : 'Agent'}, Status: ${newUser.status}`,
+      newValue: `Role: ${data.role === 'business_admin' ? 'Business Admin (All Stores & Booths)' : 'Agent'}, Status: ${newUser.status}`,
       reason: 'New organization user profile provisioned',
       actor,
       storeId: store?.id,
@@ -1131,6 +1130,134 @@ class OrganizationService {
 
     this.saveToStorage();
     return { success: true, user: newUser };
+  }
+
+  public updateUser(
+    actor: AuthenticatedUser,
+    data: {
+      userId: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone?: string;
+      role?: 'business_admin' | 'agent';
+      storeId?: string;
+      boothId?: string;
+      status?: OrgUserStatus;
+    }
+  ): { success: boolean; error?: string; user?: OrgUser } {
+    if (actor.role === 'business_admin') {
+      const target = this.users.find((u) => u.id === data.userId);
+      if (target && target.role !== 'agent') {
+        return { success: false, error: 'Forbidden: Business Admins can only edit Agents.' };
+      }
+      if (data.role && data.role !== 'agent') {
+        return { success: false, error: 'Forbidden: Business Admins cannot change user roles.' };
+      }
+    } else if (actor.role !== 'business_owner') {
+      return { success: false, error: 'Forbidden: Insufficient privileges.' };
+    }
+
+    const businessId = this.getTenantBusinessId(actor);
+    const user = this.users.find((u) => u.id === data.userId && u.businessId === businessId);
+    if (!user) {
+      return { success: false, error: 'User not found.' };
+    }
+    if (user.role === 'business_owner') {
+      return { success: false, error: 'The Business Owner account cannot be modified from this page.' };
+    }
+
+    if (!data.firstName.trim() || !data.lastName.trim()) {
+      return { success: false, error: 'First Name and Last Name are required.' };
+    }
+    if (!data.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+      return { success: false, error: 'A valid email address is required.' };
+    }
+
+    // Check duplicate email (excluding self)
+    const emailTaken = this.users.some(
+      (u) => u.id !== user.id && u.email.toLowerCase() === data.email.trim().toLowerCase()
+    );
+    if (emailTaken) {
+      return { success: false, error: `Email "${data.email}" is already registered.` };
+    }
+
+    // Check duplicate phone if provided (excluding self)
+    if (data.phone?.trim()) {
+      const phoneTaken = this.users.some(
+        (u) => u.id !== user.id && u.phone && u.phone.trim() === data.phone?.trim()
+      );
+      if (phoneTaken) {
+        return { success: false, error: `Phone number "${data.phone}" is already registered.` };
+      }
+    }
+
+    const prevStoreId = user.storeId;
+    const prevBoothId = user.boothId;
+    const prevRole = user.role;
+
+    if (data.role) {
+      user.role = data.role;
+    }
+
+    const isBA = user.role === 'business_admin';
+
+    user.firstName = data.firstName.trim();
+    user.lastName = data.lastName.trim();
+    user.email = data.email.trim();
+    user.phone = data.phone?.trim();
+    if (data.status) user.status = data.status;
+
+    // Business Admins must NEVER have storeId or boothId
+    if (isBA) {
+      user.storeId = undefined;
+      user.boothId = undefined;
+    } else {
+      user.storeId = data.storeId || undefined;
+      user.boothId = data.boothId || undefined;
+    }
+    user.updatedAt = new Date().toISOString();
+    user.updatedBy = actor.uid;
+
+    // Handle staff booth assignment changes
+    if (isBA || prevStoreId !== user.storeId || prevBoothId !== user.boothId) {
+      const prevAssignment = this.staffAssignments.find(
+        (sa) => sa.userId === user.id && sa.isActive
+      );
+      if (prevAssignment) {
+        prevAssignment.isActive = false;
+        prevAssignment.effectiveTo = new Date().toISOString();
+      }
+      if (!isBA && user.storeId && user.boothId) {
+        this.staffAssignments.push({
+          id: `SBA-${Date.now()}`,
+          businessId,
+          userId: user.id,
+          storeId: user.storeId,
+          boothId: user.boothId,
+          effectiveFrom: new Date().toISOString(),
+          effectiveTo: null,
+          isActive: true,
+          reason: 'Booth assignment updated during user edit',
+          assignedBy: actor.uid,
+        });
+      }
+    }
+
+    this.logAuditEvent({
+      businessId,
+      eventType: 'User Updated',
+      entityType: 'User',
+      entityId: user.id,
+      affectedName: `${user.firstName} ${user.lastName} (${user.username})`,
+      previousValue: `Role: ${prevRole}`,
+      newValue: `Updated details for ${user.firstName} ${user.lastName} (Role: ${user.role})`,
+      reason: 'User profile details edited',
+      actor,
+    });
+
+    this.saveToStorage();
+    return { success: true, user };
   }
 
   public setUserStatus(
@@ -1237,6 +1364,80 @@ class OrganizationService {
       previousValue: '[PROTECTED HASH]',
       newValue: '[PROTECTED HASH UPDATED]',
       reason: params.reason.trim(),
+      actor,
+    });
+
+    this.saveToStorage();
+    return { success: true };
+  }
+
+  public deleteUser(
+    actor: AuthenticatedUser,
+    userId: string
+  ): { success: boolean; error?: string } {
+    // Only Business Owner or Super Admin can delete users
+    if (actor.role !== 'business_owner' && actor.role !== 'super_admin') {
+      return {
+        success: false,
+        error: 'Forbidden: Only the Business Owner has permission to delete staff accounts.',
+      };
+    }
+
+    const businessId = this.getTenantBusinessId(actor);
+    const targetIndex = this.users.findIndex((u) => u.id === userId && u.businessId === businessId);
+    if (targetIndex === -1) {
+      return { success: false, error: 'User not found in your business.' };
+    }
+
+    const targetUser = this.users[targetIndex];
+
+    // The Business Owner account must never be deletable, including through direct API calls
+    if (targetUser.role === 'business_owner') {
+      return {
+        success: false,
+        error: 'Security Violation: The primary Business Owner account cannot be deleted.',
+      };
+    }
+
+    // Inactivate any active staff booth assignments
+    this.staffAssignments = this.staffAssignments.map((sa) => {
+      if (sa.userId === userId && sa.isActive) {
+        return {
+          ...sa,
+          isActive: false,
+          effectiveTo: new Date().toISOString(),
+        };
+      }
+      return sa;
+    });
+
+    // Unmap any active device assignments
+    this.deviceAssignments = this.deviceAssignments.map((da) => {
+      if (da.staffUserId === userId && da.isActive) {
+        return {
+          ...da,
+          isActive: false,
+          unmappedAt: new Date().toISOString(),
+          unmappedBy: actor.uid,
+          unmapReason: 'User account deleted',
+        };
+      }
+      return da;
+    });
+
+    // Remove user
+    this.users.splice(targetIndex, 1);
+
+    // Audit log
+    this.logAuditEvent({
+      businessId,
+      eventType: 'User Deleted',
+      entityType: 'User',
+      entityId: targetUser.id,
+      affectedName: `${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+      previousValue: `Role: ${targetUser.role}, Status: ${targetUser.status}`,
+      newValue: 'Deleted from system',
+      reason: `Staff user deleted by Business Owner (${actor.fullName})`,
       actor,
     });
 
@@ -1419,7 +1620,9 @@ class OrganizationService {
 
     if (!isSuperAdmin) {
       const businessId = this.getTenantBusinessId(actor);
-      targetDevices = targetDevices.filter((d) => d.allocatedBusinessId === businessId);
+      targetDevices = targetDevices.filter(
+        (d) => d.allocatedBusinessId === businessId && d.status !== 'Decommissioned'
+      );
     }
 
     return targetDevices.map((device) => {
@@ -1670,44 +1873,44 @@ class OrganizationService {
     deviceId: string,
     reason: string
   ): { success: boolean; error?: string } {
-    if (actor.role !== 'business_owner' && actor.role !== 'business_admin' && actor.role !== 'super_admin') {
-      return { success: false, error: 'Forbidden: Insufficient privileges to decommission devices.' };
+    if (actor.role !== 'super_admin') {
+      return { success: false, error: 'Forbidden: Only TellerBud Platform Administrators can decommission devices.' };
     }
     if (!reason.trim()) {
       return { success: false, error: 'Decommissioning reason is required.' };
     }
 
-    const isSuperAdmin = actor.role === 'super_admin';
-    const businessId = isSuperAdmin ? undefined : this.getTenantBusinessId(actor);
-
-    const device = this.devices.find((d) =>
-      isSuperAdmin ? d.id === deviceId : d.id === deviceId && d.allocatedBusinessId === businessId
-    );
+    const device = this.devices.find((d) => d.id === deviceId);
     if (!device) {
       return { success: false, error: 'Device not found.' };
     }
 
-    // Close any active assignment
-    const currentAssignment = this.deviceAssignments.find(
+    // Close any active assignment across all booths/stores/businesses
+    const activeAssignments = this.deviceAssignments.filter(
       (da) => da.deviceId === device.id && da.isActive
     );
-    if (currentAssignment) {
-      currentAssignment.isActive = false;
-      currentAssignment.effectiveTo = new Date().toISOString();
-    }
+    const now = new Date().toISOString();
+    activeAssignments.forEach((da) => {
+      da.isActive = false;
+      da.effectiveTo = now;
+      da.updatedAt = now;
+      da.updatedBy = actor.uid;
+    });
 
     const previousStatus = device.status;
     device.status = 'Decommissioned';
     device.decommissionReason = reason.trim();
-    device.decommissionedAt = new Date().toISOString();
-    device.decommissionedBy = actor.fullName;
+    device.decommissionedAt = now;
+    device.decommissionedBy = actor.fullName || 'TellerBud Admin';
+    device.updatedAt = now;
+    device.updatedBy = actor.uid;
 
     this.logAuditEvent({
       businessId: device.allocatedBusinessId || 'PLATFORM',
       eventType: 'Device Decommissioned',
       entityType: 'Device',
       entityId: device.id,
-      affectedName: `${device.deviceName} (${device.deviceId})`,
+      affectedName: `${device.deviceName} (${device.deviceId || device.id})`,
       previousValue: `Status: ${previousStatus}`,
       newValue: 'Status: Decommissioned',
       reason: reason.trim(),

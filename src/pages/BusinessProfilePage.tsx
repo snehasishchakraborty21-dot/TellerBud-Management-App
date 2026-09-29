@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Building2,
@@ -74,6 +74,23 @@ export const BusinessProfilePage: React.FC = () => {
     };
   }, [businessId]);
 
+  const [isStickyScrolled, setIsStickyScrolled] = useState<boolean>(false);
+  const profileContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = profileContainerRef.current?.closest('main') || window;
+    const handleScroll = () => {
+      const scrollY = scrollContainer instanceof HTMLElement ? scrollContainer.scrollTop : window.scrollY;
+      setIsStickyScrolled(scrollY > 6);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   if (loading || !profile) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -86,7 +103,7 @@ export const BusinessProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div ref={profileContainerRef} className="min-h-full">
       {/* Back to Businesses for admin portal */}
       {currentUser?.role === 'super_admin' && (
         <div className="px-4 sm:px-6 lg:px-8 pt-4 -mb-2">
@@ -125,85 +142,95 @@ export const BusinessProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* 2. Business Summary Card (Full-width clean card at top) */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {/* Official Business Logo Container */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-gray-200 bg-white p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-              {profile.logoUrl ? (
-                <img
-                  src={profile.logoUrl}
-                  alt={`${profile.businessName} logo`}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div
-                  className="w-full h-full rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center"
-                  title={`${profile.businessName} logo placeholder`}
-                >
-                  <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
+      {/* 2. Sticky/Frozen Business Profile Header Section */}
+      <div
+        className={`sticky top-0 z-30 bg-[#FAFAFA] pt-3 sm:pt-4 pb-2.5 sm:pb-3 px-4 sm:px-6 lg:px-8 transition-all duration-200 ${
+          isStickyScrolled
+            ? 'shadow-xs border-b border-gray-200/80 bg-[#FAFAFA]/95 backdrop-blur-xs'
+            : 'border-b border-transparent'
+        }`}
+      >
+        <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {/* Official Business Logo Container */}
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl border border-gray-200 bg-white p-1.5 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                {profile.logoUrl ? (
+                  <img
+                    src={profile.logoUrl}
+                    alt={`${profile.businessName} logo`}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center"
+                    title={`${profile.businessName} logo placeholder`}
+                  >
+                    <Building2 className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1 sm:space-y-1.5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#102025] tracking-tight">
+                    {profile.businessName}
+                  </h2>
+                  {/* Green Active status badge */}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {profile.accountStatus}
+                  </span>
                 </div>
-              )}
+
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 font-medium">Business ID:</span>
+                    <span className="font-mono font-bold text-[#102025]">{profile.businessId}</span>
+                  </div>
+                  <span className="text-gray-300 hidden sm:inline">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 font-medium">Category:</span>
+                    <span className="font-medium text-gray-700">{profile.businessType}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1 sm:space-y-1.5">
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-xl sm:text-2xl font-bold text-[#102025] tracking-tight">
-                  {profile.businessName}
-                </h2>
-                {/* Green Active status badge */}
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {profile.accountStatus}
+            {/* Edit Profile Action Button */}
+            {canEditProfile ? (
+              <div className="shrink-0 pt-2 sm:pt-0">
+                <button
+                  type="button"
+                  id="btn-edit-business-profile"
+                  onClick={() => {
+                    const editPath = location.pathname.includes('/people/business-profile')
+                      ? '/business-owner/people/business-profile/edit'
+                      : '/business-owner/business-profile/edit';
+                    navigate(editPath);
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D93AA] hover:bg-[#0B8296] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit Business Profile</span>
+                </button>
+              </div>
+            ) : (
+              <div className="shrink-0 pt-2 sm:pt-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-medium">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Read Only</span>
                 </span>
               </div>
-
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-gray-600">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-gray-400 font-medium">Business ID:</span>
-                  <span className="font-mono font-bold text-[#102025]">{profile.businessId}</span>
-                </div>
-                <span className="text-gray-300 hidden sm:inline">•</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-gray-400 font-medium">Category:</span>
-                  <span className="font-medium text-gray-700">{profile.businessType}</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-
-          {/* Edit Profile Action Button */}
-          {canEditProfile ? (
-            <div className="shrink-0 pt-2 sm:pt-0">
-              <button
-                type="button"
-                id="btn-edit-business-profile"
-                onClick={() => {
-                  const editPath = location.pathname.includes('/people/business-profile')
-                    ? '/business-owner/people/business-profile/edit'
-                    : '/business-owner/business-profile/edit';
-                  navigate(editPath);
-                }}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0D93AA] hover:bg-[#0B8296] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-xs cursor-pointer"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Edit Business Profile</span>
-              </button>
-            </div>
-          ) : (
-            <div className="shrink-0 pt-2 sm:pt-0">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-medium">
-                <Lock className="w-3.5 h-3.5" />
-                <span>Read Only</span>
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Two-Column Information Layout on Desktop / Balanced Columns on Tablet / Stacked on Mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      {/* Scrollable Information Layout */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-3 pb-12 space-y-6">
+        {/* Two-Column Information Layout on Desktop / Balanced Columns on Tablet / Stacked on Mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Column: Business Registration Information & Business Address */}
         <div className="space-y-6">
           {/* 3. Business Registration Information (Read-only) */}
@@ -481,6 +508,7 @@ export const BusinessProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

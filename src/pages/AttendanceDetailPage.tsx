@@ -33,7 +33,7 @@ export const AttendanceDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-16 text-center">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 py-16 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-gray-200 border-t-[#0D93AA]" />
         <p className="mt-3 text-xs text-gray-500 font-medium">Loading attendance details...</p>
       </div>
@@ -42,14 +42,20 @@ export const AttendanceDetailPage: React.FC = () => {
 
   if (!record) {
     return (
-      <div className="space-y-4">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-4 py-4">
         <button
           type="button"
-          onClick={() => navigate('/business-owner/attendance-end-of-day')}
+          onClick={() => {
+            if (window.history.state && window.history.state.idx > 0) {
+              navigate(-1);
+            } else {
+              navigate('/business-owner/attendance-end-of-day?tab=attendance');
+            }
+          }}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0b8296] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Attendance & End-of-Day</span>
+          <span>Back to Attendance</span>
         </button>
         <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
           <h3 className="text-sm font-bold text-gray-900">Attendance Record Not Found</h3>
@@ -62,16 +68,22 @@ export const AttendanceDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-6 pb-12">
       {/* Back Button and Breadcrumb */}
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate('/business-owner/attendance-end-of-day?tab=attendance')}
+          onClick={() => {
+            if (window.history.state && window.history.state.idx > 0) {
+              navigate(-1);
+            } else {
+              navigate('/business-owner/attendance-end-of-day?tab=attendance');
+            }
+          }}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-[#0D93AA] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Attendance & End-of-Day</span>
+          <span>Back to Attendance</span>
         </button>
       </div>
 

@@ -33,8 +33,43 @@ import {
   MobileMoneyTransactionType,
 } from '../types/mobileMoney';
 import { formatZMW, calculateServiceFeeSplit } from '../utils/financialUtils';
-import { VendorLogo } from '../components/walk-in/VendorLogo';
 import { maskZambianPhone, getInitials } from '../utils/customerUtils';
+
+const getVendorDisplayName = (vendor: string): string => {
+  if (!vendor) return '';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
   const { reference } = useParams<{ reference: string }>();
@@ -190,7 +225,7 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 py-16 text-center space-y-6">
         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center shadow-2xs">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#0D93AA] mb-4" />
           <p className="text-sm font-medium text-gray-600">
@@ -203,7 +238,7 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
 
   if (!transaction) {
     return (
-      <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 py-12 space-y-6">
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-2xs space-y-4 max-w-lg mx-auto">
           <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-6 h-6" />
@@ -235,7 +270,7 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
   const isUnregistered = !transaction.isRegisteredCustomer || !transaction.customerId;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-16">
+    <div className="w-full max-w-none box-border px-4 sm:px-5 lg:px-6 space-y-6 pb-16">
       {/* 1. Back Navigation & Header Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
@@ -293,12 +328,14 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Complete Vendor Brand Presentation */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200/80 flex items-center gap-3 shrink-0">
-            <VendorLogo vendor={transaction.vendor} size="detail" showName={true} />
-            <div className="border-l border-gray-200 pl-3">
-              <span className="text-[11px] text-gray-500 font-medium block">
-                {transaction.vendorType}
+          {/* Vendor Brand Presentation */}
+          <div className="px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200/80 flex items-center gap-2 shrink-0">
+            <div>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
+                Vendor
+              </span>
+              <span className="text-sm font-bold text-gray-900">
+                {getVendorDisplayName(transaction.vendor)}
               </span>
             </div>
           </div>
@@ -679,14 +716,14 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {transaction.completionInformation && (
+            {isCompleted && (
               <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-lg text-xs space-y-1">
                 <div className="font-bold text-emerald-900 flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-700" />
                   <span>Completion & Settlement Note</span>
                 </div>
                 <div className="text-emerald-800 text-[11px] leading-relaxed">
-                  {transaction.completionInformation}
+                  Transaction completed successfully through customer and agent confirmation. Reference: {transaction.reference}.
                 </div>
               </div>
             )}
@@ -747,9 +784,9 @@ export const BusinessOwnerMobileMoneyDetailPage: React.FC = () => {
                 </span>
               </div>
               <div>
-                <span className="text-gray-400 text-[11px] block">Principal Gateway</span>
+                <span className="text-gray-400 text-[11px] block">Processing Method</span>
                 <span className="font-medium text-gray-800">
-                  {transaction.principalProcessingMethod}
+                  Customer & Agent Dual Confirmation
                 </span>
               </div>
               <div>

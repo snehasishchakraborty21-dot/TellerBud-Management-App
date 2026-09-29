@@ -352,13 +352,13 @@ export const ChargesCommissionsPage: React.FC = () => {
     <div
       id="charges-commissions-container"
       aria-label="Charges & Revenue"
-      className="w-full space-y-4 px-3 sm:px-6 pt-2 pb-4"
+      className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 max-w-[1600px] w-full mx-auto select-none"
     >
       <h1 className="sr-only">Charges &amp; Revenue</h1>
       {/* 1. THREE COMPACT SUMMARY CARDS (Single horizontal line, equal height and width) */}
       <div
         id="kpi-summary-cards"
-        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+        className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 shrink-0"
       >
         {/* Card 1: Reservation Charges */}
         <div
@@ -425,7 +425,7 @@ export const ChargesCommissionsPage: React.FC = () => {
       </div>
 
       {/* 2. TABS: Agent Revenue Breakdown (default), Charge Records & Revenue Records */}
-      <div id="tabs-header" className="border-b border-slate-200 bg-white px-2 sm:px-3 rounded-t-xl">
+      <div id="tabs-header" className="border border-slate-200 bg-white px-2 sm:px-3 rounded-xl shrink-0 shadow-2xs">
         <nav className="flex items-center space-x-1 sm:space-x-3 overflow-x-auto" aria-label="Tabs">
           <button
             id="tab-agent-breakdown"
@@ -499,11 +499,11 @@ export const ChargesCommissionsPage: React.FC = () => {
           }
         />
       ) : (
-        <>
-          {/* COMMON FILTERS SECTION (Compact single horizontal line layout) */}
+        <div className="flex-1 min-h-0 flex flex-col gap-3">
+          {/* COMMON FILTERS SECTION (Compact single horizontal line layout - Frozen upper section) */}
           <div
             id="filter-controls-section"
-            className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 sm:px-4 shadow-sm"
+            className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 sm:px-4 shadow-sm shrink-0"
           >
             <div className="flex flex-wrap xl:flex-nowrap items-center justify-between gap-2.5 sm:gap-3 w-full">
               {/* Filter controls: From Date, To Date, All Services, All Providers, All Statuses, Clear Filters, Refresh */}
@@ -650,188 +650,186 @@ export const ChargesCommissionsPage: React.FC = () => {
             </div>
           </div>
 
-      {/* 4. TABLE SECTION */}
-      <div
-        id="charges-commissions-table-card"
-        className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-0"
-      >
-        <div className="overflow-x-auto">
-          {/* ========================================================================= */
-          /* CHARGE RECORDS TABLE (Uniform 16px column spacing & balanced proportions) */
-          /* ========================================================================= */}
-          <div id="charge-records-table" className="w-full min-w-[860px]">
-            {/* Table Heading */}
-            <div className="grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center bg-slate-50/80 border-b border-slate-200 py-2.5 px-4 text-[11px] font-bold text-slate-600 uppercase tracking-wider text-left">
-              <div className="text-left whitespace-nowrap">Charge Record</div>
-              <div className="text-left whitespace-nowrap">Transaction</div>
-              <div className="text-left whitespace-nowrap">Charged Customer</div>
-              <div className="text-left whitespace-nowrap">Service</div>
-              <div className="text-left leading-tight">
-                <div className="whitespace-nowrap">Transaction Amount</div>
-                <div className="whitespace-nowrap">(ZMW)</div>
-              </div>
-              <div className="text-left leading-tight">
-                <div className="whitespace-nowrap">Reservation Charge</div>
-                <div className="whitespace-nowrap">(ZMW)</div>
-              </div>
-              <div className="text-left whitespace-nowrap">Status</div>
-              <div className="text-left whitespace-nowrap">Action</div>
-            </div>
-
-            {/* Table Body */}
-            <div className="divide-y divide-slate-100 text-xs">
-              {paginatedRecords.length === 0 ? (
-                <div className="py-10 text-center text-slate-500">
-                  No charge records matching your criteria.
-                </div>
-              ) : (
-                (paginatedRecords as ChargeRecord[]).map((row) => (
-                  <div
-                    key={row.id}
-                    id={`charge-row-${row.id}`}
-                    className="grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center py-2.5 px-4 hover:bg-slate-50/70 transition-colors text-left"
-                  >
-                    {/* 1. Charge Record */}
-                    <div className="text-left min-w-0">
-                      <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap text-xs truncate">
-                        {row.reference}
-                      </div>
-                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
-                        {row.createdAt}
-                      </div>
-                    </div>
-
-                    {/* 2. Transaction */}
-                    <div className="text-left min-w-0">
-                      <div className="font-mono font-medium text-slate-800 whitespace-nowrap text-xs truncate">
-                        {row.transactionReference}
-                      </div>
-                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
-                        {row.transactionType}
-                      </div>
-                    </div>
-
-                    {/* 3. Charged Customer */}
-                    <div className="text-left min-w-0">
-                      <div className="font-medium text-slate-900 whitespace-nowrap text-xs truncate">
-                        {row.customerName}
-                      </div>
-                      <div className="text-[11px] font-mono text-slate-500 whitespace-nowrap mt-0.5 truncate">
-                        {row.customerId}
-                      </div>
-                    </div>
-
-                    {/* 4. Service & Provider stacked */}
-                    <div className="text-left min-w-0">
-                      <div className="font-medium text-slate-800 whitespace-nowrap text-xs truncate">
-                        {row.service}
-                      </div>
-                      <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5 truncate">
-                        {row.provider}
-                      </div>
-                    </div>
-
-                    {/* 5. Transaction Amount (ZMW) */}
-                    <div className="text-left min-w-0">
-                      <div className="font-mono font-medium text-slate-700 whitespace-nowrap text-xs">
-                        {formatZmwListingAmount(row.transactionAmount)}
-                      </div>
-                    </div>
-
-                    {/* 6. Reservation Charge (ZMW) */}
-                    <div className="text-left min-w-0">
-                      <div className="font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
-                        {formatZmwListingAmount(row.reservationCharge)}
-                      </div>
-                    </div>
-
-                    {/* 7. Status */}
-                    <div className="text-left min-w-0">{renderChargeStatus(row.status)}</div>
-
-                    {/* 8. Action (Details button) */}
-                    <div className="text-left whitespace-nowrap">
-                      <button
-                        id={`btn-details-${row.id}`}
-                        type="button"
-                        onClick={() => handleViewDetails(row.id)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[#0D93AA] hover:text-white hover:bg-[#0D93AA] bg-cyan-50/60 border border-[#0D93AA]/30 rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                      >
-                        <Eye size={13} />
-                        <span>Details</span>
-                      </button>
-                    </div>
+          {/* 4. TABLE SECTION - Flexible with Sticky Header, Scrollable Rows, and Fixed Pagination */}
+          <div
+            id="charges-commissions-table-card"
+            className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0"
+          >
+            {/* Scrollable Table Rows Area */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+              <div id="charge-records-table" className="w-full min-w-[860px]">
+                {/* Table Heading (Sticky Frozen) */}
+                <div className="sticky top-0 z-10 grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center bg-[#F8FAFC] border-b border-slate-200 py-2.5 px-4 text-[11px] font-bold text-slate-600 uppercase tracking-wider text-left shadow-[0_1px_0_0_#E2E8F0]">
+                  <div className="text-left whitespace-nowrap">Charge Record</div>
+                  <div className="text-left whitespace-nowrap">Transaction</div>
+                  <div className="text-left whitespace-nowrap">Charged Customer</div>
+                  <div className="text-left whitespace-nowrap">Service</div>
+                  <div className="text-left leading-tight">
+                    <div className="whitespace-nowrap">Transaction Amount</div>
+                    <div className="whitespace-nowrap">(ZMW)</div>
                   </div>
-                ))
-              )}
+                  <div className="text-left leading-tight">
+                    <div className="whitespace-nowrap">Reservation Charge</div>
+                    <div className="whitespace-nowrap">(ZMW)</div>
+                  </div>
+                  <div className="text-left whitespace-nowrap">Status</div>
+                  <div className="text-left whitespace-nowrap">Action</div>
+                </div>
+
+                {/* Table Body */}
+                <div className="divide-y divide-slate-100 text-xs">
+                  {paginatedRecords.length === 0 ? (
+                    <div className="py-10 text-center text-slate-500">
+                      No charge records matching your criteria.
+                    </div>
+                  ) : (
+                    (paginatedRecords as ChargeRecord[]).map((row) => (
+                      <div
+                        key={row.id}
+                        id={`charge-row-${row.id}`}
+                        className="grid grid-cols-[1.15fr_1fr_1.35fr_1.15fr_1.35fr_1.35fr_0.8fr_0.9fr] gap-4 items-center py-2.5 px-4 hover:bg-slate-50/70 transition-colors text-left"
+                      >
+                        {/* 1. Charge Record */}
+                        <div className="text-left min-w-0">
+                          <div className="font-mono font-semibold text-[#0D93AA] whitespace-nowrap text-xs truncate">
+                            {row.reference}
+                          </div>
+                          <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
+                            {row.createdAt}
+                          </div>
+                        </div>
+
+                        {/* 2. Transaction */}
+                        <div className="text-left min-w-0">
+                          <div className="font-mono font-medium text-slate-800 whitespace-nowrap text-xs truncate">
+                            {row.transactionReference}
+                          </div>
+                          <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5">
+                            {row.transactionType}
+                          </div>
+                        </div>
+
+                        {/* 3. Charged Customer */}
+                        <div className="text-left min-w-0">
+                          <div className="font-medium text-slate-900 whitespace-nowrap text-xs truncate">
+                            {row.customerName}
+                          </div>
+                          <div className="text-[11px] font-mono text-slate-500 whitespace-nowrap mt-0.5 truncate">
+                            {row.customerId}
+                          </div>
+                        </div>
+
+                        {/* 4. Service & Provider stacked */}
+                        <div className="text-left min-w-0">
+                          <div className="font-medium text-slate-800 whitespace-nowrap text-xs truncate">
+                            {row.service}
+                          </div>
+                          <div className="text-[11px] text-slate-500 whitespace-nowrap mt-0.5 truncate">
+                            {row.provider}
+                          </div>
+                        </div>
+
+                        {/* 5. Transaction Amount (ZMW) */}
+                        <div className="text-left min-w-0">
+                          <div className="font-mono font-medium text-slate-700 whitespace-nowrap text-xs">
+                            {formatZmwListingAmount(row.transactionAmount)}
+                          </div>
+                        </div>
+
+                        {/* 6. Reservation Charge (ZMW) */}
+                        <div className="text-left min-w-0">
+                          <div className="font-mono font-bold text-slate-900 whitespace-nowrap text-xs">
+                            {formatZmwListingAmount(row.reservationCharge)}
+                          </div>
+                        </div>
+
+                        {/* 7. Status */}
+                        <div className="text-left min-w-0">{renderChargeStatus(row.status)}</div>
+
+                        {/* 8. Action (Details button) */}
+                        <div className="text-left whitespace-nowrap">
+                          <button
+                            id={`btn-details-${row.id}`}
+                            type="button"
+                            onClick={() => handleViewDetails(row.id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[#0D93AA] hover:text-white hover:bg-[#0D93AA] bg-cyan-50/60 border border-[#0D93AA]/30 rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                          >
+                            <Eye size={13} />
+                            <span>Details</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. PAGINATION SECTION (Fixed at bottom) */}
+            <div
+              id="table-pagination-controls"
+              className="shrink-0 bg-slate-50/80 px-4 py-2.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600"
+            >
+              {/* Status Text: e.g. "Showing 1 to 20 of 369 charge records" */}
+              <div className="flex items-center gap-4">
+                <span id="pagination-record-count-text" className="font-medium text-slate-700">
+                  Showing {startRecordNum} to {endRecordNum} of {totalRecordsCount} charge records
+                </span>
+
+                {/* Rows Per Page Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span>Rows:</span>
+                  <select
+                    id="pagination-rows-per-page"
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Page Indicators and Navigation */}
+              <div className="flex items-center gap-3">
+                {/* Page Count Text: e.g. "Page 1 of 19" */}
+                <span id="pagination-page-number-text" className="font-medium text-slate-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <div className="flex items-center space-x-1">
+                  <button
+                    id="btn-pagination-prev"
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="p-1 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    id="btn-pagination-next"
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="p-1 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    title="Next Page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* 5. PAGINATION SECTION */}
-        <div
-          id="table-pagination-controls"
-          className="bg-slate-50/80 px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600"
-        >
-          {/* Status Text: e.g. "Showing 1 to 20 of 369 charge records" */}
-          <div className="flex items-center gap-4">
-            <span id="pagination-record-count-text" className="font-medium text-slate-700">
-              Showing {startRecordNum} to {endRecordNum} of {totalRecordsCount} charge records
-            </span>
-
-            {/* Rows Per Page Selector */}
-            <div className="flex items-center gap-1.5">
-              <span>Rows:</span>
-              <select
-                id="pagination-rows-per-page"
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Page Indicators and Navigation */}
-          <div className="flex items-center gap-3">
-            {/* Page Count Text: e.g. "Page 1 of 19" */}
-            <span id="pagination-page-number-text" className="font-medium text-slate-700">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <div className="flex items-center space-x-1">
-              <button
-                id="btn-pagination-prev"
-                type="button"
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="p-1 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="Previous Page"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                id="btn-pagination-next"
-                type="button"
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="p-1 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title="Next Page"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
+      )}
 </div>
   );
 };

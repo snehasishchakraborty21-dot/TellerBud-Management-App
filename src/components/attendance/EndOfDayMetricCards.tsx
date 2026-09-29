@@ -51,30 +51,33 @@ export const EndOfDayMetricCards: React.FC<EndOfDayMetricCardsProps> = ({ metric
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.id}
-            className="attendance-kpi-card rounded-xl border border-gray-100 shadow-2xs bg-white"
+            className="bg-white rounded-xl border border-gray-200/90 px-3.5 sm:px-4 py-2.5 shadow-2xs h-[64px] flex items-center justify-between gap-2.5"
           >
-            <div className="attendance-kpi-content">
-              <span className="attendance-kpi-label text-gray-500 tracking-tight">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg}`}
+              >
+                <Icon className="w-4 h-4" />
+              </div>
+              <span className="text-xs sm:text-[12.5px] font-semibold text-gray-700 whitespace-nowrap">
                 {card.label}
               </span>
-              <span className={`attendance-kpi-value tracking-tight ${card.accentColor}`}>
-                {card.value}
-              </span>
             </div>
-            <div
-              className={`attendance-kpi-icon w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg}`}
+            <span
+              className={`text-xl sm:text-2xl font-bold font-mono tracking-tight shrink-0 ${card.accentColor}`}
             >
-              <Icon className="w-4 h-4" />
-            </div>
+              {card.value}
+            </span>
           </div>
         );
       })}
     </div>
   );
 };
+

@@ -20,6 +20,7 @@ import { formatZMW } from '../utils/formatters';
 import { AttendanceRecord } from '../types/attendance';
 import { BusinessProfile } from '../types/businessProfile';
 import { MonthlyRevenueOverviewChart } from '../components/dashboard/MonthlyRevenueOverviewChart';
+import { MobileMoneyTransactionMatrix } from '../components/dashboard/MobileMoneyTransactionMatrix';
 
 interface BusinessMetricCardProps {
   label: string;
@@ -117,6 +118,23 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
     currentUser?.businessName ||
     'Lusaka Central Express Agency';
   const logoUrl = businessProfile?.logoUrl;
+
+  const [isStickyScrolled, setIsStickyScrolled] = useState<boolean>(false);
+  const dashboardContainerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = dashboardContainerRef.current?.closest('main') || window;
+    const handleScroll = () => {
+      const scrollY = scrollContainer instanceof HTMLElement ? scrollContainer.scrollTop : window.scrollY;
+      setIsStickyScrolled(scrollY > 6);
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // Dynamic Height Synchronization for Requires Attention card matching Agent Availability card
   const agentAvailabilityRef = React.useRef<HTMLDivElement>(null);
@@ -219,46 +237,58 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto select-none">
-      {/* 1. Business Identification Bar */}
-      <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          {/* Business Logo Container: 48px x 48px */}
-          <div className="w-12 h-12 rounded-xl border border-gray-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
-            {logoUrl && !logoLoadFailed ? (
-              <img
-                src={logoUrl}
-                alt={`${businessName} logo`}
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-                onError={() => setLogoLoadFailed(true)}
-              />
-            ) : (
-              <div
-                className="w-full h-full rounded-lg bg-cyan-50 border border-[#0D93AA]/15 text-[#0D93AA] flex items-center justify-center"
-                title={`${businessName} placeholder logo`}
-              >
-                <Building2 className="w-5 h-5 text-[#0D93AA]" aria-hidden="true" />
+    <div ref={dashboardContainerRef} className="min-h-full select-none">
+      {/* 1. Sticky/Frozen Business Identification Section */}
+      <div
+        className={`sticky top-0 z-30 bg-[#FAFAFA] pt-3 sm:pt-3.5 lg:pt-4 pb-2.5 sm:pb-3 px-4 sm:px-6 lg:px-8 transition-all duration-200 ${
+          isStickyScrolled
+            ? 'shadow-xs border-b border-gray-200/80 bg-[#FAFAFA]/95 backdrop-blur-xs'
+            : 'border-b border-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-xs flex items-center justify-center">
+            <div className="flex items-center justify-center gap-3.5 sm:gap-4 flex-wrap">
+              {/* Business Logo Container: 48px x 48px */}
+              <div className="w-12 h-12 rounded-xl border border-gray-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                {logoUrl && !logoLoadFailed ? (
+                  <img
+                    src={logoUrl}
+                    alt={`${businessName} logo`}
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                    onError={() => setLogoLoadFailed(true)}
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full rounded-lg bg-cyan-50 border border-[#0D93AA]/15 text-[#0D93AA] flex items-center justify-center"
+                    title={`${businessName} placeholder logo`}
+                  >
+                    <Building2 className="w-5 h-5 text-[#0D93AA]" aria-hidden="true" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-bold text-[#102025]">{businessName}</h2>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Active
-              </span>
-            </div>
-            <div className="text-xs text-gray-500 font-mono mt-0.5">
-              Business ID: {businessId}
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-base font-bold text-[#102025]">{businessName}</h2>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-0.5">
+                  Business ID: {businessId}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Primary 6 Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      {/* Main Scrollable Dashboard Content */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-3 pb-6 sm:pb-8 space-y-6 max-w-7xl mx-auto">
+        {/* 2. Primary 6 Metric Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {/* 1. Today’s Transactions */}
         <BusinessMetricCard
           label="Today’s Transactions"
@@ -662,6 +692,10 @@ export const BusinessOwnerDashboardPage: React.FC = () => {
 
       {/* 4. Full-Width Monthly Revenue Overview Line Graph */}
       <MonthlyRevenueOverviewChart year={selectedYear} />
+
+      {/* 5. Full-Width Mobile Money Transactions Year Matrix */}
+      <MobileMoneyTransactionMatrix year={selectedYear} />
+    </div>
     </div>
   );
 };

@@ -251,9 +251,9 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:px-8 lg:pt-5 lg:pb-8 space-y-5 max-w-[1600px] mx-auto">
-      {/* Top Action Bar */}
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-3.5 max-w-[1600px] w-full mx-auto select-none">
+      {/* Top Action Bar (Frozen upper section) */}
+      <div className="flex items-center justify-between shrink-0">
         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
           Overview
         </span>
@@ -272,10 +272,10 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 1. SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 1. SUMMARY CARDS (Frozen upper section) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 shrink-0">
         {/* All Notifications Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-slate-500 block mb-1">
               All Notifications
@@ -290,7 +290,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </div>
 
         {/* Unread Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-slate-500 block mb-1">
               Unread
@@ -305,7 +305,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </div>
 
         {/* Action Required Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-slate-500 block mb-1">
               Action Required
@@ -320,8 +320,8 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. NOTIFICATION TABS */}
-      <div className="border-b border-slate-200 flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+      {/* 2. NOTIFICATION TABS (Frozen upper section) */}
+      <div className="border-b border-slate-200 bg-white px-3 pt-2 rounded-t-xl shrink-0 flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar shadow-2xs">
         {[
           { id: 'All', label: 'All', count: counts.all },
           { id: 'Unread', label: 'Unread', count: counts.unread },
@@ -334,7 +334,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
-              className={`pb-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              className={`pb-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
                 isActive
                   ? 'border-[#0D93AA] text-[#0D93AA]'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
@@ -355,21 +355,21 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         })}
       </div>
 
-      {/* 3. SEARCH AND FILTERS */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 3. SEARCH AND FILTERS (Frozen upper section) */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-3.5 shadow-sm space-y-2.5 shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
           {/* Search Box */}
           <div className="relative sm:col-span-2 lg:col-span-1">
             <Search
               size={15}
-              className="absolute left-3 top-3 text-slate-400 pointer-events-none"
+              className="absolute left-3 top-2.5 text-slate-400 pointer-events-none"
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search title, ref, or Agent..."
-              className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
             />
           </div>
 
@@ -378,7 +378,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+              className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
             >
               <option value="All">All Categories</option>
               <option value="Cash / Float Requests">Cash / Float Requests</option>
@@ -399,7 +399,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
             <select
               value={selectedReadStatus}
               onChange={(e) => setSelectedReadStatus(e.target.value as any)}
-              className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+              className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
             >
               <option value="All">All Read Statuses</option>
               <option value="Unread">Unread</option>
@@ -412,7 +412,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
             <select
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value as any)}
-              className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+              className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all cursor-pointer truncate"
             >
               <option value="All">All Priorities</option>
               <option value="Normal">Normal</option>
@@ -423,24 +423,24 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </div>
 
         {/* Second row: From Date, To Date, Clear, Refresh */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">From:</span>
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">From:</span>
               <input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
+                className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">To:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">To:</span>
               <input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
+                className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer"
               />
             </div>
           </div>
@@ -449,14 +449,14 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
             <button
               type="button"
               onClick={handleClearFilters}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+              className="px-3 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors cursor-pointer"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={reloadData}
-              className="px-3 py-1.5 text-xs font-medium text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-[#0D93AA]/30 transition-colors flex items-center gap-1.5"
+              className="px-3 py-1 text-xs font-medium text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <RotateCcw size={13} />
               <span>Refresh</span>
@@ -465,137 +465,152 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. NOTIFICATION LIST */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {paginatedNotifications.length === 0 ? (
-          <div className="py-16 px-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto mb-3">
-              <Bell size={24} />
+      {/* 4. NOTIFICATION LIST (Flexible container with Sticky Header, Scrollable Records, and Fixed Pagination) */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        {/* Pinned Notification Listing Heading */}
+        <div className="shrink-0 bg-[#F8FAFC] border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-slate-600 uppercase tracking-wider shadow-[0_1px_0_0_#E2E8F0]">
+          <div className="flex items-center gap-2">
+            <Bell size={14} className="text-[#0D93AA]" />
+            <span>Notification Listing</span>
+          </div>
+          <span className="text-[11px] font-normal lowercase tracking-normal text-slate-500 font-sans">
+            Showing {filteredNotifications.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+            {Math.min(currentPage * ITEMS_PER_PAGE, filteredNotifications.length)} of {filteredNotifications.length} items
+          </span>
+        </div>
+
+        {/* Scrollable Notifications Records Container */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {paginatedNotifications.length === 0 ? (
+            <div className="py-16 px-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                <Bell size={24} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                No notifications found
+              </h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                There are no notifications matching your current filters or selected tab.
+              </p>
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer"
+              >
+                Reset Filters
+              </button>
             </div>
-            <h3 className="text-sm font-bold text-slate-800 mb-1">
-              No notifications found
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-              There are no notifications matching your current filters or selected tab.
-            </p>
-            <button
-              type="button"
-              onClick={handleClearFilters}
-              className="px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-lg transition-colors"
-            >
-              Reset Filters
-            </button>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {paginatedNotifications.map((item) => {
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => handleOpenNotification(item)}
-                  className={`p-4 transition-colors cursor-pointer hover:bg-slate-50/80 flex flex-col md:flex-row md:items-center justify-between gap-3 ${
-                    item.read
-                      ? 'bg-white'
-                      : 'bg-sky-50/40 border-l-4 border-l-[#0D93AA]'
-                  }`}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleOpenNotification(item);
-                    }
-                  }}
-                >
-                  {/* Left Column: Icon + Core details */}
-                  <div className="flex items-start gap-3 min-w-0 flex-1">
-                    {/* Category Icon */}
-                    <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {getCategoryIcon(item.category)}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-xs font-bold text-slate-900">
-                          {item.title}
-                        </span>
-                        {getPriorityBadge(item.priority)}
-                        <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.2 rounded">
-                          {item.category}
-                        </span>
-                        {!item.read && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0D93AA]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA]" />
-                            Unread
-                          </span>
-                        )}
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {paginatedNotifications.map((item) => {
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleOpenNotification(item)}
+                    className={`p-3.5 sm:p-4 transition-colors cursor-pointer hover:bg-slate-50/80 flex flex-col md:flex-row md:items-center justify-between gap-3 ${
+                      item.read
+                        ? 'bg-white'
+                        : 'bg-sky-50/40 border-l-4 border-l-[#0D93AA]'
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpenNotification(item);
+                      }
+                    }}
+                  >
+                    {/* Left Column: Icon + Core details */}
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      {/* Category Icon */}
+                      <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {getCategoryIcon(item.category)}
                       </div>
 
-                      <p className="text-xs text-slate-600 leading-relaxed line-clamp-2 mb-1.5">
-                        {item.message}
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-xs font-bold text-slate-900">
+                            {item.title}
+                          </span>
+                          {getPriorityBadge(item.priority)}
+                          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.2 rounded">
+                            {item.category}
+                          </span>
+                          {!item.read && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0D93AA]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA]" />
+                              Unread
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
-                        {item.relatedReference && (
-                          <span className="font-mono text-slate-600 font-semibold">
-                            Ref: {item.relatedReference}
-                          </span>
-                        )}
-                        {item.agent && (
-                          <span>
-                            Agent:{' '}
-                            <strong className="text-slate-600 font-medium">
-                              {item.agent.name}
-                            </strong>
-                          </span>
-                        )}
-                        {!item.agent && item.businessName && (
-                          <span>
-                            Entity:{' '}
-                            <strong className="text-slate-600 font-medium">
-                              {item.businessName}
-                            </strong>
-                          </span>
-                        )}
-                        <span>•</span>
-                        <span>{item.createdAt}</span>
-                        <span className="text-slate-500">({item.timeAgo})</span>
+                        <p className="text-xs text-slate-600 leading-relaxed line-clamp-2 mb-1.5">
+                          {item.message}
+                        </p>
+
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
+                          {item.relatedReference && (
+                            <span className="font-mono text-slate-600 font-semibold">
+                              Ref: {item.relatedReference}
+                            </span>
+                          )}
+                          {item.agent && (
+                            <span>
+                              Agent:{' '}
+                              <strong className="text-slate-600 font-medium">
+                                {item.agent.name}
+                              </strong>
+                            </span>
+                          )}
+                          {!item.agent && item.businessName && (
+                            <span>
+                              Entity:{' '}
+                              <strong className="text-slate-600 font-medium">
+                                {item.businessName}
+                              </strong>
+                            </span>
+                          )}
+                          <span>•</span>
+                          <span>{item.createdAt}</span>
+                          <span className="text-slate-500">({item.timeAgo})</span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Right Column: Actions */}
+                    <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0 pt-2 md:pt-0">
+                      {/* Toggle Read/Unread Icon Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleReadRow(e, item)}
+                        title={item.read ? 'Mark as Unread' : 'Mark as Read'}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+                        aria-label={item.read ? 'Mark as Unread' : 'Mark as Read'}
+                      >
+                        {item.read ? <EyeOff size={15} /> : <Eye size={15} className="text-[#0D93AA]" />}
+                      </button>
+
+                      {/* Contextual Action Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleActionClick(e, item)}
+                        className="px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>{item.actionType}</span>
+                        <ExternalLink size={12} />
+                      </button>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-                  {/* Right Column: Actions */}
-                  <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0 pt-2 md:pt-0">
-                    {/* Toggle Read/Unread Icon Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleToggleReadRow(e, item)}
-                      title={item.read ? 'Mark as Unread' : 'Mark as Read'}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors"
-                      aria-label={item.read ? 'Mark as Unread' : 'Mark as Read'}
-                    >
-                      {item.read ? <EyeOff size={15} /> : <Eye size={15} className="text-[#0D93AA]" />}
-                    </button>
-
-                    {/* Contextual Action Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleActionClick(e, item)}
-                      className="px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{item.actionType}</span>
-                      <ExternalLink size={12} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination Controls */}
+        {/* 5. Fixed Pagination Controls at bottom (Shrink-0) */}
         {filteredNotifications.length > 0 && (
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 flex-wrap text-xs">
+          <div className="shrink-0 p-3 sm:px-4 sm:py-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-4 flex-wrap text-xs">
             <span className="text-slate-500">
               Showing{' '}
               <strong>{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to{' '}
@@ -610,7 +625,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 aria-label="Previous page"
               >
                 <ChevronLeft size={14} />
@@ -629,7 +644,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
                       key={num}
                       type="button"
                       onClick={() => setCurrentPage(num)}
-                      className={`min-w-[28px] h-7 px-2 rounded font-semibold transition-colors ${
+                      className={`min-w-[28px] h-7 px-2 rounded font-semibold transition-colors cursor-pointer ${
                         isSelected
                           ? 'bg-[#0D93AA] text-white'
                           : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -653,7 +668,7 @@ export const BusinessOwnerNotificationsPage: React.FC = () => {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 aria-label="Next page"
               >
                 <ChevronRight size={14} />

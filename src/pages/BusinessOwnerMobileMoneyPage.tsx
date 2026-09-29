@@ -33,9 +33,10 @@ export const BusinessOwnerMobileMoneyPage: React.FC = () => {
   const businessScope =
     currentUser?.businessName || currentUser?.businessId || 'Lusaka Central Express Agency';
 
-  // Read saved session state or URL parameters for date range (?from=YYYY-MM-DD&to=YYYY-MM-DD)
-  const rawFromParam = searchParams.get('from');
-  const rawToParam = searchParams.get('to');
+  // Read saved session state or URL parameters for date range (?from=YYYY-MM-DD&to=YYYY-MM-DD or ?date=YYYY-MM-DD)
+  const rawDateParam = searchParams.get('date');
+  const rawFromParam = searchParams.get('from') || (rawDateParam && isValidDateString(rawDateParam) ? rawDateParam : null);
+  const rawToParam = searchParams.get('to') || (rawDateParam && isValidDateString(rawDateParam) ? rawDateParam : null);
   const savedDateFrom = sessionStorage.getItem('bo_mmt_date_from');
   const savedDateTo = sessionStorage.getItem('bo_mmt_date_to');
 

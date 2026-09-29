@@ -164,10 +164,10 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. FILTERS BAR */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
-        <div className="flex flex-col gap-3">
+    <div className="flex-1 min-h-0 flex flex-col gap-3">
+      {/* 1. FILTERS BAR (Frozen upper section) */}
+      <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-4 shadow-2xs shrink-0">
+        <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
               <Filter className="w-3.5 h-3.5 text-slate-500" />
@@ -298,21 +298,21 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
         </div>
       </div>
 
-      {/* 2. AGENT REVENUE BREAKDOWN TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="px-4 py-3.5 text-left">Agent</th>
-                <th className="px-4 py-3.5 text-left">Agent ID</th>
-                <th className="px-4 py-3.5 text-left">Store</th>
-                <th className="px-4 py-3.5 text-left">Completed Transactions</th>
-                <th className="px-4 py-3.5 text-left">Reservation Charges (ZMW)</th>
-                <th className="px-4 py-3.5 text-left">TellerBud Charges (ZMW)</th>
-                <th className="px-4 py-3.5 text-left">Revenue Generated (ZMW)</th>
-                <th className="px-4 py-3.5 text-left">Status</th>
-                <th className="px-4 py-3.5 text-left">Action</th>
+      {/* 2. AGENT REVENUE BREAKDOWN TABLE (Flexible with Sticky Header, Scrollable Rows, and Fixed Pagination) */}
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xs flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[950px]">
+            <thead className="sticky top-0 z-10 bg-[#F8FAFC] shadow-[0_1px_0_0_#E2E8F0]">
+              <tr className="border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Agent</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Agent ID</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Store</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Completed Transactions</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Reservation Charges (ZMW)</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">TellerBud Charges (ZMW)</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Revenue Generated (ZMW)</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Status</th>
+                <th className="sticky top-0 z-10 bg-[#F8FAFC] px-4 py-3 text-left whitespace-nowrap">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -412,24 +412,24 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
 
             {/* Table Footer: Exact Reconciliation Summary */}
             {breakdown.length > 0 && (
-              <tfoot className="bg-slate-50/95 border-t-2 border-slate-200 text-xs font-bold text-slate-900">
+              <tfoot className="sticky bottom-0 z-10 bg-slate-50 border-t-2 border-slate-200 text-xs font-bold text-slate-900 shadow-[0_-1px_0_0_#E2E8F0]">
                 <tr>
-                  <td className="px-4 py-3.5 text-left" colSpan={3}>
+                  <td className="px-4 py-3 text-left" colSpan={3}>
                     Total ({breakdown.length} Filtered Agents)
                   </td>
-                  <td className="px-4 py-3.5 text-left">
+                  <td className="px-4 py-3 text-left">
                     {listingTotals.completedTransactions}
                   </td>
-                  <td className="px-4 py-3.5 text-left font-mono text-slate-900">
+                  <td className="px-4 py-3 text-left font-mono text-slate-900">
                     {formatCurrencyAmount(listingTotals.reservationCharges)}
                   </td>
-                  <td className="px-4 py-3.5 text-left font-mono text-slate-700">
+                  <td className="px-4 py-3 text-left font-mono text-slate-700">
                     {formatCurrencyAmount(listingTotals.tellerBudCharges)}
                   </td>
-                  <td className="px-4 py-3.5 text-left font-mono text-emerald-700">
+                  <td className="px-4 py-3 text-left font-mono text-emerald-700">
                     {formatCurrencyAmount(listingTotals.revenueGenerated)}
                   </td>
-                  <td className="px-4 py-3.5 text-left" colSpan={2}>
+                  <td className="px-4 py-3 text-left" colSpan={2}>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">
                       Reconciled with KPIs
                     </span>
@@ -440,8 +440,8 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
           </table>
         </div>
 
-        {/* Pagination Bar */}
-        <div className="px-4 py-3 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs text-slate-600">
+        {/* Pagination Bar (shrink-0) */}
+        <div className="shrink-0 px-4 py-2.5 border-t border-slate-200 bg-slate-50/70 flex items-center justify-between text-xs text-slate-600">
           <div>
             Showing{' '}
             <span className="font-semibold text-slate-800">
@@ -458,7 +458,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-1.5 border border-slate-200 rounded hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 border border-slate-200 rounded hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -469,7 +469,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-1.5 border border-slate-200 rounded hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 border border-slate-200 rounded hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4" />

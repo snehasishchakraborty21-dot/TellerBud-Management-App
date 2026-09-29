@@ -2,8 +2,43 @@ import React from 'react';
 import { X, ExternalLink, ArrowRight } from 'lucide-react';
 import { BusinessTransactionRecord } from '../../types/admin';
 import { StatusChip } from '../shared/StatusChip';
-import { VendorLogo } from '../walk-in/VendorLogo';
 import { formatZMW } from '../../utils/formatters';
+
+const getVendorDisplayName = (vendor?: string): string => {
+  if (!vendor || vendor === '—') return '—';
+  const normalized = vendor.trim().toLowerCase();
+  switch (normalized) {
+    case 'mtn':
+    case 'mtn mobile money':
+    case 'mtn momo':
+      return 'MTN Mobile Money';
+    case 'airtel':
+    case 'airtel money':
+      return 'Airtel Money';
+    case 'zamtel':
+    case 'zamtel kwacha':
+      return 'Zamtel';
+    case 'zanaco':
+    case 'zanaco bank':
+      return 'Zanaco';
+    case 'fnb':
+    case 'fnb zambia':
+      return 'FNB';
+    case 'indo':
+    case 'indo zambia':
+    case 'indo zambia bank':
+    case 'indobank':
+      return 'INDO';
+    case 'stanbic':
+    case 'stanbic bank':
+      return 'Stanbic';
+    case 'access':
+    case 'access bank':
+      return 'Access Bank';
+    default:
+      return vendor;
+  }
+};
 
 interface TransactionSummaryModalProps {
   isOpen: boolean;
@@ -127,11 +162,9 @@ export const TransactionSummaryModal: React.FC<TransactionSummaryModalProps> = (
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
                 Vendor
               </span>
-              {transaction.vendor ? (
-                <VendorLogo vendor={transaction.vendor} size="detail" showName={true} />
-              ) : (
-                <span className="text-sm text-slate-500">—</span>
-              )}
+              <span className="text-sm font-semibold text-slate-900">
+                {transaction.vendor ? getVendorDisplayName(transaction.vendor) : '—'}
+              </span>
             </div>
 
             <div>

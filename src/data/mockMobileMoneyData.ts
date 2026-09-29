@@ -5,6 +5,7 @@ import {
   MobileMoneySortField,
   MobileMoneySortDirection,
 } from '../types/mobileMoney';
+import { ApprovedVendor } from '../types/admin';
 import { calculateMobileMoneyKPIs } from '../utils/financialUtils';
 import { getLusakaDateString } from '../utils/dateUtils';
 import { MOCK_WALK_IN_TRANSACTIONS } from './mockWalkInData';
@@ -46,7 +47,7 @@ const mappedWalkInTransactions: MobileMoneyTransaction[] = MOCK_WALK_IN_TRANSACT
     serviceChannel: 'Walk-In',
     transactionType: w.transactionType,
     vendor: w.vendor,
-    vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(w.vendor) ? 'MNO Mobile Money' : 'Bank API',
+    vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(w.vendor) ? 'MNO Mobile Money' : 'Commercial Bank',
     
     isRegisteredCustomer: isRegistered,
     customerId: custId,
@@ -173,7 +174,7 @@ const mappedPickupTransactions: MobileMoneyTransaction[] = rawPickupRequests
       serviceChannel: 'Pickup',
       transactionType: p.type,
       vendor: p.vendor,
-      vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(p.vendor) ? 'MNO Mobile Money' : 'Bank API',
+      vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(p.vendor) ? 'MNO Mobile Money' : 'Commercial Bank',
 
       isRegisteredCustomer: true,
       customerId: p.customerId || `TB-CUS-10${(idx + 20).toString()}`,
@@ -448,7 +449,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     serviceChannel: 'Pickup',
     transactionType: 'Purchase',
     vendor: 'Zanaco',
-    vendorType: 'Bank API',
+    vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
     customerId: 'TB-CUS-1050',
     customerName: 'Grace Tembo',
@@ -620,7 +621,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     serviceChannel: 'Pickup',
     transactionType: 'Deposit',
     vendor: 'FNB',
-    vendorType: 'Bank API',
+    vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
     customerId: 'TB-CUS-2015',
     customerName: 'Bwembya Musonda',
@@ -640,7 +641,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     reservationCharge: 25.0,
     otherCharges: 0,
     customerTotal: 8025.0,
-    principalProcessingMethod: 'Bank Core API Integration',
+    principalProcessingMethod: 'Customer & Agent Dual Confirmation',
     customerConfirmationStatus: 'Not Required',
     agentConfirmationStatus: 'Pending',
     status: 'Cancelled',
@@ -661,7 +662,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     serviceChannel: 'Walk-In',
     transactionType: 'Liquidity Transfer',
     vendor: 'INDO',
-    vendorType: 'Bank API',
+    vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
     customerId: 'TB-CUS-1024',
     customerName: 'Kelvin Phiri Float Fund',
@@ -682,10 +683,10 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     reservationCharge: 0,
     otherCharges: 0,
     customerTotal: 15000.0,
-    principalProcessingMethod: 'Vendor Portal API Switch',
+    principalProcessingMethod: 'Customer & Agent Dual Confirmation',
     customerConfirmationStatus: 'Confirmed',
     customerConfirmationTimestamp: '2026-09-08T08:05:00+02:00',
-    customerConfirmationMethod: 'Bank Core Direct Authorization',
+    customerConfirmationMethod: 'Customer Confirmation PIN',
     agentConfirmationStatus: 'Confirmed',
     agentConfirmationTimestamp: '2026-09-08T08:05:00+02:00',
     agentConfirmationMethod: 'TellerBud Agent POS Terminal PIN',
@@ -694,7 +695,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     formattedDate: '08 Sep 2026, 08:05',
     timeline: [
       { id: 'TL-9089B-1', eventName: 'Liquidity Transfer Initiated', actor: 'Supervisor', timestamp: '2026-09-08T08:00:00+02:00', result: 'Inter-agency float rebalancing transfer of ZMW 15,000.00' },
-      { id: 'TL-9089B-2', eventName: 'Vendor Switch Confirmed', actor: 'INDO Bank API', timestamp: '2026-09-08T08:04:00+02:00', result: 'INDO Zambia Bank float account debited successfully' },
+      { id: 'TL-9089B-2', eventName: 'Vendor Switch Confirmed', actor: 'INDO Confirmation', timestamp: '2026-09-08T08:04:00+02:00', result: 'INDO Zambia float account confirmed successfully' },
       { id: 'TL-9089B-3', eventName: 'Float Ledger Credited', actor: 'System', timestamp: '2026-09-08T08:05:00+02:00', result: 'Counter cash till credited with ZMW 15,000.00' },
     ],
     recordSource: 'TellerBud Treasury Module',
@@ -845,7 +846,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     serviceChannel: 'Pickup',
     transactionType: 'Deposit',
     vendor: 'Zanaco',
-    vendorType: 'Bank API',
+    vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
     customerId: 'TB-CUS-4011',
     customerName: 'Brian Mwape',
@@ -1125,11 +1126,157 @@ const normalizedDatedTransactions: MobileMoneyTransaction[] = DATED_MOBILE_MONEY
   return t;
 });
 
+// Helper function to generate realistic, deterministic historical transactions for 2026
+function generateHistorical2026Transactions(): MobileMoneyTransaction[] {
+  const generated: MobileMoneyTransaction[] = [];
+  const agents = [
+    { id: 'TB-AGT-1024', name: 'Kelvin Phiri', phone: '+260 97 234 5678' },
+    { id: 'TB-AGT-1062', name: 'Natasha Zulu', phone: '+260 97 556 7890' },
+    { id: 'TB-AGT-1055', name: 'Brian Lungu', phone: '+260 97 123 4455' },
+    { id: 'TB-AGT-1064', name: 'Joseph Kaunda', phone: '+260 96 443 2211' },
+    { id: 'TB-AGT-1088', name: 'Brian Chanda', phone: '+260 96 112 3344' },
+  ];
+
+  const customers = [
+    { name: 'Mwamba Mulenga', phone: '+260 97 778 9012', id: 'TB-CUS-1052' },
+    { name: 'Ruth Banda', phone: '+260 97 654 3210', id: 'TB-CUS-1048' },
+    { name: 'Precious Mwale', phone: '+260 97 445 6789', id: 'TB-CUS-2012' },
+    { name: 'Grace Tembo', phone: '+260 97 345 1050', id: 'TB-CUS-1050' },
+    { name: 'Chileshe Mumba', phone: '+260 95 334 5678', id: 'TB-CUS-1049' },
+    { name: 'Lombe Kasonde', phone: '+260 96 612 9901', id: 'TB-CUS-1046' },
+    { name: 'Bwembya Musonda', phone: '+260 97 334 1122', id: 'TB-CUS-2015' },
+    { name: 'Chisomo Banda', phone: '+260 96 789 0123', id: 'TB-CUS-2016' },
+    { name: 'Sipho Daka', phone: '+260 97 881 2233', id: 'TB-CUS-3021' },
+    { name: 'Choolwe Hamoonga', phone: '+260 97 990 4455', id: 'TB-CUS-3022' },
+    { name: 'Kondwani Phiri', phone: '+260 95 554 1122', id: 'TB-CUS-3023' },
+    { name: 'Mizinga Mwanza', phone: '+260 96 332 9988', id: 'TB-CUS-3024' },
+    { name: 'Mutale Mwila', phone: '+260 97 114 7788', id: 'TB-CUS-3025' },
+  ];
+
+  const vendors: Array<ApprovedVendor> = ['MTN', 'Airtel', 'Zamtel', 'Zanaco', 'FNB'];
+  const channels: Array<'Pickup' | 'Walk-In'> = ['Pickup', 'Walk-In'];
+  const types: Array<'Deposit' | 'Withdrawal' | 'Purchase'> = ['Deposit', 'Withdrawal', 'Purchase'];
+
+  // Months Jan (1) through Sep (9) in 2026
+  const daysInMonths2026 = [31, 28, 31, 30, 31, 30, 31, 31, 30]; // Jan - Sep
+
+  for (let m = 0; m < daysInMonths2026.length; m++) {
+    const monthNum = m + 1;
+    const monthStr = String(monthNum).padStart(2, '0');
+    const totalDays = daysInMonths2026[m];
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dayStr = String(d).padStart(2, '0');
+      const dateIso = `2026-${monthStr}-${dayStr}`;
+
+      // Calculate daily count pseudo-randomly but deterministically
+      // Weekday vs weekend variance (day of week: 0 Sunday, 6 Saturday)
+      const dayOfWeek = new Date(2026, m, d).getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      // Base count between 8 and 24 on weekdays, 4 and 14 on weekends
+      const seed = (m * 31 + d) * 17;
+      const baseDailyCount = isWeekend
+        ? 4 + (seed % 11)
+        : 8 + (seed % 17);
+
+      for (let seq = 1; seq <= baseDailyCount; seq++) {
+        const itemSeed = (seed * 37 + seq * 19);
+        const agent = agents[itemSeed % agents.length];
+        const cust = customers[(itemSeed + seq) % customers.length];
+        const vendor = vendors[itemSeed % vendors.length];
+        const channel = channels[(itemSeed + seq) % channels.length];
+        const txType = types[(itemSeed + 2 * seq) % types.length];
+        
+        // 94% Completed, small percent other statuses
+        const statusVal = (itemSeed % 20 === 0)
+          ? 'Failed'
+          : (itemSeed % 25 === 0)
+          ? 'Cancelled'
+          : (itemSeed % 18 === 0)
+          ? 'Pending Confirmation'
+          : 'Completed';
+
+        // Amounts between 200 and 6500 rounded to 50
+        const amount = 200 + ((itemSeed * 73) % 120) * 50;
+        const resCharge = channel === 'Pickup' ? (amount > 3000 ? 25.0 : 15.0) : 0;
+        const total = amount + resCharge;
+
+        const hour = 8 + (itemSeed % 10);
+        const minute = (itemSeed * 7) % 60;
+        const hourStr = String(hour).padStart(2, '0');
+        const minStr = String(minute).padStart(2, '0');
+        const timeIso = `${dateIso}T${hourStr}:${minStr}:00+02:00`;
+        const dateObj = new Date(2026, m, d, hour, minute);
+        const formattedDate = dateObj.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }) + ', ' + dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        const refNumber = `TB-TXN-26${monthStr}${dayStr}-${String(seq).padStart(2, '0')}`;
+        const sourceRef = channel === 'Pickup' ? `TB-REQ-26${monthStr}${dayStr}${seq}` : `TB-WLK-26${monthStr}${dayStr}${seq}`;
+
+        generated.push({
+          id: `MMT-HIST-26${monthStr}${dayStr}-${seq}`,
+          reference: refNumber,
+          sourceReference: sourceRef,
+          sourceReferenceType: channel === 'Pickup' ? 'Customer Request' : 'Walk-In',
+          serviceChannel: channel,
+          transactionType: txType,
+          vendor: vendor,
+          vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(vendor) ? 'MNO Mobile Money' : 'Commercial Bank',
+          isRegisteredCustomer: true,
+          customerId: cust.id,
+          customerName: cust.name,
+          customerPhone: cust.phone,
+          customerAccountStatus: 'Verified KYC Tier 2',
+          agentId: agent.id,
+          agentName: agent.name,
+          agentPhone: agent.phone,
+          businessId: 'BIZ-LUS-001',
+          businessName: 'Lusaka Central Express Agency',
+          businessLocation: 'Cairo Road Commercial Suite, Lusaka',
+          pickupLocation: channel === 'Pickup' ? 'Lusaka Commercial District' : undefined,
+          walkInLocation: channel === 'Walk-In' ? `Lusaka Central Express Agency - Counter ${(seq % 2) + 1}` : undefined,
+          processingAgent: `${agent.name} (${agent.id})`,
+          terminalId: `POS-LUS-0${(seq % 2) + 1}`,
+          receiptNumber: `REC-${vendor.slice(0, 3).toUpperCase()}-${monthStr}${dayStr}${seq}`,
+          initiationTimestamp: timeIso,
+          amount: amount,
+          reservationCharge: resCharge,
+          otherCharges: 0,
+          customerTotal: total,
+          principalProcessingMethod: 'Customer & Agent Dual Confirmation',
+          customerConfirmationStatus: statusVal === 'Completed' ? 'Confirmed' : 'Pending',
+          customerConfirmationTimestamp: statusVal === 'Completed' ? timeIso : undefined,
+          agentConfirmationStatus: statusVal === 'Completed' ? 'Confirmed' : 'In Progress',
+          agentConfirmationTimestamp: statusVal === 'Completed' ? timeIso : undefined,
+          status: statusVal,
+          postedAt: timeIso,
+          formattedDate: formattedDate,
+          timeline: [
+            { id: `TL-${refNumber}-1`, eventName: 'Transaction Created', actor: 'Customer', timestamp: timeIso, result: `Transaction initiated for ${txType} of ZMW ${amount.toLocaleString()}.00` },
+            { id: `TL-${refNumber}-2`, eventName: statusVal === 'Completed' ? 'Transaction Completed' : 'Service Update', actor: 'System', timestamp: timeIso, result: `Processed via ${vendor}` },
+          ],
+          recordSource: channel === 'Pickup' ? 'TellerBud Pickup Engine' : 'TellerBud Agent Terminal',
+          lastUpdated: formattedDate,
+        });
+      }
+    }
+  }
+
+  return generated;
+}
+
+const historical2026Transactions = generateHistorical2026Transactions();
+
 // Unified list of all Mobile Money Transactions
 const allTransactions = [
   ...normalizedDatedTransactions,
   ...mappedPickupTransactions,
   ...mappedWalkInTransactions,
+  ...historical2026Transactions,
 ];
 
 const seenTxnIds = new Set<string>();
@@ -1157,19 +1304,18 @@ export const MOCK_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = allTrans
       balanceBefore: balBefore,
       balanceAfter: balAfter,
       completionInformation:
-        t.completionInformation ||
-        (t.status === 'Completed'
-          ? `Settled successfully via ${t.principalProcessingMethod || 'MNO Direct Gateway'}. Authorization reference: ${t.receiptNumber || 'REC-' + t.reference}`
-          : undefined),
+        t.status === 'Completed'
+          ? `Transaction completed successfully through customer and agent confirmation. Reference: ${t.reference}.`
+          : undefined,
       failureReason:
         t.failureReason ||
         (t.status === 'Failed'
-          ? 'Transaction timed out at telecom operator payment gateway during customer confirmation.'
+          ? 'Transaction timed out during customer confirmation.'
           : undefined),
       cancellationReason:
         t.cancellationReason ||
         (t.status === 'Cancelled'
-          ? 'Transaction was cancelled prior to terminal cash handover.'
+          ? 'Transaction was cancelled prior to cash handover.'
           : undefined),
     };
   });
