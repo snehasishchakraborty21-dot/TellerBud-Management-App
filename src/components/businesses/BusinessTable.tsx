@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   Building2,
-  Users,
   Eye,
+  PauseCircle,
+  PlayCircle,
   AlertTriangle,
   RefreshCw,
+  X,
+  ShieldAlert,
+  RotateCcw,
 } from 'lucide-react';
 import {
   BusinessRecord,
@@ -23,7 +27,9 @@ interface BusinessTableProps {
   sortField: BusinessSortField;
   sortDirection: BusinessSortDirection;
   onSort: (field: BusinessSortField) => void;
-  onViewDetails: (business: BusinessRecord, e?: React.MouseEvent<HTMLButtonElement>) => void;
+  onViewDetails: (business: BusinessRecord, e?: React.MouseEvent) => void;
+  onSuspendBusiness: (business: BusinessRecord) => void;
+  onReactivateBusiness: (business: BusinessRecord) => void;
   onRetry: () => void;
   hasActiveFilters: boolean;
   onResetFilters?: () => void;
@@ -37,13 +43,24 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
   sortDirection,
   onSort,
   onViewDetails,
+  onSuspendBusiness,
+  onReactivateBusiness,
   onRetry,
   hasActiveFilters,
   onResetFilters,
 }) => {
+  // Modal state
+  const [suspendingBusiness, setSuspendingBusiness] = useState<BusinessRecord | null>(null);
+  const [reactivatingBusiness, setReactivatingBusiness] = useState<BusinessRecord | null>(null);
+
   const renderSortIcon = (field: BusinessSortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown size={12} className="text-gray-400 group-hover:text-gray-600 ml-1 inline shrink-0" />;
+      return (
+        <ArrowUpDown
+          size={12}
+          className="text-gray-400 group-hover:text-gray-600 ml-1 inline shrink-0"
+        />
+      );
     }
     return sortDirection === 'asc' ? (
       <ArrowUp size={12} className="text-[#0D93AA] ml-1 inline shrink-0" />
@@ -56,27 +73,41 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
     switch (status) {
       case 'Active':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             Active
           </span>
         );
       case 'Pending':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span className="inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
             Pending
           </span>
         );
       case 'Suspended':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+          <span className="inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
             Suspended
           </span>
         );
       default:
         return null;
+    }
+  };
+
+  const handleConfirmSuspend = () => {
+    if (suspendingBusiness) {
+      onSuspendBusiness(suspendingBusiness);
+      setSuspendingBusiness(null);
+    }
+  };
+
+  const handleConfirmReactivate = () => {
+    if (reactivatingBusiness) {
+      onReactivateBusiness(reactivatingBusiness);
+      setReactivatingBusiness(null);
     }
   };
 
@@ -127,7 +158,7 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
         <h3 className="text-sm font-bold text-gray-900 mb-1">No businesses found</h3>
         <p className="text-xs text-gray-500 max-w-sm mx-auto mb-4">
           {hasActiveFilters
-            ? 'No businesses match the specified search query and filter criteria.'
+            ? 'No businesses match the specified filter criteria.'
             : 'No business agency records currently available in the system.'}
         </p>
         {hasActiveFilters && onResetFilters && (
@@ -143,193 +174,321 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
     );
   }
 
-  // 4. Data Table: Exact 8 columns ordered per requirement:
+  // 4. Data Table: 8 columns ordered per requirement:
   // 1. Business
   // 2. Business Owner
   // 3. Location
-  // 4. Associated Agents
-  // 5. Shared Wallet Balance
+  // 4. Agents
+  // 5. Wallet Balance
   // 6. Registered
   // 7. Status
-  // 8. Action (Sticky on right on narrower viewports)
+  // 8. Actions
   return (
-    <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden">
-      <div className="overflow-x-auto min-w-full">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="bg-[#F8FAFB] text-gray-700 font-semibold border-b border-gray-200 text-[11px] uppercase tracking-wider select-none">
-              {/* 1. Business */}
-              <th className="py-3.5 px-4 min-w-[210px]">
-                <button
-                  type="button"
+    <>
+      <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full">
+        <div className="overflow-x-auto max-h-[calc(100vh-270px)] overflow-y-auto">
+          <table className="w-full text-center border-collapse text-xs">
+            <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs">
+              <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-600 uppercase tracking-wider select-none">
+                {/* 1. Business */}
+                <th
                   onClick={() => onSort('name')}
-                  className="group inline-flex items-center font-bold text-gray-700 hover:text-[#0D93AA] cursor-pointer"
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[200px] sm:min-w-[220px]"
                 >
-                  Business
-                  {renderSortIcon('name')}
-                </button>
-              </th>
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Business</span>
+                    {renderSortIcon('name')}
+                  </div>
+                </th>
 
-              {/* 2. Business Owner */}
-              <th className="py-3.5 px-4 min-w-[190px]">Business Owner</th>
+                {/* 2. Business Owner */}
+                <th className="py-3 px-3 text-center align-middle min-w-[170px] sm:min-w-[190px]">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Business Owner</span>
+                  </div>
+                </th>
 
-              {/* 3. Location */}
-              <th className="py-3.5 px-4 min-w-[140px]">Location</th>
+                {/* 3. Location */}
+                <th className="py-3 px-3 text-center align-middle min-w-[160px] sm:min-w-[180px]">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Location</span>
+                  </div>
+                </th>
 
-              {/* 4. Associated Agents */}
-              <th className="py-3.5 px-4 text-center min-w-[100px]">
-                <button
-                  type="button"
+                {/* 4. Agents */}
+                <th
                   onClick={() => onSort('associatedAgents')}
-                  className="group inline-flex items-center font-bold text-gray-700 hover:text-[#0D93AA] cursor-pointer"
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[80px]"
                 >
-                  Agents
-                  {renderSortIcon('associatedAgents')}
-                </button>
-              </th>
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Agents</span>
+                    {renderSortIcon('associatedAgents')}
+                  </div>
+                </th>
 
-              {/* 5. Shared Wallet Balance */}
-              <th className="py-3.5 px-4 text-right min-w-[150px]">
-                <button
-                  type="button"
+                {/* 5. Wallet Balance (Renamed from SHARED WALLET BALANCE) */}
+                <th
                   onClick={() => onSort('sharedWalletBalance')}
-                  className="group inline-flex items-center font-bold text-gray-700 hover:text-[#0D93AA] cursor-pointer ml-auto"
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[140px]"
                 >
-                  Shared Wallet Balance
-                  {renderSortIcon('sharedWalletBalance')}
-                </button>
-              </th>
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Wallet Balance</span>
+                    {renderSortIcon('sharedWalletBalance')}
+                  </div>
+                </th>
 
-              {/* 6. Registered */}
-              <th className="py-3.5 px-4 min-w-[110px]">
-                <button
-                  type="button"
+                {/* 6. Registered */}
+                <th
                   onClick={() => onSort('registeredDateIso')}
-                  className="group inline-flex items-center font-bold text-gray-700 hover:text-[#0D93AA] cursor-pointer"
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[110px]"
                 >
-                  Registered
-                  {renderSortIcon('registeredDateIso')}
-                </button>
-              </th>
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Registered</span>
+                    {renderSortIcon('registeredDateIso')}
+                  </div>
+                </th>
 
-              {/* 7. Status */}
-              <th className="py-3.5 px-4 min-w-[100px]">Status</th>
+                {/* 7. Status */}
+                <th className="py-3 px-3 text-center align-middle min-w-[95px]">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Status</span>
+                  </div>
+                </th>
 
-              {/* 8. Action: Sticky on right with solid background */}
-              <th className="py-3.5 px-4 text-right min-w-[130px] sticky right-0 z-20 bg-[#F8FAFB] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {businesses.map((business) => {
-              return (
-                <tr
-                  key={business.id}
-                  id={`business-row-${business.id}`}
-                  className="group hover:bg-gray-50/70 transition-colors"
-                >
-                  {/* 1. Business */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#0D93AA]/10 text-[#0D93AA] font-bold text-xs flex items-center justify-center shrink-0 border border-[#0D93AA]/20">
-                        {business.logoInitials}
-                      </div>
-                      <div className="min-w-0">
-                        <button
-                          type="button"
-                          onClick={(e) => onViewDetails(business, e)}
-                          className="font-bold text-gray-900 hover:text-[#0D93AA] transition-colors text-left truncate block cursor-pointer"
-                        >
-                          {business.name}
-                        </button>
-                        <div className="text-[11px] font-mono text-gray-400 mt-0.5">
+                {/* 8. Actions */}
+                <th className="py-3 px-3 text-center align-middle min-w-[95px]">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Actions</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {businesses.map((business) => {
+                return (
+                  <tr
+                    key={`business-row-${business.id}`}
+                    id={`business-row-${business.id}`}
+                    className="hover:bg-gray-50/70 transition-colors text-center align-middle"
+                  >
+                    {/* 1. Business: Avatar, Name, and TB-BIZ-000001 ID */}
+                    <td className="py-3 px-3 text-center align-middle">
+                      <div className="flex flex-col items-center justify-center text-center mx-auto">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-[#0D93AA]/10 text-[#0D93AA] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#0D93AA]/20">
+                            {business.logoInitials}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => onViewDetails(business, e)}
+                            className="font-bold text-[#102025] hover:text-[#0D93AA] transition-colors text-xs sm:text-[13px] text-center cursor-pointer whitespace-nowrap"
+                          >
+                            {business.name}
+                          </button>
+                        </div>
+                        <div className="text-[10.5px] font-mono text-gray-400 mt-0.5 whitespace-nowrap">
                           {business.id}
                         </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* 2. Business Owner (Masked mobile number for privacy) */}
-                  <td className="py-3.5 px-4">
-                    <div>
-                      <div className="font-semibold text-gray-900 text-xs">
-                        {business.ownerName}
+                    {/* 2. Business Owner: Full name + Complete phone number (unmasked, no code) */}
+                    <td className="py-3 px-3 text-center align-middle">
+                      <div className="flex flex-col items-center justify-center text-center mx-auto">
+                        <div className="font-semibold text-gray-900 text-xs sm:text-[12.5px] whitespace-nowrap">
+                          {business.ownerName}
+                        </div>
+                        <div className="text-[11px] font-mono text-gray-500 mt-0.5 whitespace-nowrap">
+                          {business.ownerPhone}
+                        </div>
                       </div>
-                      <div className="text-[11px] font-mono text-gray-400 mt-0.5">
-                        {business.ownerId}
+                    </td>
+
+                    {/* 3. Location: City on line 1, Province and Country on line 2 */}
+                    <td className="py-3 px-3 text-center align-middle">
+                      <div className="flex flex-col items-center justify-center text-center mx-auto">
+                        <div className="font-semibold text-gray-800 text-xs whitespace-nowrap">
+                          {business.city}
+                        </div>
+                        <div className="text-[10.5px] sm:text-[11px] text-gray-400 mt-0.5 whitespace-nowrap">
+                          {business.province}, {business.country || 'Zambia'}
+                        </div>
                       </div>
-                      <div className="text-[11px] font-mono text-gray-500 mt-0.5" title="Protected mobile number">
-                        {business.ownerPhoneMasked}
+                    </td>
+
+                    {/* 4. Agents */}
+                    <td className="py-3 px-3 text-center align-middle font-mono font-bold text-gray-800 text-xs sm:text-[13px]">
+                      {business.associatedAgents}
+                    </td>
+
+                    {/* 5. Wallet Balance */}
+                    <td className="py-3 px-3 text-center align-middle">
+                      <div className="flex flex-col items-center justify-center text-center mx-auto">
+                        <span className="font-mono font-bold text-gray-900 text-xs sm:text-[13px] whitespace-nowrap">
+                          {formatZMW(business.sharedWalletBalance)}
+                        </span>
+                        {business.walletState === 'Low Balance' && (
+                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 whitespace-nowrap">
+                            Low Balance
+                          </span>
+                        )}
+                        {business.walletState === 'Suspended' && (
+                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-red-700 bg-red-50 px-1.5 py-0.2 rounded border border-red-200 whitespace-nowrap">
+                            Suspended
+                          </span>
+                        )}
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* 3. Location */}
-                  <td className="py-3.5 px-4">
-                    <div>
-                      <div className="font-semibold text-gray-800">
-                        {business.city}
+                    {/* 6. Registered */}
+                    <td className="py-3 px-3 text-center align-middle text-gray-600 text-xs whitespace-nowrap">
+                      {business.registeredDate}
+                    </td>
+
+                    {/* 7. Status */}
+                    <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
+                      {getStatusBadge(business.status)}
+                    </td>
+
+                    {/* 8. Actions: Small icon-only buttons */}
+                    <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5 mx-auto">
+                        {/* View Details Action */}
+                        <button
+                          type="button"
+                          id={`btn-view-${business.id}`}
+                          onClick={(e) => onViewDetails(business, e)}
+                          title="View Business"
+                          className="w-7 h-7 rounded-lg text-[#0D93AA] hover:text-[#0B7C90] hover:bg-[#0D93AA]/10 flex items-center justify-center border border-transparent hover:border-[#0D93AA]/20 transition-all cursor-pointer"
+                          aria-label="View Business"
+                        >
+                          <Eye size={14} />
+                        </button>
+
+                        {/* Suspend Action (for Active businesses) */}
+                        {business.status === 'Active' && (
+                          <button
+                            type="button"
+                            id={`btn-suspend-${business.id}`}
+                            onClick={() => setSuspendingBusiness(business)}
+                            title="Suspend Business"
+                            className="w-7 h-7 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 flex items-center justify-center border border-transparent hover:border-red-200 transition-all cursor-pointer"
+                            aria-label="Suspend Business"
+                          >
+                            <PauseCircle size={14} />
+                          </button>
+                        )}
+
+                        {/* Reactivate Action (for Suspended businesses) */}
+                        {business.status === 'Suspended' && (
+                          <button
+                            type="button"
+                            id={`btn-reactivate-${business.id}`}
+                            onClick={() => setReactivatingBusiness(business)}
+                            title="Reactivate Business"
+                            className="w-7 h-7 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 flex items-center justify-center border border-transparent hover:border-emerald-200 transition-all cursor-pointer"
+                            aria-label="Reactivate Business"
+                          >
+                            <PlayCircle size={14} />
+                          </button>
+                        )}
                       </div>
-                      <div className="text-[11px] text-gray-500">
-                        {business.province}, {business.country}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* 4. Associated Agents */}
-                  <td className="py-3.5 px-4 text-center">
-                    <div className="inline-flex items-center gap-1 text-gray-800 font-semibold">
-                      <Users size={12} className="text-gray-400" />
-                      <span>{business.associatedAgents}</span>
-                    </div>
-                  </td>
-
-                  {/* 5. Shared Wallet Balance (Read-only financial value on a single line) */}
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="font-mono font-bold text-gray-900 whitespace-nowrap">
-                      {formatZMW(business.sharedWalletBalance)}
-                    </div>
-                    {business.walletState === 'Low Balance' && (
-                      <span className="inline-block mt-0.5 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 whitespace-nowrap">
-                        Low Balance
-                      </span>
-                    )}
-                    {business.walletState === 'Suspended' && (
-                      <span className="inline-block mt-0.5 text-[10px] font-semibold text-red-700 bg-red-50 px-1.5 py-0.5 rounded border border-red-200 whitespace-nowrap">
-                        Suspended
-                      </span>
-                    )}
-                  </td>
-
-                  {/* 6. Registered */}
-                  <td className="py-3.5 px-4 text-gray-600 whitespace-nowrap">
-                    {business.registeredDate}
-                  </td>
-
-                  {/* 7. Status */}
-                  <td className="py-3.5 px-4 whitespace-nowrap">
-                    {getStatusBadge(business.status)}
-                  </td>
-
-                  {/* 8. Action: Outlined Oceanic Blue button with eye icon, sticky on right with solid white background */}
-                  <td className="py-3.5 px-4 text-right whitespace-nowrap sticky right-0 z-10 bg-white group-hover:bg-[#fbfcfc] shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]">
-                    <button
-                      type="button"
-                      id={`btn-view-details-${business.id}`}
-                      onClick={(e) => onViewDetails(business, e)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-transparent hover:bg-[#0D93AA]/10 border border-[#0D93AA] rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                      <Eye size={13} className="shrink-0" />
-                      <span>View Details</span>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      {/* Suspend Confirmation Dialog */}
+      {suspendingBusiness && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-2xs animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="suspend-modal-title"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                <ShieldAlert size={20} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 id="suspend-modal-title" className="text-base font-bold text-gray-900">
+                  Suspend Business?
+                </h3>
+                <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
+                  Are you sure you want to suspend <span className="font-semibold text-gray-900">{suspendingBusiness.name}</span>? The business and its users will temporarily lose access to operational services. Existing records and financial history will remain preserved.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setSuspendingBusiness(null)}
+                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-suspend-business"
+                onClick={handleConfirmSuspend}
+                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-2xs transition-colors cursor-pointer"
+              >
+                Suspend Business
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivate Confirmation Dialog */}
+      {reactivatingBusiness && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-2xs animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reactivate-modal-title"
+        >
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <RotateCcw size={20} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 id="reactivate-modal-title" className="text-base font-bold text-gray-900">
+                  Reactivate Business?
+                </h3>
+                <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
+                  Are you sure you want to reactivate <span className="font-semibold text-gray-900">{reactivatingBusiness.name}</span>? The business and its authorised users will regain access to operational services.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setReactivatingBusiness(null)}
+                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-reactivate-business"
+                onClick={handleConfirmReactivate}
+                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-2xs transition-colors cursor-pointer"
+              >
+                Reactivate Business
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

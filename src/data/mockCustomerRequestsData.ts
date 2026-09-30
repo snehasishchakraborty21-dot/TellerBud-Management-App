@@ -25,84 +25,84 @@ const HISTORICAL_AGENTS: AgentTemplate[] = [
     id: 'TB-AGT-1024',
     phone: '+260 97 234 5678',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Natasha Zulu',
     id: 'TB-AGT-1062',
     phone: '+260 97 556 7890',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Brian Chanda',
     id: 'TB-AGT-1088',
     phone: '+260 96 112 3344',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Faith Mwewa',
     id: 'TB-AGT-1050',
     phone: '+260 97 456 7890',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Mutale Musonda',
     id: 'TB-AGT-1044',
     phone: '+260 97 990 1234',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Blessings Banda',
     id: 'TB-AGT-1092',
     phone: '+260 97 887 6543',
     businessName: 'Lusaka Central Express Agency',
-    businessId: 'BIZ-LUS-001',
+    businessId: 'TB-BIZ-000001',
   },
   {
     name: 'Chanda Mulenga',
     id: 'TB-AGT-1077',
     phone: '+260 97 334 5566',
     businessName: 'Kabwata Market Agency',
-    businessId: 'BIZ-KAB-001',
+    businessId: 'TB-BIZ-000002',
   },
   {
     name: 'Peter Mwila',
     id: 'TB-AGT-1081',
     phone: '+260 96 445 6677',
     businessName: 'Kabwata Market Agency',
-    businessId: 'BIZ-KAB-001',
+    businessId: 'TB-BIZ-000002',
   },
   {
     name: 'Joseph Mwale',
     id: 'TB-AGT-1015',
     phone: '+260 97 123 9988',
     businessName: 'Copperbelt Financial Services',
-    businessId: 'BIZ-COP-002',
+    businessId: 'TB-BIZ-000003',
   },
   {
     name: 'Taonga Phiri',
     id: 'TB-AGT-1033',
     phone: '+260 96 332 1100',
     businessName: 'Copperbelt Financial Services',
-    businessId: 'BIZ-COP-002',
+    businessId: 'TB-BIZ-000003',
   },
   {
     name: 'Monde Lungu',
     id: 'TB-AGT-1095',
     phone: '+260 97 776 5544',
-    businessName: 'Ndola Express Hub',
-    businessId: 'BIZ-NDO-003',
+    businessName: 'Ndola Copperbelt Agency',
+    businessId: 'TB-BIZ-000005',
   },
   {
     name: 'Davies Sakala',
     id: 'TB-AGT-1098',
     phone: '+260 95 889 0011',
-    businessName: 'Ndola Express Hub',
-    businessId: 'BIZ-NDO-003',
+    businessName: 'Ndola Copperbelt Agency',
+    businessId: 'TB-BIZ-000005',
   },
 ];
 
@@ -244,8 +244,9 @@ function generateHistoricalRequests(): PickupRequest[] {
     let agentName: string | null = null;
     let agentId: string | undefined = undefined;
     let agentPhone: string | undefined = undefined;
-    let businessName: string | undefined = undefined;
-    let businessId: string | undefined = undefined;
+    const ag = HISTORICAL_AGENTS[i % HISTORICAL_AGENTS.length];
+    let businessName: string | undefined = ag.businessName;
+    let businessId: string | undefined = ag.businessId;
     let notes: string | undefined = 'Standard Cash Pickup transaction fulfilled.';
 
     if (NO_AGENT_INDICES.has(i)) {
@@ -255,23 +256,17 @@ function generateHistoricalRequests(): PickupRequest[] {
     } else if (CANCELLED_INDICES.has(i)) {
       status = 'Cancelled';
       if (i % 2 === 0) {
-        const ag = HISTORICAL_AGENTS[i % HISTORICAL_AGENTS.length];
         agentName = ag.name;
         agentId = ag.id;
         agentPhone = ag.phone;
-        businessName = ag.businessName;
-        businessId = ag.businessId;
       }
       notes = 'Customer cancelled request prior to service completion.';
     } else {
       // Completed (216 requests)
       status = 'Completed';
-      const ag = HISTORICAL_AGENTS[i % HISTORICAL_AGENTS.length];
       agentName = ag.name;
       agentId = ag.id;
       agentPhone = ag.phone;
-      businessName = ag.businessName;
-      businessId = ag.businessId;
     }
 
     records.push({

@@ -37,7 +37,7 @@ export function maskZambianPhoneNumber(phone: string): string {
 
 export const MOCK_BUSINESSES: BusinessRecord[] = [
   {
-    id: 'BIZ-LUS-001',
+    id: 'TB-BIZ-000001',
     name: 'Lusaka Central Express Agency',
     registrationNumber: 'PACRA-2023-884920',
     businessType: 'Agency Banking & Financial Services',
@@ -100,7 +100,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-KAB-001',
+    id: 'TB-BIZ-000002',
     name: 'Kabwata Market Agency',
     registrationNumber: 'PACRA-2023-912401',
     businessType: 'Mobile Money & Cash Distribution',
@@ -150,7 +150,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-COP-002',
+    id: 'TB-BIZ-000003',
     name: 'Copperbelt Financial Services',
     registrationNumber: 'PACRA-2022-773412',
     businessType: 'Micro-Banking & Agent Liquidity Hub',
@@ -220,7 +220,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-COP-003',
+    id: 'TB-BIZ-000004',
     name: 'Copperbelt Liquidity Hub',
     registrationNumber: 'PACRA-2023-948102',
     businessType: 'Wholesale Liquidity & Agency Banking',
@@ -279,7 +279,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-NDO-001',
+    id: 'TB-BIZ-000005',
     name: 'Ndola Copperbelt Agency',
     registrationNumber: 'PACRA-2023-956201',
     businessType: 'Retail Cash & Utility Payment Services',
@@ -327,7 +327,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-LIV-001',
+    id: 'TB-BIZ-000006',
     name: 'Livingstone Tourist Kiosk Agency',
     registrationNumber: 'PACRA-2024-102948',
     businessType: 'Cross-Border Exchange & Kiosk Operations',
@@ -374,7 +374,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Active',
   },
   {
-    id: 'BIZ-CHI-001',
+    id: 'TB-BIZ-000007',
     name: 'Chipata Eastern Financial Agency',
     registrationNumber: 'PACRA-2026-118204',
     businessType: 'Agricultural Pay-Out & Agency Banking',
@@ -418,7 +418,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     status: 'Pending',
   },
   {
-    id: 'BIZ-KBW-001',
+    id: 'TB-BIZ-000008',
     name: 'Kabwe Central Agency',
     registrationNumber: 'PACRA-2023-899432',
     businessType: 'Express Cash Points & Float Kiosk',

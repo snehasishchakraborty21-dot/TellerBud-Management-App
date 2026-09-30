@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { CheckCircle2, ShieldAlert } from 'lucide-react';
 import {
   CustomerWalletRecord,
   CustomerWalletSummary,
@@ -11,10 +12,10 @@ import {
   BalanceRangeFilter,
 } from '../types/customerWallet';
 import {
-  MOCK_CUSTOMER_WALLETS,
   calculateCustomerWalletSummary,
   filterAndSortCustomerWallets,
 } from '../data/mockCustomerWalletData';
+import { customerWalletService } from '../services/customerWalletService';
 import { CustomerWalletKpiCards } from '../components/customerWallets/CustomerWalletKpiCards';
 import { CustomerWalletFilterBar } from '../components/customerWallets/CustomerWalletFilterBar';
 import { CustomerWalletTable } from '../components/customerWallets/CustomerWalletTable';
@@ -22,7 +23,34 @@ import { CustomerWalletPagination } from '../components/customerWallets/Customer
 
 export const CustomerWalletsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Reactive wallet list from customerWalletService
+  const [allWallets, setAllWallets] = useState<CustomerWalletRecord[]>(() =>
+    customerWalletService.getWallets()
+  );
+
+  // Subscribe to updates in customerWalletService
+  useEffect(() => {
+    const unsubscribe = customerWalletService.subscribe(() => {
+      setAllWallets(customerWalletService.getWallets());
+    });
+    return unsubscribe;
+  }, []);
+
+  // Toast notification state
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'warning';
+  } | null>(null);
+
+  const showToast = useCallback((text: string, type: 'success' | 'warning' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  }, []);
 
   // Initialize filters from URL params if present
   const [filters, setFilters] = useState<CustomerWalletFilters>({
@@ -51,16 +79,16 @@ export const CustomerWalletsPage: React.FC = () => {
 
   // Derived KPI summary from the exact canonical wallet records
   const summary: CustomerWalletSummary = useMemo(() => {
-    return calculateCustomerWalletSummary(MOCK_CUSTOMER_WALLETS);
-  }, []);
+    return calculateCustomerWalletSummary(allWallets);
+  }, [allWallets]);
 
   // Filtered and sorted customer wallets
   const filteredWallets = useMemo(() => {
-    return filterAndSortCustomerWallets(MOCK_CUSTOMER_WALLETS, filters, {
+    return filterAndSortCustomerWallets(allWallets, filters, {
       field: sortField,
       direction: sortDirection,
     });
-  }, [filters, sortField, sortDirection]);
+  }, [allWallets, filters, sortField, sortDirection]);
 
   // Paginated records
   const paginatedWallets = useMemo(() => {
@@ -71,9 +99,7 @@ export const CustomerWalletsPage: React.FC = () => {
   // Determine if any non-default filter is currently active
   const hasActiveFilters = useMemo(() => {
     return Boolean(
-      (filters.search && filters.search.trim() !== '') ||
-        filters.walletState !== 'ALL' ||
-        filters.reservationState !== 'ALL' ||
+      filters.walletState !== 'ALL' ||
         filters.balanceRange !== 'ALL' ||
         filters.updatedFrom !== '' ||
         filters.updatedTo !== '' ||
@@ -159,11 +185,11 @@ export const CustomerWalletsPage: React.FC = () => {
     setIsRefreshing(true);
     setError(null);
     setTimeout(() => {
+      setAllWallets(customerWalletService.getWallets());
       setIsRefreshing(false);
+      showToast('Customer wallets data refreshed successfully.');
     }, 450);
-  }, []);
-
-  const location = useLocation();
+  }, [showToast]);
 
   // Navigate to dedicated full-width Customer Wallet Details route
   const handleViewDetails = useCallback(
@@ -175,8 +201,48 @@ export const CustomerWalletsPage: React.FC = () => {
     [navigate, location.search]
   );
 
+  // Action: Suspend Wallet
+  const handleSuspendWallet = useCallback(
+    (walletId: string, reason: string) => {
+      const success = customerWalletService.suspendWallet(walletId, reason);
+      if (success) {
+        showToast(`Wallet ${walletId} has been suspended.`, 'warning');
+      }
+    },
+    [showToast]
+  );
+
+  // Action: Reactivate Wallet
+  const handleReactivateWallet = useCallback(
+    (walletId: string) => {
+      const success = customerWalletService.reactivateWallet(walletId);
+      if (success) {
+        showToast(`Wallet ${walletId} has been reactivated successfully.`, 'success');
+      }
+    },
+    [showToast]
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold animate-in slide-in-from-bottom-3 duration-200 ${
+            toastMessage.type === 'warning'
+              ? 'bg-amber-50 border-amber-200 text-amber-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}
+        >
+          {toastMessage.type === 'warning' ? (
+            <ShieldAlert size={16} className="text-amber-600 shrink-0" />
+          ) : (
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* 1. Compact KPI Cards (Click to filter, strictly no subtitles beneath values) */}
       <CustomerWalletKpiCards
         summary={summary}
@@ -184,7 +250,7 @@ export const CustomerWalletsPage: React.FC = () => {
         onSelectKpiFilter={handleSelectKpiFilter}
       />
 
-      {/* 2. Filter Bar with Search, States, Ranges, Dates, Clear, Refresh */}
+      {/* 2. Compact Filter Bar with State, Ranges, Dates, Clear, Refresh, and Export */}
       <CustomerWalletFilterBar
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -192,6 +258,7 @@ export const CustomerWalletsPage: React.FC = () => {
         onRefresh={handleRefresh}
         hasActiveFilters={hasActiveFilters}
         isRefreshing={isRefreshing}
+        walletsToExport={filteredWallets}
       />
 
       {/* 3. Customer Wallets Table */}
@@ -204,6 +271,8 @@ export const CustomerWalletsPage: React.FC = () => {
           sortDirection={sortDirection}
           onSort={handleSort}
           onViewDetails={handleViewDetails}
+          onSuspendWallet={handleSuspendWallet}
+          onReactivateWallet={handleReactivateWallet}
           onRetry={handleRefresh}
           hasActiveFilters={hasActiveFilters}
           onClearFilters={handleClearFilters}

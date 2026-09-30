@@ -34,13 +34,18 @@ export const MobileMoneySummaryCards: React.FC<MobileMoneySummaryCardsProps> = (
       {/* 2. WEEK TO DATE */}
       <div
         id="kpi-card-week-to-date"
-        className="bg-white rounded-xl border border-gray-200/90 px-3.5 sm:px-4 py-3 shadow-2xs h-[66px] flex items-center justify-between gap-2"
+        className="bg-white rounded-xl border border-gray-200/90 px-3.5 sm:px-4 py-2.5 shadow-2xs h-[66px] flex flex-col justify-between"
       >
-        <span className="text-[11px] sm:text-[11.5px] font-semibold text-gray-500 uppercase tracking-wider truncate">
-          Week to Date
-        </span>
-        <span className="text-[18px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
-          {isLoading ? '...' : (kpis?.weekToDateCount ?? 0).toLocaleString()}
+        <div className="flex items-center justify-between gap-2 w-full">
+          <span className="text-[11px] sm:text-[11.5px] font-semibold text-gray-500 uppercase tracking-wider truncate">
+            Week to Date
+          </span>
+          <span className="text-[18px] sm:text-[20px] font-bold font-mono tracking-tight text-gray-900 leading-none shrink-0">
+            {isLoading ? '...' : (kpis?.weekToDateCount ?? 0).toLocaleString()}
+          </span>
+        </div>
+        <span className="text-[9.5px] sm:text-[10px] text-gray-400 font-normal leading-none tracking-tight">
+          Week starts Monday
         </span>
       </div>
 

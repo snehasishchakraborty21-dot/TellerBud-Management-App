@@ -52,7 +52,7 @@ export const OperationalMetricsGrid: React.FC<OperationalMetricsProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {cards.map((card) => {
         const isClickable = Boolean(card.targetRoute || onCardClick);
 
@@ -70,22 +70,21 @@ export const OperationalMetricsGrid: React.FC<OperationalMetricsProps> = ({
                 handleCardClick(card);
               }
             }}
-            className={`bg-white p-4 border border-gray-100 rounded-xl shadow-sm transition-all flex flex-col justify-between min-h-[96px] group ${
+            className={`bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm transition-all flex items-center justify-between gap-3 h-[56px] group ${
               isClickable
                 ? 'hover:border-[#0D93AA]/40 hover:shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30'
                 : 'cursor-default'
             }`}
           >
-            <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1.5 leading-snug break-words transition-colors">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider truncate">
               {card.label}
-            </div>
-            <div className={`text-2xl font-bold ${card.colorClass} tracking-tight`}>
+            </span>
+            <span className={`text-[20px] font-bold font-mono tracking-tight leading-none shrink-0 ${card.colorClass}`}>
               {card.value}
-            </div>
+            </span>
           </div>
         );
       })}
     </div>
   );
 };
-

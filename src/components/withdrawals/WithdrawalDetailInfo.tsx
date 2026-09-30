@@ -36,7 +36,7 @@ export const WithdrawalDetailInfo: React.FC<WithdrawalDetailInfoProps> = ({ with
 
         <div>
           <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-            Network
+            Vendor
           </span>
           <div className="flex items-center gap-2">
             {withdrawal.network === 'MTN Mobile Money' ? (

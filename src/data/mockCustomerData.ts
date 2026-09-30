@@ -742,6 +742,9 @@ export const filterAndSortCustomers = (
       case 'name':
         comparison = a.name.localeCompare(b.name);
         break;
+      case 'phone':
+        comparison = a.phone.localeCompare(b.phone);
+        break;
       case 'walletBalance':
         comparison = a.walletBalance - b.walletBalance;
         break;
@@ -751,6 +754,12 @@ export const filterAndSortCustomers = (
       case 'pendingWithdrawalsCount':
         comparison = a.pendingWithdrawalsCount - b.pendingWithdrawalsCount;
         break;
+      case 'pendingWithdrawalAmount': {
+        const aAmount = a.pendingWithdrawalAmount ?? (a.pendingWithdrawalsCount > 0 ? 1500 : 0);
+        const bAmount = b.pendingWithdrawalAmount ?? (b.pendingWithdrawalsCount > 0 ? 1500 : 0);
+        comparison = aAmount - bAmount;
+        break;
+      }
       case 'lastActivityTimestamp':
         comparison = a.lastActivityTimestamp.localeCompare(b.lastActivityTimestamp);
         break;

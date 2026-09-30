@@ -1,6 +1,9 @@
-import React from 'react';
-import { Search, X, RotateCw, Filter } from 'lucide-react';
-import { CustomerFilters, CustomerAccountStatus } from '../../types/customer';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, RefreshCw, Download, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { CustomerFilters, CustomerAccountStatus, CustomerRecord } from '../../types/customer';
+import { getZambiaTodayString } from '../../utils/dateUtils';
+import { formatZMW } from '../../utils/formatters';
 
 interface CustomerFilterBarProps {
   filters: CustomerFilters;
@@ -9,6 +12,7 @@ interface CustomerFilterBarProps {
   onRefresh: () => void;
   isFiltered: boolean;
   isRefreshing?: boolean;
+  customersToExport: CustomerRecord[];
 }
 
 export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
@@ -18,8 +22,22 @@ export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
   onRefresh,
   isFiltered,
   isRefreshing = false,
+  customersToExport,
 }) => {
-  const todayStr = '2026-09-08';
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+  const todayStr = getZambiaTodayString() || '2026-09-29';
+
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -37,44 +55,71 @@ export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
     onFilterChange('toDate', val);
   };
 
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm space-y-3">
-      {/* Top Filter Row: Search & Dropdowns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-        {/* Search Input */}
-        <div className="sm:col-span-2 lg:col-span-4 relative">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Search
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <Search className="w-4 h-4" />
-            </div>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => onFilterChange('search', e.target.value)}
-              placeholder="Search by Customer name, Customer ID or mobile number"
-              className="w-full pl-9 pr-8 py-2 bg-gray-50/70 border border-gray-200 rounded-lg text-sm text-[#102025] placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all"
-            />
-            {filters.search && (
-              <button
-                type="button"
-                onClick={() => onFilterChange('search', '')}
-                aria-label="Clear search text"
-                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
+  const prepareExportData = () => {
+    return customersToExport.map((c) => ({
+      'Customer Name': c.name,
+      'Customer ID': c.id,
+      'Mobile Number': c.phone,
+      'Account Status': c.accountStatus,
+      'Wallet Balance (ZMW)': c.walletBalance,
+      'Active Requests': c.activeRequestsCount,
+      'Pending Withdrawal': c.pendingWithdrawalsCount,
+      'Withdrawal Amount':
+        c.pendingWithdrawalsCount > 0 && c.pendingWithdrawalAmount
+          ? formatZMW(c.pendingWithdrawalAmount)
+          : '—',
+      'Last Activity': c.lastActivity,
+      'Registered Date': c.registeredDate,
+    }));
+  };
 
-        {/* Account Status */}
-        <div className="lg:col-span-3">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Account Status
-          </label>
+  const handleExportCSV = () => {
+    setShowExportMenu(false);
+    const data = prepareExportData();
+    if (data.length === 0) return;
+
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(','),
+      ...data.map((row) =>
+        headers
+          .map((header) => {
+            const val = (row as Record<string, string | number>)[header];
+            const escaped = String(val ?? '').replace(/"/g, '""');
+            return `"${escaped}"`;
+          })
+          .join(',')
+      ),
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvRows.join('\n'));
+    const link = document.createElement('a');
+    link.setAttribute('href', csvContent);
+    link.setAttribute('download', `TellerBud_Customers_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportExcel = () => {
+    setShowExportMenu(false);
+    const data = prepareExportData();
+    if (data.length === 0) return;
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+    XLSX.writeFile(wb, `TellerBud_Customers_${todayStr}.xlsx`);
+  };
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
+      <div className="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-2.5 w-full">
+        {/* 1. Account Status */}
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+            Status:
+          </span>
           <select
             value={filters.accountStatus}
             onChange={(e) =>
@@ -83,20 +128,20 @@ export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
                 e.target.value as CustomerAccountStatus | 'ALL'
               )
             }
-            className="w-full py-2 px-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all cursor-pointer"
+            className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
           >
-            <option value="ALL">All Account Statuses</option>
+            <option value="ALL">All Statuses</option>
             <option value="Active">Active</option>
             <option value="Pending">Pending</option>
             <option value="Suspended">Suspended</option>
           </select>
         </div>
 
-        {/* Request State */}
-        <div className="lg:col-span-2">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Request State
-          </label>
+        {/* 2. Request State */}
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+            Requests:
+          </span>
           <select
             value={filters.requestState}
             onChange={(e) =>
@@ -105,19 +150,19 @@ export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
                 e.target.value as 'ALL' | 'HAS_ACTIVE' | 'NO_ACTIVE'
               )
             }
-            className="w-full py-2 px-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all cursor-pointer"
+            className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
           >
-            <option value="ALL">All Request States</option>
-            <option value="HAS_ACTIVE">Has Active Requests</option>
-            <option value="NO_ACTIVE">No Active Requests</option>
+            <option value="ALL">All Requests</option>
+            <option value="HAS_ACTIVE">Has Active</option>
+            <option value="NO_ACTIVE">No Active</option>
           </select>
         </div>
 
-        {/* Withdrawal State */}
-        <div className="lg:col-span-3">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Withdrawal State
-          </label>
+        {/* 3. Withdrawal State */}
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+            Withdrawal:
+          </span>
           <select
             value={filters.withdrawalState}
             onChange={(e) =>
@@ -126,73 +171,103 @@ export const CustomerFilterBar: React.FC<CustomerFilterBarProps> = ({
                 e.target.value as 'ALL' | 'HAS_PENDING' | 'NO_PENDING'
               )
             }
-            className="w-full py-2 px-3 bg-gray-50/70 border border-gray-200 rounded-lg text-sm text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all cursor-pointer"
+            className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
           >
-            <option value="ALL">All Withdrawal States</option>
-            <option value="HAS_PENDING">Has Pending Withdrawal</option>
-            <option value="NO_PENDING">No Pending Withdrawal</option>
+            <option value="ALL">All States</option>
+            <option value="HAS_PENDING">Pending Only</option>
+            <option value="NO_PENDING">No Pending</option>
           </select>
         </div>
-      </div>
 
-      {/* Bottom Filter Row: Date Range & Action Buttons */}
-      <div className="flex flex-wrap items-end justify-between gap-3 pt-2 border-t border-gray-100">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Registration Date From */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-600">
-              Registration From:
-            </span>
-            <input
-              type="date"
-              value={filters.fromDate}
-              max={todayStr}
-              onChange={handleFromDateChange}
-              className="py-1.5 px-2.5 bg-gray-50/70 border border-gray-200 rounded-lg text-xs text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all cursor-pointer"
-            />
-          </div>
-
-          {/* Registration Date To */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-gray-600">To:</span>
-            <input
-              type="date"
-              value={filters.toDate}
-              min={filters.fromDate || undefined}
-              max={todayStr}
-              onChange={handleToDateChange}
-              className="py-1.5 px-2.5 bg-gray-50/70 border border-gray-200 rounded-lg text-xs text-[#102025] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 focus:border-[#0D93AA] transition-all cursor-pointer"
-            />
-          </div>
+        {/* 4. Registration From */}
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+            From:
+          </span>
+          <input
+            type="date"
+            value={filters.fromDate}
+            max={filters.toDate || todayStr}
+            onChange={handleFromDateChange}
+            className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+          />
         </div>
 
-        {/* Clear & Refresh Buttons */}
-        <div className="flex items-center gap-2 ml-auto">
+        {/* 5. Registration To */}
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+            To:
+          </span>
+          <input
+            type="date"
+            value={filters.toDate}
+            min={filters.fromDate || undefined}
+            max={todayStr}
+            onChange={handleToDateChange}
+            className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+          />
+        </div>
+
+        {/* Right Action Buttons: Clear, Refresh, Export */}
+        <div className="flex items-center gap-2 shrink-0 sm:ml-auto">
+          {/* 6. Clear */}
           <button
             type="button"
             onClick={onClearFilters}
             disabled={!isFiltered}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all select-none ${
-              isFiltered
-                ? 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-[#102025] hover:border-gray-300 cursor-pointer shadow-2xs'
-                : 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'
-            }`}
-            title={isFiltered ? 'Reset applied filters' : 'Clear is disabled until a search or filter is applied'}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
           >
-            <X className="w-3.5 h-3.5" />
+            <X size={13} />
             Clear
           </button>
 
+          {/* 7. Refresh */}
           <button
             type="button"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-[#102025] hover:border-gray-300 shadow-2xs transition-all cursor-pointer select-none"
-            title="Refresh customer data while preserving current filters"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : ''}`} />
+            <RefreshCw
+              size={13}
+              className={isRefreshing ? 'animate-spin' : ''}
+            />
             Refresh
           </button>
+
+          {/* 8. Export Dropdown */}
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              type="button"
+              onClick={() => setShowExportMenu((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg shadow-2xs transition-all cursor-pointer h-9"
+            >
+              <Download size={13} className="text-[#0D93AA]" />
+              <span>Export</span>
+              <ChevronDown size={12} className="text-gray-400" />
+            </button>
+
+            {showExportMenu && (
+              <div className="absolute right-0 mt-1.5 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-30 divide-y divide-gray-100 select-none animate-in fade-in zoom-in-95 duration-100">
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-left cursor-pointer"
+                >
+                  <FileSpreadsheet size={14} className="text-emerald-600 shrink-0" />
+                  <span>Export as Excel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors text-left cursor-pointer"
+                >
+                  <FileText size={14} className="text-blue-600 shrink-0" />
+                  <span>Export as CSV</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

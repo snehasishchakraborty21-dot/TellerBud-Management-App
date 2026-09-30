@@ -125,13 +125,34 @@ export const BusinessesPage: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  // Refresh handler
+  // Refresh handler (reloads businesses while preserving current filter selections)
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
     setError(null);
+    setBusinesses(businessService.getBusinesses());
     setTimeout(() => {
       setIsRefreshing(false);
     }, 400);
+  }, []);
+
+  // Suspend Business handler
+  const handleSuspendBusiness = useCallback((business: BusinessRecord) => {
+    businessService.updateBusinessStatus(
+      business.id,
+      'Suspended',
+      'Administrative suspension requested from All Businesses page.'
+    );
+    setBusinesses(businessService.getBusinesses());
+  }, []);
+
+  // Reactivate Business handler
+  const handleReactivateBusiness = useCallback((business: BusinessRecord) => {
+    businessService.updateBusinessStatus(
+      business.id,
+      'Active',
+      'Administrative reactivation requested from All Businesses page.'
+    );
+    setBusinesses(businessService.getBusinesses());
   }, []);
 
   // Sorting handler
@@ -167,13 +188,9 @@ export const BusinessesPage: React.FC = () => {
   // Determine if any non-default filter is currently active
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.search.trim() !== '' ||
       filters.quickFilter !== 'ALL' ||
       filters.status !== 'ALL' ||
-      filters.province !== 'ALL' ||
-      filters.walletState !== 'ALL' ||
-      filters.fromDate !== '' ||
-      filters.toDate !== ''
+      filters.walletState !== 'ALL'
     );
   }, [filters]);
 
@@ -192,8 +209,8 @@ export const BusinessesPage: React.FC = () => {
   }, [filteredBusinesses, currentPage, pageSize]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto pb-16">
-      {/* 1. KPI Cards Section (Interactive, no subtitles) */}
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto pb-16 w-full">
+      {/* 1. KPI Cards Section (Compact, equal width/height, no icons, single line) */}
       <section aria-label="Business Metrics Summary">
         <BusinessKPICards
           summary={summary}
@@ -203,7 +220,7 @@ export const BusinessesPage: React.FC = () => {
         />
       </section>
 
-      {/* 2. Filter Bar Section */}
+      {/* 2. Filter Bar Section (Single compact line: Status, Wallet on left; Clear, Refresh, Export on right) */}
       <section aria-label="Business Filters">
         <BusinessFilterBar
           filters={filters}
@@ -212,10 +229,11 @@ export const BusinessesPage: React.FC = () => {
           onRefresh={handleRefresh}
           isFiltered={hasActiveFilters}
           isRefreshing={isRefreshing}
+          businessesToExport={filteredBusinesses}
         />
       </section>
 
-      {/* 3. Businesses Table Section */}
+      {/* 3. Businesses Table Section (8 columns, centre-aligned, action icons with Suspend/Reactivate confirmation dialogs) */}
       <section aria-label="Businesses Table">
         <BusinessTable
           businesses={paginatedBusinesses}
@@ -225,6 +243,8 @@ export const BusinessesPage: React.FC = () => {
           sortDirection={sortDirection}
           onSort={handleSort}
           onViewDetails={handleOpenDetails}
+          onSuspendBusiness={handleSuspendBusiness}
+          onReactivateBusiness={handleReactivateBusiness}
           onRetry={handleRefresh}
           hasActiveFilters={hasActiveFilters}
           onResetFilters={handleClearFilters}

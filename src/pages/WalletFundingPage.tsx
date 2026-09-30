@@ -128,6 +128,7 @@ export const WalletFundingPage: React.FC = () => {
         onRefresh={handleRefresh}
         hasActiveFilters={hasActiveFilters}
         isRefreshing={isRefreshing}
+        recordsToExport={filteredRecords}
       />
 
       {/* Results Table */}

@@ -62,6 +62,21 @@ function migrateBoothCode(code: string | undefined, fallbackIndex: number): stri
   return `TB-BTH-${String(fallbackIndex + 1).padStart(6, '0')}`;
 }
 
+function migrateDeviceCode(code: string | undefined, id: string | undefined, fallbackIndex: number): string {
+  if (code && /^TB-DEV-\d{6}$/.test(code)) return code;
+  if (id && /^TB-DEV-\d{6}$/.test(id)) return id;
+  return `TB-DEV-${String(fallbackIndex + 1).padStart(6, '0')}`;
+}
+
+function migrateBusinessCode(code: string | null | undefined): string | null {
+  if (!code || code === 'UNALLOCATED') return null;
+  if (/^TB-BIZ-\d{6}$/.test(code)) return code;
+  if (code === 'BIZ-LUS-001') return 'TB-BIZ-000001';
+  if (code === 'BIZ-COP-002' || code === 'BIZ-NDO-002') return 'TB-BIZ-000007';
+  if (code === 'BIZ-LIV-003') return 'TB-BIZ-000005';
+  return code;
+}
+
 class OrganizationService {
   private stores: Store[] = [];
   private booths: Booth[] = [];
@@ -118,7 +133,17 @@ class OrganizationService {
       this.staffAssignments = sStaff ? JSON.parse(sStaff) : [...INITIAL_STAFF_ASSIGNMENTS];
 
       const sDevices = localStorage.getItem(STORAGE_KEYS.DEVICES);
-      this.devices = sDevices ? JSON.parse(sDevices) : [...INITIAL_DEVICES];
+      const rawDevices: Device[] = sDevices ? JSON.parse(sDevices) : [...INITIAL_DEVICES];
+      this.devices = rawDevices.map((d, idx) => {
+        const stdId = migrateDeviceCode(d.deviceId, d.id, idx);
+        const stdBizId = migrateBusinessCode(d.allocatedBusinessId);
+        return {
+          ...d,
+          id: stdId,
+          deviceId: stdId,
+          allocatedBusinessId: stdBizId,
+        };
+      });
 
       const sDevAss = localStorage.getItem(STORAGE_KEYS.DEVICE_ASSIGNMENTS);
       this.deviceAssignments = sDevAss ? JSON.parse(sDevAss) : [...INITIAL_DEVICE_ASSIGNMENTS];
@@ -1948,18 +1973,17 @@ class OrganizationService {
       return { success: false, error: `Serial Number "${data.serialNumber}" is already registered.` };
     }
 
+    const devCode = sequenceService.nextReference('DEVICE');
     const newDevice: Device = {
-      id: `DEV-${Date.now().toString().slice(-4)}`,
-      deviceId: `DEV-${data.deviceType.startsWith('POS') ? 'POS' : 'TRM'}-${Math.floor(
-        1000 + Math.random() * 9000
-      )}`,
+      id: devCode,
+      deviceId: devCode,
       deviceName: data.deviceName.trim(),
       deviceType: data.deviceType.trim(),
       serialNumber: data.serialNumber.trim(),
       allocatedBusinessId: data.allocatedBusinessId || null,
-      status: 'Available',
+      status: data.allocatedBusinessId ? 'Assigned' : 'Available',
       registeredAt: new Date().toISOString(),
-      registeredBy: actor.fullName,
+      registeredBy: actor.fullName || 'TellerBud Admin',
     };
 
     this.devices.push(newDevice);

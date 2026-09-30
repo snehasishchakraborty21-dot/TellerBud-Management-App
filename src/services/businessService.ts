@@ -180,8 +180,31 @@ class BusinessService {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          this.businesses = parsed;
-          return;
+          const seenIds = new Set<string>();
+          const seenNames = new Set<string>();
+          const valid: BusinessRecord[] = [];
+
+          parsed.forEach((b: BusinessRecord, i: number) => {
+            const rawId = b.id || `TB-BIZ-${String(i + 1).padStart(6, '0')}`;
+            const stdId = rawId.startsWith('TB-BIZ-')
+              ? rawId
+              : `TB-BIZ-${String(i + 1).padStart(6, '0')}`;
+            const normName = (b.name || '').trim().toLowerCase();
+
+            if (!seenIds.has(stdId) && (!normName || !seenNames.has(normName))) {
+              seenIds.add(stdId);
+              if (normName) seenNames.add(normName);
+              valid.push({
+                ...b,
+                id: stdId,
+              });
+            }
+          });
+
+          if (valid.length > 0) {
+            this.businesses = valid.map((b, i) => enrichMockBusiness(b, i));
+            return;
+          }
         }
       }
     } catch (e) {
@@ -189,7 +212,19 @@ class BusinessService {
     }
 
     // Default to seeded mock businesses
-    this.businesses = MOCK_BUSINESSES.map((b, i) => enrichMockBusiness(b, i));
+    const seenIds = new Set<string>();
+    const uniqueMocks: BusinessRecord[] = [];
+    MOCK_BUSINESSES.forEach((b, i) => {
+      const stdId = b.id?.startsWith('TB-BIZ-')
+        ? b.id
+        : `TB-BIZ-${String(i + 1).padStart(6, '0')}`;
+      if (!seenIds.has(stdId)) {
+        seenIds.add(stdId);
+        uniqueMocks.push({ ...b, id: stdId });
+      }
+    });
+
+    this.businesses = uniqueMocks.map((b, i) => enrichMockBusiness(b, i));
     this.saveToStorage();
   }
 
@@ -310,9 +345,7 @@ class BusinessService {
     timeZone?: string;
   }): BusinessRecord {
     // Generate IDs
-    const cityCode = params.city.slice(0, 3).toUpperCase() || 'LUS';
-    const existingCityCount = this.businesses.filter((b) => b.city.toLowerCase() === params.city.toLowerCase()).length;
-    const businessId = `BIZ-${cityCode}-${String(existingCityCount + 1).padStart(3, '0')}`;
+    const businessId = `TB-BIZ-${String(this.businesses.length + 1).padStart(6, '0')}`;
     const ownerId = `USR-BO-${String(this.businesses.length + 1).padStart(3, '0')}`;
 
     const ownerFullName = `${params.ownerFirstName.trim()} ${params.ownerLastName.trim()}`;

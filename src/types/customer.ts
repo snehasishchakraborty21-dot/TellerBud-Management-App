@@ -17,6 +17,7 @@ export interface CustomerRecord {
   walletBalance: number; // in ZMW
   activeRequestsCount: number;
   pendingWithdrawalsCount: number;
+  pendingWithdrawalAmount?: number; // combined amount in ZMW
   hasRecoverySupport: boolean;
   recoveryCaseTitle?: string;
   lastActivity: string; // e.g. 'Today, 11:52 AM'
@@ -46,9 +47,11 @@ export interface CustomerFilters {
 
 export type CustomerSortField =
   | 'name'
+  | 'phone'
   | 'walletBalance'
   | 'activeRequestsCount'
   | 'pendingWithdrawalsCount'
+  | 'pendingWithdrawalAmount'
   | 'lastActivityTimestamp'
   | 'registeredDateIso';
 

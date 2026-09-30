@@ -12,8 +12,7 @@ import {
   Ban,
 } from 'lucide-react';
 import { CustomerWithdrawal, WithdrawalStatus } from '../../types/admin';
-import { formatZMW, formatZmwListingAmount, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
-import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
+import { formatZmwListingAmount, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 
 export type CustomerWithdrawalSortField =
@@ -145,14 +144,14 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 </button>
               </th>
 
-              {/* 3. Provider */}
+              {/* 3. Vendor (Updated from Provider) */}
               <th scope="col" className="py-3 px-4 min-w-[160px]">
                 <button
                   type="button"
                   onClick={() => onSort('provider')}
                   className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
-                  <span>Provider</span>
+                  <span>Vendor</span>
                   {renderSortIcon('provider')}
                 </button>
               </th>
@@ -258,18 +257,11 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 3. Provider with Logo */}
+                  {/* 3. Vendor (Text Only, No Logos) */}
                   <td className="py-3 px-4 align-middle">
-                    <div className="flex items-center gap-2">
-                      {record.network === 'MTN Mobile Money' ? (
-                        <MtnLogo className="w-5 h-5 rounded-full shrink-0" />
-                      ) : (
-                        <AirtelLogo className="w-5 h-5 rounded-full shrink-0" />
-                      )}
-                      <span className="font-medium text-slate-800 text-xs whitespace-nowrap">
-                        {record.network}
-                      </span>
-                    </div>
+                    <span className="font-medium text-slate-800 text-xs whitespace-nowrap block text-left">
+                      {record.network}
+                    </span>
                   </td>
 
                   {/* 4. Withdrawal Amount (ZMW) (Left-aligned) */}

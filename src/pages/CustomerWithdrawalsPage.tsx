@@ -303,6 +303,7 @@ export const CustomerWithdrawalsPage: React.FC = () => {
         onRefresh={handleRefresh}
         hasActiveFilters={hasActiveFilters}
         isRefreshing={isRefreshing}
+        withdrawalsToExport={filteredAndSortedWithdrawals}
       />
 
       {/* Table & Pagination */}

@@ -19,6 +19,7 @@ import {
   Copy,
   Check,
   Activity,
+  CreditCard,
 } from 'lucide-react';
 import {
   getWalletFundingByReference,
@@ -28,7 +29,6 @@ import {
 import { getCustomerRegisteredPhone } from '../data/mockCustomerData';
 import { useAuth } from '../context/AuthContext';
 import { FundingStatus } from '../types/walletFunding';
-import { MtnLogo, AirtelLogo } from '../components/wallet/ProviderLogos';
 
 export const WalletFundingDetailPage: React.FC = () => {
   const { fundingId } = useParams<{ fundingId: string }>();
@@ -74,7 +74,7 @@ export const WalletFundingDetailPage: React.FC = () => {
       });
       setManualRefreshTime(`${formattedDate}, ${formattedTime}`);
       setRefreshNotification(
-        `Backend provider query successful: Status verified as "${record.status.toUpperCase()}". Idempotency preserved with zero duplicate balance impact.`
+        `Backend vendor query successful: Status verified as "${record.status.toUpperCase()}". Idempotency preserved with zero duplicate balance impact.`
       );
       setTimeout(() => setRefreshNotification(null), 6000);
     }, 700);
@@ -326,13 +326,13 @@ export const WalletFundingDetailPage: React.FC = () => {
         </button>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Refresh Provider Status */}
+          {/* Refresh Vendor Status */}
           <button
             type="button"
             onClick={handleRefreshStatus}
             disabled={isRefreshing}
-            aria-label="Refresh provider transaction status"
-            title="Refresh Provider Status"
+            aria-label="Refresh vendor transaction status"
+            title="Refresh Vendor Status"
             className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 transition-colors shadow-2xs cursor-pointer ${
               isRefreshing
                 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
@@ -344,7 +344,7 @@ export const WalletFundingDetailPage: React.FC = () => {
               className={`shrink-0 ${isRefreshing ? 'animate-spin text-[#0D93AA]' : 'text-slate-600'}`}
             />
             <span>
-              {isRefreshing ? 'Querying Provider API...' : 'Refresh Provider Status'}
+              {isRefreshing ? 'Querying Vendor API...' : 'Refresh Vendor Status'}
             </span>
           </button>
 
@@ -389,7 +389,7 @@ export const WalletFundingDetailPage: React.FC = () => {
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-emerald-900 animate-in fade-in slide-in-from-top-2 duration-200">
           <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <span className="font-semibold text-emerald-950">Provider Verification: </span>
+            <span className="font-semibold text-emerald-950">Vendor Verification: </span>
             {refreshNotification}
           </div>
         </div>
@@ -398,14 +398,10 @@ export const WalletFundingDetailPage: React.FC = () => {
       {/* 2. Header Banner Card */}
       <div className="bg-white border border-gray-200/80 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Left: Provider Logo, Reference, Status Badge, Customer Info */}
+          {/* Left: Reference, Status Badge, Customer Info */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center justify-center shrink-0 p-2 shadow-2xs">
-              {record.provider === 'MTN Mobile Money' ? (
-                <MtnLogo className="w-8 h-8 rounded-full" />
-              ) : (
-                <AirtelLogo className="w-8 h-8 rounded-full" />
-              )}
+            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center justify-center shrink-0 p-2 shadow-2xs text-[#0D93AA]">
+              <CreditCard size={22} />
             </div>
 
             <div className="space-y-1.5">
@@ -426,7 +422,11 @@ export const WalletFundingDetailPage: React.FC = () => {
                 </span>
                 <span className="text-slate-300">/</span>
                 <span className="font-mono text-slate-800 font-medium select-all">
-                  {fullCustomerPhone}
+                  Phone: {fullCustomerPhone}
+                </span>
+                <span className="text-slate-300">/</span>
+                <span className="font-medium text-slate-800">
+                  Vendor: {record.provider}
                 </span>
                 <span className="text-slate-300">/</span>
                 <span className="font-mono text-slate-600 font-medium">
@@ -616,19 +616,14 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Collection Provider</dt>
-              <dd className="flex items-center gap-2 font-medium text-slate-900 mt-0.5">
-                {record.provider === 'MTN Mobile Money' ? (
-                  <MtnLogo className="w-4 h-4 rounded-full shrink-0" />
-                ) : (
-                  <AirtelLogo className="w-4 h-4 rounded-full shrink-0" />
-                )}
+              <dt className="text-slate-600 font-semibold text-[11px]">Collection Vendor</dt>
+              <dd className="font-medium text-slate-900 mt-0.5">
                 <span>{record.provider}</span>
               </dd>
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Funding Mobile Number</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Phone #</dt>
               <dd className="font-mono text-slate-800 font-medium mt-0.5 flex items-center gap-1.5 select-all">
                 <Smartphone size={12} className="text-slate-500" />
                 <span>{fullCustomerPhone}</span>
@@ -879,25 +874,25 @@ export const WalletFundingDetailPage: React.FC = () => {
           )}
         </div>
 
-        {/* Section 3: Provider Verification */}
+        {/* Section 3: Vendor Verification */}
         <div className="bg-white border border-gray-200/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
             <Building2 size={15} className="text-[#0D93AA]" />
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Provider Verification
+              Vendor Verification
             </h2>
           </div>
 
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5 text-xs">
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Provider Name</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Vendor Name</dt>
               <dd className="font-semibold text-slate-900 mt-0.5">
                 {record.provider}
               </dd>
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Provider Reference</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Vendor Reference</dt>
               <dd className="font-mono font-bold text-slate-900 mt-0.5 flex items-center gap-1.5">
                 <span className="select-all">{record.providerReference}</span>
                 <button
@@ -905,8 +900,8 @@ export const WalletFundingDetailPage: React.FC = () => {
                   onClick={() =>
                     handleCopy(record.providerReference, 'providerRef')
                   }
-                  aria-label={`Copy provider reference ${record.providerReference}`}
-                  title="Copy provider reference"
+                  aria-label={`Copy vendor reference ${record.providerReference}`}
+                  title="Copy vendor reference"
                   className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded transition-colors cursor-pointer"
                 >
                   {copiedField === 'providerRef' ? (
@@ -919,7 +914,7 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Provider Transaction Status</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Vendor Transaction Status</dt>
               <dd className="mt-0.5">
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
@@ -952,7 +947,7 @@ export const WalletFundingDetailPage: React.FC = () => {
                 ext.callbackReceived === 'Awaiting Handset Input' ||
                 ext.callbackReceived === 'No — awaiting provider callback' ||
                 ext.callbackReceived === 'Awaiting Provider Response'
-                  ? 'Awaiting Provider Response'
+                  ? 'Awaiting Vendor Response'
                   : ext.callbackReceived}
               </dd>
             </div>
@@ -985,7 +980,7 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Last Provider Response Time</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Last Vendor Response Time</dt>
               <dd className="font-mono text-slate-700 mt-0.5">
                 {currentResponseTime}
               </dd>
@@ -1126,7 +1121,7 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Provider Integration</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">Vendor Integration</dt>
               <dd className="font-mono text-[11px] text-slate-800 font-medium mt-0.5 truncate" title={ext.providerIntegration}>
                 {ext.providerIntegration}
               </dd>

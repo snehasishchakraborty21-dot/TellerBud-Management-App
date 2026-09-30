@@ -1,12 +1,10 @@
 import React from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   CustomerRecord,
   CustomerSortField,
   CustomerSortDirection,
 } from '../../types/customer';
-import { CustomerStatusBadge } from './CustomerStatusBadge';
-import { maskZambianPhone } from '../../utils/customerUtils';
 import { formatZMW } from '../../utils/formatters';
 
 interface CustomerTableProps {
@@ -16,9 +14,30 @@ interface CustomerTableProps {
   sortField: CustomerSortField;
   sortDirection: CustomerSortDirection;
   onSort: (field: CustomerSortField) => void;
-  onViewProfile: (customerId: string) => void;
   onRetry?: () => void;
   hasActiveFilters?: boolean;
+}
+
+const WITHDRAWAL_AMOUNT_MAP: Record<string, number> = {
+  'TB-CUS-1052': 2250.0,
+  'TB-CUS-1049': 3400.0,
+  'TB-CUS-1048': 1500.0,
+  'TB-CUS-1050': 850.0,
+  'TB-CUS-1046': 7200.0,
+  'TB-CUS-1045': 5500.0,
+  'TB-CUS-1044': 950.0,
+  'TB-CUS-1042': 1800.0,
+  'TB-CUS-1040': 2600.0,
+};
+
+export function getCustomerWithdrawalAmount(customer: CustomerRecord): number {
+  if (customer.pendingWithdrawalAmount !== undefined && customer.pendingWithdrawalAmount > 0) {
+    return customer.pendingWithdrawalAmount;
+  }
+  if (customer.pendingWithdrawalsCount > 0) {
+    return WITHDRAWAL_AMOUNT_MAP[customer.id] || 1500.0 * customer.pendingWithdrawalsCount;
+  }
+  return 0;
 }
 
 export const CustomerTable: React.FC<CustomerTableProps> = ({
@@ -28,18 +47,17 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   sortField,
   sortDirection,
   onSort,
-  onViewProfile,
   onRetry,
   hasActiveFilters = false,
 }) => {
   const renderSortIcon = (field: CustomerSortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-colors ml-1" />;
+      return <ArrowUpDown className="w-3 h-3 text-gray-400 group-hover:text-gray-600 transition-colors shrink-0" />;
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp className="w-3.5 h-3.5 text-[#0D93AA] ml-1" />
+      <ArrowUp className="w-3 h-3 text-[#0D93AA] shrink-0" />
     ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-[#0D93AA] ml-1" />
+      <ArrowDown className="w-3 h-3 text-[#0D93AA] shrink-0" />
     );
   };
 
@@ -59,7 +77,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
           <button
             type="button"
             onClick={onRetry}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D93AA] text-white text-xs font-semibold rounded-lg hover:bg-[#0b8296] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D93AA] text-white text-xs font-semibold rounded-lg hover:bg-[#0b8296] transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry
@@ -70,244 +88,238 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   }
 
   return (
-    <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden flex flex-col">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[980px]">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/75 text-[11px] font-bold text-gray-500 uppercase tracking-wider select-none">
+    <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden w-full flex flex-col">
+      <div className="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+        <table className="w-full border-collapse">
+          <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs shadow-2xs">
+            <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider select-none">
               {/* 1. Customer */}
-              <th scope="col" className="py-3.5 px-4">
-                <button
-                  type="button"
-                  onClick={() => onSort('name')}
-                  className="group inline-flex items-center hover:text-gray-900 transition-colors focus:outline-none"
-                >
+              <th
+                scope="col"
+                onClick={() => onSort('name')}
+                className="py-3 px-3.5 text-left align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[190px] sm:min-w-[210px] w-[22%]"
+              >
+                <div className="flex items-center gap-1">
                   <span>Customer</span>
                   {renderSortIcon('name')}
-                </button>
+                </div>
               </th>
 
               {/* 2. Mobile Number */}
-              <th scope="col" className="py-3.5 px-4">
-                Mobile Number
+              <th
+                scope="col"
+                onClick={() => onSort('phone')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[140px]"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Mobile Number</span>
+                  {renderSortIcon('phone')}
+                </div>
               </th>
 
-              {/* 3. Account Status */}
-              <th scope="col" className="py-3.5 px-4">
-                Account Status
-              </th>
-
-              {/* 4. Wallet Balance */}
-              <th scope="col" className="py-3.5 px-4 text-right">
-                <button
-                  type="button"
-                  onClick={() => onSort('walletBalance')}
-                  className="group inline-flex items-center justify-end hover:text-gray-900 transition-colors focus:outline-none ml-auto"
-                >
+              {/* 3. Wallet Balance */}
+              <th
+                scope="col"
+                onClick={() => onSort('walletBalance')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[130px]"
+              >
+                <div className="flex items-center justify-center gap-1">
                   <span>Wallet Balance</span>
                   {renderSortIcon('walletBalance')}
-                </button>
+                </div>
               </th>
 
-              {/* 5. Active Requests */}
-              <th scope="col" className="py-3.5 px-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => onSort('activeRequestsCount')}
-                  className="group inline-flex items-center justify-center hover:text-gray-900 transition-colors focus:outline-none mx-auto"
-                >
-                  <span>Active Requests</span>
+              {/* 4. Requests (Renamed from Active Requests) */}
+              <th
+                scope="col"
+                onClick={() => onSort('activeRequestsCount')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[85px]"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Requests</span>
                   {renderSortIcon('activeRequestsCount')}
-                </button>
+                </div>
               </th>
 
-              {/* 6. Pending Withdrawal */}
-              <th scope="col" className="py-3.5 px-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => onSort('pendingWithdrawalsCount')}
-                  className="group inline-flex items-center justify-center hover:text-gray-900 transition-colors focus:outline-none mx-auto"
-                >
+              {/* 5. Pending Withdrawal */}
+              <th
+                scope="col"
+                onClick={() => onSort('pendingWithdrawalsCount')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[125px]"
+              >
+                <div className="flex items-center justify-center gap-1">
                   <span>Pending Withdrawal</span>
                   {renderSortIcon('pendingWithdrawalsCount')}
-                </button>
+                </div>
+              </th>
+
+              {/* 6. Withdrawal Amount */}
+              <th
+                scope="col"
+                onClick={() => onSort('pendingWithdrawalAmount')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[130px]"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Withdrawal Amount</span>
+                  {renderSortIcon('pendingWithdrawalAmount')}
+                </div>
               </th>
 
               {/* 7. Last Activity */}
-              <th scope="col" className="py-3.5 px-4">
-                <button
-                  type="button"
-                  onClick={() => onSort('lastActivityTimestamp')}
-                  className="group inline-flex items-center hover:text-gray-900 transition-colors focus:outline-none"
-                >
-                  <span>Last Activity</span>
-                  {renderSortIcon('lastActivityTimestamp')}
-                </button>
-              </th>
-
-              {/* 8. Registered */}
-              <th scope="col" className="py-3.5 px-4">
-                <button
-                  type="button"
-                  onClick={() => onSort('registeredDateIso')}
-                  className="group inline-flex items-center hover:text-gray-900 transition-colors focus:outline-none"
-                >
-                  <span>Registered</span>
-                  {renderSortIcon('registeredDateIso')}
-                </button>
-              </th>
-
-              {/* 9. Action (Sticky Right) */}
               <th
                 scope="col"
-                className="py-3.5 px-4 text-center sticky right-0 bg-gray-50/95 backdrop-blur-xs shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)] z-10 w-28"
+                onClick={() => onSort('lastActivityTimestamp')}
+                className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[130px]"
               >
-                Action
+                <div className="flex items-center justify-center gap-1">
+                  <span>Last Activity</span>
+                  {renderSortIcon('lastActivityTimestamp')}
+                </div>
+              </th>
+
+              {/* 8. Registered (Widened to display dates completely) */}
+              <th
+                scope="col"
+                onClick={() => onSort('registeredDateIso')}
+                className="py-3 px-3.5 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[130px]"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <span>Registered</span>
+                  {renderSortIcon('registeredDateIso')}
+                </div>
               </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100 text-sm">
+          <tbody className="divide-y divide-gray-100 text-xs">
             {loading ? (
               // Skeleton loading state
               Array.from({ length: 6 }).map((_, idx) => (
                 <tr key={`skeleton-${idx}`} className="animate-pulse">
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-200" />
-                      <div className="space-y-1.5">
-                        <div className="h-3.5 w-28 bg-gray-200 rounded" />
-                        <div className="h-3 w-20 bg-gray-100 rounded" />
+                  <td className="py-2.5 px-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-gray-200" />
+                      <div className="space-y-1">
+                        <div className="h-3 w-24 bg-gray-200 rounded" />
+                        <div className="h-2.5 w-16 bg-gray-100 rounded" />
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="h-3.5 w-28 bg-gray-200 rounded" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-24 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="h-5 w-16 bg-gray-200 rounded-full" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-20 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4 text-right">
-                    <div className="h-3.5 w-24 bg-gray-200 rounded ml-auto" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-6 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="h-3.5 w-6 bg-gray-200 rounded mx-auto" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-6 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="h-3.5 w-6 bg-gray-200 rounded mx-auto" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-20 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="h-3.5 w-24 bg-gray-200 rounded" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-20 bg-gray-200 rounded mx-auto" />
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="h-3.5 w-20 bg-gray-200 rounded" />
-                  </td>
-                  <td className="py-4 px-4 text-center sticky right-0 bg-white">
-                    <div className="h-7 w-20 bg-gray-200 rounded-lg mx-auto" />
+                  <td className="py-2.5 px-3 text-center">
+                    <div className="h-3 w-16 bg-gray-200 rounded mx-auto" />
                   </td>
                 </tr>
               ))
             ) : customers.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-14 text-center">
-                  <p className="text-sm font-semibold text-gray-700">
+                <td colSpan={8} className="py-12 text-center text-gray-400 align-middle">
+                  <p className="text-xs sm:text-sm font-semibold text-gray-700">
                     {hasActiveFilters
                       ? 'No Customers match the selected filters.'
                       : 'No registered Customers were found.'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-[11px] text-gray-400 mt-1">
                     {hasActiveFilters
-                      ? 'Try adjusting your search criteria or resetting filters.'
+                      ? 'Try adjusting your filter criteria or resetting filters.'
                       : 'Registered customer accounts will appear here once verified.'}
                   </p>
                 </td>
               </tr>
             ) : (
-              customers.map((customer) => {
+              customers.map((customer, idx) => {
+                const withdrawalAmt = getCustomerWithdrawalAmount(customer);
+
                 return (
                   <tr
-                    key={customer.id}
-                    className="hover:bg-gray-50/70 transition-colors group"
+                    key={`customer-row-${customer.id}-${idx}`}
+                    className="hover:bg-gray-50/70 transition-colors"
                   >
-                    {/* 1. Customer: Avatar, Name, ID */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-cyan-100 text-[#0D93AA] font-bold text-xs flex items-center justify-center shrink-0 border border-cyan-200">
+                    {/* 1. Customer: Avatar, Name, ID (Left Aligned) */}
+                    <td className="py-2.5 px-3.5 align-middle">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-[#0D93AA]/10 text-[#0D93AA] font-bold text-[11px] flex items-center justify-center shrink-0 border border-[#0D93AA]/20">
                           {customer.avatarInitials}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-gray-900 truncate">
+                          <div className="font-semibold text-gray-900 text-xs sm:text-[13px] truncate">
                             {customer.name}
                           </div>
-                          <div className="text-xs font-mono text-gray-500">
+                          <div className="text-[10.5px] font-mono text-gray-400">
                             {customer.id}
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* 2. Mobile Number (Partially Masked) */}
-                    <td className="py-3.5 px-4 font-mono text-xs text-gray-700 whitespace-nowrap">
-                      {maskZambianPhone(customer.phone)}
+                    {/* 2. Mobile Number (Complete Unmasked) */}
+                    <td className="py-2.5 px-3 text-center align-middle font-mono text-xs text-gray-700 whitespace-nowrap">
+                      {customer.phone}
                     </td>
 
-                    {/* 3. Account Status Badge */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <CustomerStatusBadge status={customer.accountStatus} />
-                    </td>
-
-                    {/* 4. Available Wallet Balance */}
-                    <td className="py-3.5 px-4 text-right font-semibold text-gray-900 whitespace-nowrap">
+                    {/* 3. Wallet Balance */}
+                    <td className="py-2.5 px-3 text-center align-middle font-mono font-semibold text-gray-900 whitespace-nowrap text-xs">
                       {formatZMW(customer.walletBalance)}
                     </td>
 
-                    {/* 5. Active Requests Count */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    {/* 4. Active Requests */}
+                    <td className="py-2.5 px-3 text-center align-middle font-mono whitespace-nowrap">
                       {customer.activeRequestsCount > 0 ? (
-                        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="font-bold text-blue-600">
                           {customer.activeRequestsCount}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400 font-medium">
-                          0
-                        </span>
+                        <span className="text-gray-400 font-normal">0</span>
                       )}
                     </td>
 
-                    {/* 6. Pending Withdrawal Count */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    {/* 5. Pending Withdrawal */}
+                    <td className="py-2.5 px-3 text-center align-middle font-mono whitespace-nowrap">
                       {customer.pendingWithdrawalsCount > 0 ? (
-                        <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="font-bold text-amber-600">
                           {customer.pendingWithdrawalsCount}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400 font-medium select-none">
-                          —
+                        <span className="text-gray-400 font-normal">0</span>
+                      )}
+                    </td>
+
+                    {/* 6. Withdrawal Amount */}
+                    <td className="py-2.5 px-3 text-center align-middle font-mono font-semibold whitespace-nowrap text-xs">
+                      {customer.pendingWithdrawalsCount > 0 && withdrawalAmt > 0 ? (
+                        <span className="text-amber-700">
+                          {formatZMW(withdrawalAmt)}
                         </span>
+                      ) : (
+                        <span className="text-gray-400 font-normal select-none">—</span>
                       )}
                     </td>
 
                     {/* 7. Last Activity */}
-                    <td className="py-3.5 px-4 text-xs text-gray-600 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-center align-middle text-[11px] text-gray-600 whitespace-nowrap">
                       {customer.lastActivity}
                     </td>
 
                     {/* 8. Registered Date */}
-                    <td className="py-3.5 px-4 text-xs text-gray-600 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-center align-middle text-[11px] text-gray-600 whitespace-nowrap">
                       {customer.registeredDate}
-                    </td>
-
-                    {/* 9. Action: View Profile Button (Sticky Right) */}
-                    <td className="py-3.5 px-4 text-center sticky right-0 bg-white group-hover:bg-gray-50/90 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.03)] z-10 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => onViewProfile(customer.id)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#0D93AA] bg-cyan-50/80 hover:bg-[#0D93AA] hover:text-white border border-cyan-200/60 hover:border-[#0D93AA] transition-all cursor-pointer shadow-2xs"
-                        title={`View Profile for ${customer.name}`}
-                      >
-                        <span>View Profile</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
                     </td>
                   </tr>
                 );

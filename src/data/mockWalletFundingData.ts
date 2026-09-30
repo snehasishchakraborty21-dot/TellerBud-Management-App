@@ -1344,17 +1344,53 @@ const BASE_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
   },
 ];
 
+const CUSTOMER_ID_MAP: Record<string, { id: string; phone: string }> = {
+  'Mwamba Mulenga': { id: 'TB-CUS-000001', phone: '+260 97 778 9012' },
+  'Chileshe Mumba': { id: 'TB-CUS-000002', phone: '+260 95 334 5678' },
+  'Ruth Banda': { id: 'TB-CUS-000003', phone: '+260 97 654 3210' },
+  'Grace Tembo': { id: 'TB-CUS-000004', phone: '+260 96 112 3456' },
+  'Kondwani Phiri': { id: 'TB-CUS-000005', phone: '+260 97 456 7890' },
+  'Bupe Chileshe': { id: 'TB-CUS-000006', phone: '+260 96 223 5588' },
+  'Mutale Mwape': { id: 'TB-CUS-000007', phone: '+260 96 123 9900' },
+  'Brian Lungu': { id: 'TB-CUS-000008', phone: '+260 97 889 0123' },
+  'Natasha Kaunda': { id: 'TB-CUS-000009', phone: '+260 95 445 6789' },
+  'Kelvin Zulu': { id: 'TB-CUS-000010', phone: '+260 97 334 1122' },
+  'Thandiwe Sakala': { id: 'TB-CUS-000011', phone: '+260 96 556 7788' },
+  'Joseph Mwale': { id: 'TB-CUS-000012', phone: '+260 97 990 1234' },
+  'Memory Chisenga': { id: 'TB-CUS-000013', phone: '+260 95 667 8890' },
+  'Bright Musonda': { id: 'TB-CUS-000014', phone: '+260 97 223 4455' },
+  'Patrick Bwalya': { id: 'TB-CUS-000015', phone: '+260 96 778 9900' },
+  'Mary Zimba': { id: 'TB-CUS-000016', phone: '+260 97 112 2334' },
+};
+
 /**
- * All wallet funding records enriched with unmasked customer mobile numbers.
- * Retrieved directly from existing customer records using format: +260 96 123 9900.
+ * All wallet funding records enriched with standardized TB-FND-000000 references,
+ * TB-CUS-000000 Customer IDs, and complete unmasked customer mobile numbers.
  */
 export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = BASE_WALLET_FUNDING_RECORDS.map(
-  (record) => {
-    const fullPhone = getCustomerRegisteredPhone(record.customerId, record.customerName);
+  (record, index) => {
+    const fndRef = `TB-FND-${String(index + 1).padStart(6, '0')}`;
+    const cusInfo = CUSTOMER_ID_MAP[record.customerName] || {
+      id: `TB-CUS-${String((index % 16) + 1).padStart(6, '0')}`,
+      phone: getCustomerRegisteredPhone(record.customerId, record.customerName),
+    };
+
+    const ledRef = record.walletCreditReference
+      ? `TB-LED-${String(index + 1).padStart(6, '0')}`
+      : null;
+    const revRef = record.reversalCreditReference || record.status === 'Reversed'
+      ? `TB-LED-${String(index + 1).padStart(6, '0')}-REV`
+      : null;
+
     return {
       ...record,
-      customerMobileNumber: fullPhone,
-      maskedMobileNumber: fullPhone,
+      id: fndRef,
+      fundingReference: fndRef,
+      customerId: cusInfo.id,
+      customerMobileNumber: cusInfo.phone,
+      maskedMobileNumber: cusInfo.phone,
+      walletCreditReference: ledRef,
+      reversalCreditReference: revRef,
     };
   }
 );
@@ -1495,8 +1531,16 @@ export function filterAndSortWalletFunding(
  */
 export function getWalletFundingByReference(ref: string): WalletFundingRecord | undefined {
   const clean = ref.trim().toUpperCase();
-  return MOCK_WALLET_FUNDING_RECORDS.find(
+  const direct = MOCK_WALLET_FUNDING_RECORDS.find(
     (r) => r.fundingReference.toUpperCase() === clean || r.id.toUpperCase() === clean
+  );
+  if (direct) return direct;
+
+  return MOCK_WALLET_FUNDING_RECORDS.find(
+    (r) =>
+      r.fundingReference.includes(clean) ||
+      clean.includes(r.fundingReference) ||
+      (r.walletCreditReference && r.walletCreditReference.toUpperCase() === clean)
   );
 }
 

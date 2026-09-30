@@ -3,7 +3,7 @@ import { UserRole } from './auth';
 export type StoreStatus = 'Active' | 'Inactive' | 'Archived';
 export type BoothStatus = 'Active' | 'Inactive' | 'Archived';
 export type OrgUserStatus = 'Active' | 'Inactive' | 'Suspended';
-export type DeviceStatus = 'Available' | 'Assigned' | 'Unmapped' | 'Inactive' | 'Decommissioned';
+export type DeviceStatus = 'Available' | 'Assigned' | 'Unmapped' | 'Inactive' | 'Under Maintenance' | 'Decommissioned';
 export type DeviceType = 'POS Terminal' | 'mPOS' | 'Biometric Scanner' | 'PIN Pad' | 'Smartphone Terminal';
 export type BalanceType = 'Cash Balance' | 'MNO Balance' | 'Bank Balance';
 export type AdjustmentDirection = 'Increase' | 'Decrease';

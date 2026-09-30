@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
-  CustomerRecord,
   CustomerSummary,
   CustomerFilters,
   CustomerQuickFilter,
@@ -21,11 +20,10 @@ import { CustomerPagination } from '../components/customers/CustomerPagination';
 
 export const CustomersPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Filters state initialized from URL params if present
   const [filters, setFilters] = useState<CustomerFilters>({
-    search: searchParams.get('search') || '',
+    search: '',
     quickFilter: (searchParams.get('quickFilter') as CustomerQuickFilter) || 'ALL',
     accountStatus: (searchParams.get('status') as CustomerAccountStatus | 'ALL') || 'ALL',
     requestState: (searchParams.get('requestState') as 'ALL' | 'HAS_ACTIVE' | 'NO_ACTIVE') || 'ALL',
@@ -43,9 +41,9 @@ export const CustomersPage: React.FC = () => {
   const [pageSize, setPageSize] = useState<number>(10);
 
   // Data & UI states
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   // Summary counts calculated from all registered customers
   const summary: CustomerSummary = useMemo(() => {
@@ -66,10 +64,9 @@ export const CustomersPage: React.FC = () => {
     return filteredCustomers.slice(start, start + pageSize);
   }, [filteredCustomers, currentPage, pageSize]);
 
-  // Check if any filter or search is active
+  // Check if any filter is active
   const isFiltered = useMemo(() => {
     return (
-      Boolean(filters.search.trim()) ||
       filters.quickFilter !== 'ALL' ||
       filters.accountStatus !== 'ALL' ||
       filters.requestState !== 'ALL' ||
@@ -82,7 +79,6 @@ export const CustomersPage: React.FC = () => {
   // URL search params synchronizer
   const updateUrlParams = useCallback((newFilters: CustomerFilters) => {
     const params = new URLSearchParams();
-    if (newFilters.search.trim()) params.set('search', newFilters.search.trim());
     if (newFilters.quickFilter !== 'ALL') params.set('quickFilter', newFilters.quickFilter);
     if (newFilters.accountStatus !== 'ALL') params.set('status', newFilters.accountStatus);
     if (newFilters.requestState !== 'ALL') params.set('requestState', newFilters.requestState);
@@ -137,7 +133,7 @@ export const CustomersPage: React.FC = () => {
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
-    }, 450);
+    }, 400);
   };
 
   // Sorting
@@ -146,7 +142,7 @@ export const CustomersPage: React.FC = () => {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortDirection(field === 'name' ? 'asc' : 'desc');
+      setSortDirection(field === 'name' || field === 'phone' ? 'asc' : 'desc');
     }
     setCurrentPage(1);
   };
@@ -157,13 +153,8 @@ export const CustomersPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Navigate to customer profile
-  const handleViewProfile = (customerId: string) => {
-    navigate(`/super-admin/people/customers/${customerId}`);
-  };
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-5 max-w-7xl mx-auto w-full">
       {/* 1. Summary Cards (Clickable Quick Filters) */}
       <CustomerSummaryCards
         summary={summary}
@@ -172,7 +163,7 @@ export const CustomersPage: React.FC = () => {
         isFiltered={isFiltered}
       />
 
-      {/* 2. Filter Bar */}
+      {/* 2. Compact Filter Bar with Export */}
       <CustomerFilterBar
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -180,10 +171,11 @@ export const CustomersPage: React.FC = () => {
         onRefresh={handleRefresh}
         isFiltered={isFiltered}
         isRefreshing={isRefreshing}
+        customersToExport={filteredCustomers}
       />
 
-      {/* 3. Customer Table with Sticky Actions */}
-      <div className="flex flex-col">
+      {/* 3. Customer Table & Pagination */}
+      <div className="flex flex-col bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden w-full">
         <CustomerTable
           customers={paginatedCustomers}
           loading={loading || isRefreshing}
@@ -191,12 +183,10 @@ export const CustomersPage: React.FC = () => {
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
-          onViewProfile={handleViewProfile}
           onRetry={handleRefresh}
           hasActiveFilters={isFiltered}
         />
 
-        {/* 4. Pagination */}
         <CustomerPagination
           currentPage={currentPage}
           totalItems={filteredCustomers.length}
