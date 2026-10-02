@@ -96,7 +96,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Agent App',
     customerName: 'Mutale Mwape',
-    customerId: 'TB-CUS-1041',
+    customerId: 'TB-CUS-001041',
     agentName: 'Mwansa Tembo',
     agentId: 'TB-AGT-1007-01',
     businessName: 'Lusaka Central Express Agency',
@@ -136,7 +136,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Customer App',
     customerName: 'Mwamba Mulenga',
-    customerId: 'TB-CUS-1052',
+    customerId: 'TB-CUS-001052',
     agentName: 'Kelvin Banda',
     agentId: 'TB-AGT-1007-03',
     businessName: 'Lusaka Central Express Agency',
@@ -155,7 +155,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Customer App',
     customerName: 'Bupe Chileshe',
-    customerId: 'TB-CUS-1021',
+    customerId: 'TB-CUS-001021',
     agentName: 'Chanda Musonda',
     agentId: 'TB-AGT-1003-02',
     businessName: 'Copperbelt Liquidity Hub',
@@ -174,7 +174,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Customer App',
     customerName: 'Lombe Kasonde',
-    customerId: 'TB-CUS-1046',
+    customerId: 'TB-CUS-001046',
     agentName: '—',
     businessName: '—',
     service: 'Cash Pickup',
@@ -191,7 +191,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Provider API',
     customerName: 'Mutale Mwape',
-    customerId: 'TB-CUS-1041',
+    customerId: 'TB-CUS-001041',
     agentName: 'Automated Provider API',
     businessName: '—',
     service: 'Wallet Funding',
@@ -208,7 +208,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Customer App',
     customerName: 'Lombe Kasonde',
-    customerId: 'TB-CUS-1046',
+    customerId: 'TB-CUS-001046',
     agentName: '—',
     businessName: '—',
     service: 'Customer Withdrawal',
@@ -267,7 +267,7 @@ export const CORE_SAMPLE_TRANSACTIONS: AllTransactionRecord[] = [
     rawDate: '2026-09-11',
     source: 'Provider API',
     customerName: 'Chilufya Bwalya',
-    customerId: 'TB-CUS-1038',
+    customerId: 'TB-CUS-001038',
     agentName: 'Automated Provider API',
     businessName: '—',
     service: 'Wallet Funding',
@@ -305,16 +305,16 @@ function buildAllTransactions(): AllTransactionRecord[] {
   const remainingValueTarget = TARGET_TOTAL_VALUE - initialSum; // 1,208,850.00
 
   const registeredCustomers = [
-    { name: 'Faith Zulu', id: 'TB-CUS-1025' },
-    { name: 'Mutale Mwape', id: 'TB-CUS-1041' },
-    { name: 'Mwamba Mulenga', id: 'TB-CUS-1052' },
-    { name: 'Bupe Chileshe', id: 'TB-CUS-1021' },
-    { name: 'Lombe Kasonde', id: 'TB-CUS-1046' },
-    { name: 'Chilufya Bwalya', id: 'TB-CUS-1038' },
-    { name: 'Gift Mwanza', id: 'TB-CUS-1014' },
-    { name: 'Sipho Zulu', id: 'TB-CUS-1065' },
-    { name: 'Kondwani Banda', id: 'TB-CUS-1077' },
-    { name: 'Natasha Phiri', id: 'TB-CUS-1082' },
+    { name: 'Faith Zulu', id: 'TB-CUS-001025' },
+    { name: 'Mutale Mwape', id: 'TB-CUS-001041' },
+    { name: 'Mwamba Mulenga', id: 'TB-CUS-001052' },
+    { name: 'Bupe Chileshe', id: 'TB-CUS-001021' },
+    { name: 'Lombe Kasonde', id: 'TB-CUS-001046' },
+    { name: 'Chilufya Bwalya', id: 'TB-CUS-001038' },
+    { name: 'Gift Mwanza', id: 'TB-CUS-001014' },
+    { name: 'Sipho Zulu', id: 'TB-CUS-001065' },
+    { name: 'Kondwani Banda', id: 'TB-CUS-001077' },
+    { name: 'Natasha Phiri', id: 'TB-CUS-001082' },
   ];
 
   const generalCustomers = [
@@ -549,7 +549,7 @@ function buildAllTransactions(): AllTransactionRecord[] {
     // Specific Override for TB-TXN-4296 (Requirement 6):
     if (ref === 'TB-TXN-4296') {
       finalCustName = 'Faith Zulu';
-      finalCustId = 'TB-CUS-1025';
+      finalCustId = 'TB-CUS-001025';
       finalAgtName = 'Automated Provider API';
       finalAgtId = undefined;
       finalBizName = '—';

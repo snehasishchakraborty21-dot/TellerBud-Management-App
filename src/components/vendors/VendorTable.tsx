@@ -40,6 +40,7 @@ export const VendorTable: React.FC<VendorTableProps> = ({
 }) => {
   const [revealedVendorId, setRevealedVendorId] = useState<string | null>(null);
   const [hoveredVendorId, setHoveredVendorId] = useState<string | null>(null);
+
   const renderSortIndicator = (field: VendorSortField) => {
     if (sortField !== field) {
       return <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />;
@@ -55,35 +56,35 @@ export const VendorTable: React.FC<VendorTableProps> = ({
     switch (status) {
       case 'Active':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mr-1.5" />
             Active
           </span>
         );
       case 'Inactive':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5" />
             Inactive
           </span>
         );
       case 'Pending Integration':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5" />
             Pending Integration
           </span>
         );
       case 'Archived':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5" />
             Archived
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 whitespace-nowrap">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-slate-100 text-slate-700 whitespace-nowrap">
             {status}
           </span>
         );
@@ -97,13 +98,13 @@ export const VendorTable: React.FC<VendorTableProps> = ({
   return (
     <div
       id="vendor-table-container"
-      className="bg-white border border-slate-200/90 rounded-xl shadow-xs flex flex-col"
+      className="bg-white border border-slate-200/90 rounded-xl shadow-xs flex-1 min-h-0 flex flex-col overflow-hidden"
     >
-      {/* Scrollable Table Area */}
-      <div className="overflow-x-auto rounded-t-xl">
-        <table className="w-full text-left border-collapse">
+      {/* Scrollable Table Area: Header sticks at top, data rows scroll vertically beneath it */}
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto">
+        <table className="w-full text-left border-collapse min-w-[760px]">
           <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 shadow-2xs">
-            <tr className="text-[11px] font-bold text-slate-700 uppercase tracking-wider select-none bg-slate-50">
+            <tr className="text-[11px] font-bold leading-[16px] text-slate-700 uppercase tracking-wider select-none bg-slate-50">
               {/* Column 1: Vendor */}
               <th
                 onClick={() => onSort('name')}
@@ -171,15 +172,17 @@ export const VendorTable: React.FC<VendorTableProps> = ({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 text-xs">
+          <tbody className="divide-y divide-slate-100">
             {vendors.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <Building2 size={32} className="text-slate-300" />
-                    <p className="text-sm font-semibold text-slate-700">No vendors found</p>
-                    <p className="text-xs text-slate-500">
-                      Try adjusting your search query or filter parameters.
+                    <p className="text-[14px] font-semibold leading-[20px] text-slate-700">
+                      No vendors found
+                    </p>
+                    <p className="text-[13px] font-medium leading-[18px] text-slate-500">
+                      Try adjusting your filter parameters.
                     </p>
                   </div>
                 </td>
@@ -199,32 +202,22 @@ export const VendorTable: React.FC<VendorTableProps> = ({
                     id={`vendor-row-${vendor.id}`}
                     className="hover:bg-slate-50/70 transition-colors group"
                   >
-                    {/* 1. Vendor (Official Logo + Name + ID) */}
+                    {/* 1. Vendor (Text-Only Name + ID) */}
                     <td className="py-3.5 px-4 sm:px-5">
-                      <div className="flex items-center gap-3 min-w-[200px]">
-                        <div className="w-10 h-10 rounded-lg bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 shadow-2xs">
-                          <img
-                            src={vendor.logo}
-                            alt={`${vendor.name} official logo`}
-                            className="max-h-full max-w-full object-contain select-none"
-                            loading="lazy"
-                          />
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-semibold leading-[18px] text-slate-900 group-hover:text-[#0D93AA] transition-colors truncate">
+                          {vendor.name}
                         </div>
-                        <div className="min-w-0">
-                          <div className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-[#0D93AA] transition-colors truncate">
-                            {vendor.name}
-                          </div>
-                          {/* Secondary Vendor ID with increased contrast */}
-                          <div className="text-xs font-mono font-medium text-slate-600 mt-0.5">
-                            {vendor.id}
-                          </div>
+                        {/* Secondary Vendor ID */}
+                        <div className="text-[11px] font-normal leading-[15px] font-mono text-slate-500 mt-0.5">
+                          {vendor.id}
                         </div>
                       </div>
                     </td>
 
                     {/* 2. Vendor Type */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                      <div className="flex items-center gap-1.5 text-[13px] font-medium leading-[18px] text-slate-800">
                         {vendor.type === 'Mobile Money' ? (
                           <Smartphone size={14} className="text-blue-600 shrink-0" />
                         ) : (
@@ -234,13 +227,13 @@ export const VendorTable: React.FC<VendorTableProps> = ({
                       </div>
                     </td>
 
-                    {/* 3. Supported Services (Max 2 tags + Interactive "+1" reveal badge) */}
+                    {/* 3. Supported Services (Max 2 tags + Interactive "+N" reveal badge) */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-1.5 flex-wrap max-w-xs">
                         {firstTwoServices.map((service) => (
                           <span
                             key={service}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200 whitespace-nowrap"
+                            className="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium leading-[16px] bg-slate-100 text-slate-800 border border-slate-200 whitespace-nowrap"
                           >
                             {service}
                           </span>
@@ -250,7 +243,7 @@ export const VendorTable: React.FC<VendorTableProps> = ({
                             <button
                               type="button"
                               id={`reveal-services-btn-${vendor.id}`}
-                              aria-label={`Show ${remainingServicesCount} more service: ${hiddenServices.join(', ')}`}
+                              aria-label={`Show ${remainingServicesCount} more services: ${hiddenServices.join(', ')}`}
                               aria-expanded={isRevealed}
                               onMouseEnter={() => setHoveredVendorId(vendor.id)}
                               onMouseLeave={() => setHoveredVendorId(null)}
@@ -265,8 +258,8 @@ export const VendorTable: React.FC<VendorTableProps> = ({
                                 setHoveredVendorId(null);
                                 setRevealedVendorId(null);
                               }}
-                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-[#0D93AA] hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/30 transition-all cursor-pointer whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
-                              title={`Click or hover to view additional service: ${hiddenServices.join(', ')}`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[12px] font-semibold leading-[16px] bg-teal-50 text-[#0D93AA] hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/30 transition-all cursor-pointer whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
+                              title={`Click or hover to view additional services: ${hiddenServices.join(', ')}`}
                             >
                               +{remainingServicesCount}
                             </button>
@@ -298,7 +291,7 @@ export const VendorTable: React.FC<VendorTableProps> = ({
 
                     {/* 4. Integration Mode */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="text-xs font-mono font-medium text-slate-800 bg-slate-100/90 px-2 py-1 rounded border border-slate-200">
+                      <span className="text-[12px] font-medium leading-[16px] font-mono text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded border border-slate-200">
                         {vendor.integrationMode}
                       </span>
                     </td>
@@ -308,21 +301,21 @@ export const VendorTable: React.FC<VendorTableProps> = ({
                       {renderStatusBadge(vendor.status)}
                     </td>
 
-                    {/* 6. Last Updated (Enhanced Contrast) */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-700">
+                    {/* 6. Last Updated */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-[13px] font-medium leading-[18px] text-slate-700 font-mono">
                         <Clock size={12} className="text-slate-500 shrink-0" />
                         <span>{vendor.lastUpdated}</span>
                       </div>
                     </td>
 
-                    {/* 7. Action: View Details Button with Accessible Name */}
+                    {/* 7. Action: View Details Button */}
                     <td className="py-3.5 px-4 sm:px-5 text-right whitespace-nowrap">
                       <button
                         onClick={() => onViewDetails(vendor)}
                         id={`view-details-${vendor.id}`}
                         aria-label={`View Details for ${vendor.name}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-teal-50/80 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-medium leading-[16px] text-[#0D93AA] bg-teal-50/80 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs"
                         title={`View Details for ${vendor.name}`}
                       >
                         <span>View Details</span>
@@ -337,10 +330,10 @@ export const VendorTable: React.FC<VendorTableProps> = ({
         </table>
       </div>
 
-      {/* Pagination Footer with right-side spacing reserved to prevent overlap with floating PDF button */}
+      {/* Pinned Pagination Footer at bottom of table container */}
       <div
         id="vendor-table-pagination"
-        className="border-t border-slate-200 bg-slate-50/60 px-4 sm:px-5 py-3 pr-28 sm:pr-32 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700 select-none"
+        className="shrink-0 border-t border-slate-200 bg-slate-50/80 px-4 sm:px-5 py-2.5 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[13px] font-medium leading-[18px] text-slate-700 select-none"
       >
         <div className="flex items-center gap-2">
           <span>

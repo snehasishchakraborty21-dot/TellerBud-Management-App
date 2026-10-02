@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar as CalendarIcon,
   Info,
+  ArrowLeft,
 } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -173,7 +174,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </button>
 
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold text-[#102025] truncate">
+            {(location.pathname.startsWith('/super-admin/wallets/customers/') ||
+              location.pathname.startsWith('/customer-wallets/')) &&
+              !location.pathname.endsWith('/wallets/customers') &&
+              !location.pathname.endsWith('/customer-wallets') && (
+                <button
+                  type="button"
+                  id="header-back-btn-customer-wallets"
+                  onClick={() => navigate('/super-admin/wallets/customers')}
+                  className="inline-flex items-center justify-center p-1 -ml-1 text-slate-600 hover:text-[#0D93AA] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
+                  title="Back to Customer Wallets"
+                  aria-label="Back to Customer Wallets"
+                >
+                  <ArrowLeft size={19} className="text-slate-700 hover:text-[#0D93AA]" />
+                </button>
+              )}
+            <h1 className="text-[22px] font-bold leading-[28px] text-slate-900 truncate">
               {pageTitle}
             </h1>
             {(pageTitle === 'Users & Roles' || location.pathname.includes('/users-roles')) && (

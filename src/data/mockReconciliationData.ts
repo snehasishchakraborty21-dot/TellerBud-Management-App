@@ -15,7 +15,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     transactionRef: 'TB-FND-1041-02',
     transactionType: 'Wallet Funding',
     holderName: 'Mutale Mwape',
-    customerId: 'TB-CUS-1041',
+    customerId: 'TB-CUS-001041',
     customerPhone: '+260 96 1234567',
     walletId: 'TB-WAL-1041',
     walletType: 'Customer Wallet',
@@ -199,7 +199,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     transactionRef: 'TB-TXN-4255',
     transactionType: 'Business Wallet Transaction',
     holderName: 'Kabwe Central Agency',
-    walletId: 'TB-BWL-1005',
+    walletId: 'TB-BWL-000003',
     walletType: 'Business Global Wallet',
     provider: 'TellerBud Ledger',
     amount: 1200.0,
@@ -275,7 +275,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     transactionRef: 'TB-TXN-4310',
     transactionType: 'Business Wallet Transaction',
     holderName: 'Lusaka Central Express Agency',
-    walletId: 'TB-BWL-1007',
+    walletId: 'TB-BWL-000002',
     walletType: 'Business Global Wallet',
     provider: 'MTN Mobile Money',
     amount: 3500.0,
@@ -365,7 +365,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     transactionRef: 'TB-TXN-4211',
     transactionType: 'Business Wallet Transaction',
     holderName: 'Kitwe Hub Central Limited',
-    walletId: 'TB-BWL-1002',
+    walletId: 'TB-BWL-000001',
     walletType: 'Business Global Wallet',
     provider: 'TellerBud Ledger',
     amount: 6000.0,
@@ -491,7 +491,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     transactionRef: 'TB-TXN-4190',
     transactionType: 'Business Wallet Transaction',
     holderName: 'Ndola Main Distribution Hub',
-    walletId: 'TB-BWL-1001',
+    walletId: 'TB-BWL-000008',
     walletType: 'Business Global Wallet',
     provider: 'TellerBud Ledger',
     amount: 4500.0,
@@ -858,8 +858,9 @@ export function resolveReconciliationDetails(record: ReconciliationRecord): Reco
 
   // Customer attributes
   const customerId =
-    record.customerId ||
-    `TB-CUS-${record.walletId.replace(/[^0-9]/g, '') || '1041'}`;
+    record.customerId
+      ? (record.customerId.startsWith('TB-CUS-') && record.customerId.length === 13 ? record.customerId : `TB-CUS-${(record.customerId.replace(/[^0-9]/g, '') || '1041').padStart(6, '0')}`)
+      : `TB-CUS-${(record.walletId.replace(/[^0-9]/g, '') || '1041').padStart(6, '0')}`;
   const customerPhone = record.customerPhone || '+260 96 1234567';
 
   // Business attributes

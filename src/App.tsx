@@ -45,7 +45,10 @@ import { CustomersPage } from './pages/CustomersPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
 import { BusinessesPage } from './pages/BusinessesPage';
 import { BusinessDetailsPage } from './pages/BusinessDetailsPage';
-import { AddBusinessPage } from './pages/AddBusinessPage';
+import { BusinessOnboardingPage } from './pages/BusinessOnboardingPage';
+import { BusinessOnboardingDetailPage } from './pages/BusinessOnboardingDetailPage';
+import { TabletPhysicalOnboardingPage } from './pages/TabletPhysicalOnboardingPage';
+import { WebsiteBusinessSignUpPage } from './pages/WebsiteBusinessSignUpPage';
 import { CustomerWalletsPage } from './pages/CustomerWalletsPage';
 import { CustomerWalletDetailPage } from './pages/CustomerWalletDetailPage';
 import { BusinessGlobalWalletsPage } from './pages/BusinessGlobalWalletsPage';
@@ -168,9 +171,12 @@ function AppRoutes() {
     '/super-admin/people/customers',
     '/super-admin/customers',
     '/super-admin/people/businesses',
-    '/super-admin/people/businesses/add',
+    '/super-admin/people/business-onboarding',
+    '/super-admin/people/business-onboarding/:id',
+    '/super-admin/people/business-onboarding/:id/tablet-onboarding',
     '/super-admin/businesses',
-    '/super-admin/businesses/add',
+    '/super-admin/business-onboarding',
+    '/business-onboarding',
     '/super-admin/transactions/all',
     '/super-admin/transactions',
     '/transactions/all',
@@ -260,6 +266,11 @@ function AppRoutes() {
 
       {/* Login Route */}
       <Route path="/login" element={<PublicLoginRoute />} />
+
+      {/* Website Business Owner Sign Up Form Routes */}
+      <Route path="/business-signup" element={<WebsiteBusinessSignUpPage />} />
+      <Route path="/website/signup" element={<WebsiteBusinessSignUpPage />} />
+      <Route path="/website/business-signup" element={<WebsiteBusinessSignUpPage />} />
 
       {/* TellerBud Admin Protected Portal */}
       <Route
@@ -358,13 +369,21 @@ function AppRoutes() {
         <Route path="customers" element={<Navigate to="/super-admin/people/customers" replace />} />
         <Route path="customers/:id" element={<CustomerProfilePage />} />
 
-        {/* Businesses */}
+        {/* Businesses & Business Onboarding */}
         <Route path="people/businesses" element={<BusinessesPage />} />
-        <Route path="people/businesses/add" element={<AddBusinessPage />} />
+        <Route path="people/businesses/add" element={<Navigate to="/super-admin/people/business-onboarding" replace />} />
         <Route path="people/businesses/:id" element={<BusinessDetailsPage />} />
         <Route path="businesses" element={<Navigate to="/super-admin/people/businesses" replace />} />
-        <Route path="businesses/add" element={<AddBusinessPage />} />
+        <Route path="businesses/add" element={<Navigate to="/super-admin/people/business-onboarding" replace />} />
         <Route path="businesses/:id" element={<BusinessDetailsPage />} />
+
+        {/* Business Onboarding Dedicated Full-Width Experience */}
+        <Route path="people/business-onboarding" element={<BusinessOnboardingPage />} />
+        <Route path="people/business-onboarding/:id" element={<BusinessOnboardingDetailPage />} />
+        <Route path="people/business-onboarding/:id/tablet-onboarding" element={<TabletPhysicalOnboardingPage />} />
+        <Route path="business-onboarding" element={<Navigate to="/super-admin/people/business-onboarding" replace />} />
+        <Route path="business-onboarding/:id" element={<BusinessOnboardingDetailPage />} />
+        <Route path="business-onboarding/:id/tablet-onboarding" element={<TabletPhysicalOnboardingPage />} />
 
         {/* Removed TellerBud Admin Agents routes - redirect safely to Businesses */}
         <Route path="people/agents" element={<Navigate to="/super-admin/people/businesses" replace />} />

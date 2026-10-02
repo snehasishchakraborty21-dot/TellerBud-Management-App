@@ -30,6 +30,7 @@ import {
   ChargeStatus,
   CommissionSettlementStatus,
 } from '../types/chargesCommissions';
+import { formatCustomerId } from '../utils/formatters';
 
 function formatZMW(amount: number): string {
   return `ZMW ${amount.toLocaleString('en-US', {
@@ -199,7 +200,7 @@ export const ChargeCommissionDetailPage: React.FC = () => {
     const serviceName = isCurrent9089 ? 'Cash Pickup' : chargeRecord.service;
     const providerName = isCurrent9089 ? 'Airtel Money' : chargeRecord.provider;
     const customerName = isCurrent9089 ? 'Mwamba Mulenga' : chargeRecord.customerName;
-    const customerId = isCurrent9089 ? 'TB-CUS-1052' : chargeRecord.customerId;
+    const customerId = isCurrent9089 ? 'TB-CUS-001052' : formatCustomerId(chargeRecord.customerId);
     const customerWalletId = isCurrent9089 ? 'TB-WAL-1052' : (chargeRecord.customerWalletId || `TB-WAL-${chargeRecord.customerId.replace('TB-CUS-', '')}`);
     const customerMobile = isCurrent9089 ? '+260 97 123 9012' : (chargeRecord.customerMobile || '+260 97 123 9012');
     const transactionType = isCurrent9089 ? 'Deposit' : chargeRecord.transactionType;

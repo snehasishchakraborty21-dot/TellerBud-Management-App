@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -8,7 +8,12 @@ import {
   ArrowUp,
   ArrowDown,
   Building2,
+  Download,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import {
   MobileMoneyTransaction,
   MobileMoneyKPIPeriods,
@@ -29,6 +34,7 @@ interface BusinessMobileMoneySummary {
   purchase: number;
   completed: number;
   failedCancelled: number;
+  serviceCharge: number;
 }
 
 type SortField =
@@ -39,7 +45,8 @@ type SortField =
   | 'withdrawal'
   | 'purchase'
   | 'completed'
-  | 'failedCancelled';
+  | 'failedCancelled'
+  | 'serviceCharge';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -57,9 +64,19 @@ function formatToStandardBizId(rawId: string, index = 0): string {
   return `TB-BIZ-${String(index + 1).padStart(6, '0')}`;
 }
 
+/**
+ * Formats monetary amounts with thousands separators and two decimal places (without repeating ZMW prefix).
+ */
+function formatServiceChargeAmount(val: number): string {
+  return Number(val || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export const MobileMoneyTransactionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const todayStr = useMemo(() => getZambiaTodayString() || '2026-09-29', []);
+  const todayStr = useMemo(() => getZambiaTodayString() || new Date().toISOString().split('T')[0], []);
 
   // Primary Data State
   const [allTransactions, setAllTransactions] = useState<MobileMoneyTransaction[]>([]);
@@ -79,6 +96,10 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   const [fromDate, setFromDate] = useState<string>(searchParams.get('from') || '');
   const [toDate, setToDate] = useState<string>(searchParams.get('to') || '');
 
+  // Export State
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
   // Sorting State
   const [sortField, setSortField] = useState<SortField>('totalTransactions');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -86,6 +107,17 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Load all data (Global scope for Super Admin)
   const loadData = useCallback(async (showRefreshIndicator = false) => {
@@ -145,7 +177,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
     });
   }, [allTransactions, fromDate, toDate]);
 
-  // Build Business-wise Mobile Money Summaries
+  // Build Business-wise Mobile Money Summaries with Service Charge
   const businessSummaries: BusinessMobileMoneySummary[] = useMemo(() => {
     const txnsByBizId = new Map<string, MobileMoneyTransaction[]>();
     const txnsByBizName = new Map<string, MobileMoneyTransaction[]>();
@@ -188,6 +220,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
       let purchase = 0;
       let completed = 0;
       let failedCancelled = 0;
+      let serviceCharge = 0;
 
       combinedTxns.forEach((t) => {
         // Transaction Types
@@ -199,9 +232,14 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
           purchase++;
         }
 
-        // Status
+        // Status & Service Charge calculation
+        // Exclude failed, cancelled, reversed, expired transactions
         if (t.status === 'Completed') {
           completed++;
+          const fee = Number(t.reservationCharge || 0);
+          if (fee > 0) {
+            serviceCharge += fee;
+          }
         } else if (t.status === 'Failed' || t.status === 'Cancelled') {
           failedCancelled++;
         }
@@ -221,6 +259,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
         purchase,
         completed,
         failedCancelled,
+        serviceCharge: Math.round(serviceCharge * 100) / 100,
       });
     });
 
@@ -268,6 +307,9 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
         case 'failedCancelled':
           comparison = a.failedCancelled - b.failedCancelled;
           break;
+        case 'serviceCharge':
+          comparison = a.serviceCharge - b.serviceCharge;
+          break;
         default:
           comparison = 0;
       }
@@ -276,6 +318,30 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
     return list;
   }, [businessSummaries, searchQuery, sortField, sortDirection]);
+
+  // Global totals for reconciliation & export summary
+  const totals = useMemo(() => {
+    return filteredAndSortedBusinesses.reduce(
+      (acc, curr) => ({
+        totalTransactions: acc.totalTransactions + curr.totalTransactions,
+        deposit: acc.deposit + curr.deposit,
+        withdrawal: acc.withdrawal + curr.withdrawal,
+        purchase: acc.purchase + curr.purchase,
+        completed: acc.completed + curr.completed,
+        failedCancelled: acc.failedCancelled + curr.failedCancelled,
+        serviceCharge: acc.serviceCharge + curr.serviceCharge,
+      }),
+      {
+        totalTransactions: 0,
+        deposit: 0,
+        withdrawal: 0,
+        purchase: 0,
+        completed: 0,
+        failedCancelled: 0,
+        serviceCharge: 0,
+      }
+    );
+  }, [filteredAndSortedBusinesses]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedBusinesses.length / pageSize));
@@ -313,6 +379,87 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
   };
 
   const hasActiveFilters = searchQuery.trim() !== '' || fromDate !== '' || toDate !== '';
+
+  // Export Data Preparation
+  const prepareExportData = () => {
+    const rows = filteredAndSortedBusinesses.map((b) => ({
+      'Business Name': b.businessName + (b.city ? ` (${b.city})` : ''),
+      'Business ID': b.formattedBusinessId,
+      'Total': b.totalTransactions,
+      'Deposit': b.deposit,
+      'Withdrawal': b.withdrawal,
+      'Purchase': b.purchase,
+      'Completed': b.completed,
+      'Failed/Cancelled': b.failedCancelled,
+      'Service Charge (ZMW)': Number(b.serviceCharge.toFixed(2)),
+    }));
+
+    // Final total row reconciling combined Service Charge across all businesses
+    rows.push({
+      'Business Name': 'TOTAL',
+      'Business ID': '—',
+      'Total': totals.totalTransactions,
+      'Deposit': totals.deposit,
+      'Withdrawal': totals.withdrawal,
+      'Purchase': totals.purchase,
+      'Completed': totals.completed,
+      'Failed/Cancelled': totals.failedCancelled,
+      'Service Charge (ZMW)': Number(totals.serviceCharge.toFixed(2)),
+    });
+
+    return rows;
+  };
+
+  const handleExportCSV = () => {
+    setShowExportMenu(false);
+    const data = prepareExportData();
+    if (data.length === 0) return;
+
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(','),
+      ...data.map((row) =>
+        headers
+          .map((header) => {
+            const val = (row as Record<string, string | number>)[header];
+            const escaped = String(val ?? '').replace(/"/g, '""');
+            return `"${escaped}"`;
+          })
+          .join(',')
+      ),
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvRows.join('\n'));
+    const link = document.createElement('a');
+    link.setAttribute('href', csvContent);
+    link.setAttribute('download', `TellerBud_Mobile_Money_Transactions_${todayStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportExcel = () => {
+    setShowExportMenu(false);
+    const data = prepareExportData();
+    if (data.length === 0) return;
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 32 }, // Business Name
+      { wch: 18 }, // Business ID
+      { wch: 12 }, // Total
+      { wch: 12 }, // Deposit
+      { wch: 14 }, // Withdrawal
+      { wch: 12 }, // Purchase
+      { wch: 14 }, // Completed
+      { wch: 18 }, // Failed/Cancelled
+      { wch: 22 }, // Service Charge (ZMW)
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Mobile Money Transactions');
+    XLSX.writeFile(wb, `TellerBud_Mobile_Money_Transactions_${todayStr}.xlsx`);
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-5 max-w-7xl mx-auto w-full">
@@ -376,96 +523,160 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Compact Filter Section (Single Horizontal Line) */}
+      {/* 2. Compact Filter & Action Section (Single Horizontal Line) */}
       <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
-          {/* Search Box */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search Business Name or Business ID..."
-              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCurrentPage(1);
-                }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-
-          {/* Date Range: From Date & To Date */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                From:
-              </span>
-              <input
-                type="date"
-                value={fromDate}
-                max={toDate || todayStr}
-                onChange={(e) => {
-                  setFromDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+          {/* Left: Search & Date Ranges */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+            {/* Search Box */}
+            <div className="relative w-full sm:w-[240px] lg:w-[260px] shrink-0">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
               />
+              <input
+                type="text"
+                id="biz-search-input"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search Business Name or Business ID..."
+                className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
+                aria-label="Search Business Name or Business ID"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                To:
-              </span>
-              <input
-                type="date"
-                value={toDate}
-                min={fromDate || undefined}
-                max={todayStr}
-                onChange={(e) => {
-                  setToDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-              />
+            {/* Date Range: From Date & To Date */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                  From:
+                </span>
+                <input
+                  id="filter-from-date"
+                  type="date"
+                  value={fromDate}
+                  max={toDate || todayStr}
+                  onChange={(e) => {
+                    setFromDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  title="From Date"
+                  aria-label="From Date"
+                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                  To:
+                </span>
+                <input
+                  id="filter-to-date"
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  max={todayStr}
+                  onChange={(e) => {
+                    setToDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  title="To Date"
+                  aria-label="To Date"
+                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons: Clear Filters & Refresh */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right: Clear Filters, Refresh & Export Dropdown */}
+          <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
+            {/* Clear Filters */}
             <button
+              type="button"
+              id="btn-clear-filters"
               onClick={handleClearFilters}
               disabled={!hasActiveFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
+              className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-colors flex items-center gap-1.5 ${
+                hasActiveFilters
+                  ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer'
+                  : 'text-gray-400 bg-transparent border-gray-200/60 opacity-50 cursor-not-allowed'
+              }`}
+              title={hasActiveFilters ? 'Reset applied filters' : 'No active filters'}
             >
               <X size={13} />
-              Clear Filters
+              <span>Clear Filters</span>
             </button>
 
+            {/* Refresh */}
             <button
+              type="button"
+              id="btn-refresh-momo"
               onClick={() => loadData(true)}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9"
+              className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Refresh mobile money transaction summaries"
             >
               <RefreshCw
                 size={13}
-                className={isRefreshing ? 'animate-spin' : ''}
+                className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''}
               />
-              Refresh
+              <span>Refresh</span>
             </button>
+
+            {/* Export Dropdown */}
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                type="button"
+                id="btn-export-momo"
+                onClick={() => setShowExportMenu((prev) => !prev)}
+                className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Export mobile money transactions"
+              >
+                <Download size={13} />
+                <span>Export</span>
+                <ChevronDown
+                  size={12}
+                  className={showExportMenu ? 'rotate-180 transition-transform' : 'transition-transform'}
+                />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 mt-1.5 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button
+                    type="button"
+                    onClick={handleExportExcel}
+                    className="w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileSpreadsheet size={14} className="text-emerald-600" />
+                    <span>Export as Excel (.xlsx)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                  >
+                    <FileText size={14} className="text-blue-600" />
+                    <span>Export as CSV (.csv)</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -478,8 +689,9 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
               <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-wider select-none">
                 {/* 1. Business Name */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('businessName')}
-                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[240px] sm:min-w-[260px] w-[26%]"
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[220px] sm:min-w-[240px] w-[24%]"
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span>Business Name</span>
@@ -489,6 +701,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 2. Business ID */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('businessId')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[110px]"
                 >
@@ -498,8 +711,9 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
                   </div>
                 </th>
 
-                {/* 3. Total (Renamed from Total Transactions) */}
+                {/* 3. Total */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('totalTransactions')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[80px]"
                 >
@@ -511,6 +725,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 4. Deposit */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('deposit')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[80px]"
                 >
@@ -522,6 +737,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 5. Withdrawal */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('withdrawal')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[85px]"
                 >
@@ -533,6 +749,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 6. Purchase */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('purchase')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[80px]"
                 >
@@ -544,6 +761,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 7. Completed */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('completed')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[80px]"
                 >
@@ -555,6 +773,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
 
                 {/* 8. Failed/Cancelled */}
                 <th
+                  scope="col"
                   onClick={() => handleSort('failedCancelled')}
                   className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[95px]"
                 >
@@ -564,10 +783,15 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
                   </div>
                 </th>
 
-                {/* 9. Commissions */}
-                <th className="py-3 px-3 text-center align-middle whitespace-nowrap min-w-[95px]">
+                {/* 9. Service Charge (ZMW) */}
+                <th
+                  scope="col"
+                  onClick={() => handleSort('serviceCharge')}
+                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group whitespace-nowrap min-w-[145px]"
+                >
                   <div className="flex items-center justify-center gap-1">
-                    <span>Commissions</span>
+                    <span>Service Charge (ZMW)</span>
+                    {renderSortIcon('serviceCharge')}
                   </div>
                 </th>
               </tr>
@@ -595,94 +819,104 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedBusinesses.map((biz, idx) => (
-                  <tr
-                    key={`biz-row-${biz.formattedBusinessId || biz.businessId}-${idx}`}
-                    className="hover:bg-gray-50/70 transition-colors"
-                  >
-                    {/* 1. Business Name: Line 1 = Full Name (single line), Line 2 = Location */}
-                    <td className="py-3 px-3.5 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center text-center mx-auto">
-                        <div className="font-semibold text-[#102025] text-xs sm:text-[13px] whitespace-nowrap leading-tight">
-                          {biz.businessName}
-                        </div>
-                        {biz.city && (
-                          <div className="text-[10.5px] sm:text-[11px] text-gray-400 mt-0.5 whitespace-nowrap leading-tight">
-                            {biz.city}
+                paginatedBusinesses.map((biz, idx) => {
+                  const hasServiceCharge = biz.serviceCharge > 0;
+
+                  return (
+                    <tr
+                      key={`biz-row-${biz.formattedBusinessId || biz.businessId}-${idx}`}
+                      className="hover:bg-gray-50/70 transition-colors"
+                    >
+                      {/* 1. Business Name: Line 1 = Full Name (single line), Line 2 = Location */}
+                      <td className="py-3 px-3.5 text-center align-middle">
+                        <div className="flex flex-col items-center justify-center text-center mx-auto">
+                          <div className="font-semibold text-[#102025] text-xs sm:text-[13px] whitespace-nowrap leading-tight">
+                            {biz.businessName}
                           </div>
+                          {biz.city && (
+                            <div className="text-[10.5px] sm:text-[11px] text-gray-400 mt-0.5 whitespace-nowrap leading-tight">
+                              {biz.city}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* 2. Business ID */}
+                      <td className="py-3 px-3 text-center align-middle">
+                        <span className="inline-block font-mono text-xs font-bold text-gray-700 bg-gray-50 px-2.5 py-1 rounded border border-gray-200/80 whitespace-nowrap">
+                          {biz.formattedBusinessId}
+                        </span>
+                      </td>
+
+                      {/* 3. Total */}
+                      <td className="py-3 px-3 text-center align-middle font-mono font-bold text-[#102025]">
+                        {biz.totalTransactions > 0 ? (
+                          biz.totalTransactions.toLocaleString()
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* 2. Business ID */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <span className="inline-block font-mono text-xs font-bold text-gray-700 bg-gray-50 px-2.5 py-1 rounded border border-gray-200/80 whitespace-nowrap">
-                        {biz.formattedBusinessId}
-                      </span>
-                    </td>
+                      {/* 4. Deposit */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {biz.deposit > 0 ? (
+                          <span className="font-bold text-[#0D93AA]">{biz.deposit.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
+                        )}
+                      </td>
 
-                    {/* 3. Total */}
-                    <td className="py-3 px-3 text-center align-middle font-mono font-bold text-[#102025]">
-                      {biz.totalTransactions > 0 ? (
-                        biz.totalTransactions.toLocaleString()
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
+                      {/* 5. Withdrawal */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {biz.withdrawal > 0 ? (
+                          <span className="font-bold text-blue-600">{biz.withdrawal.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
+                        )}
+                      </td>
 
-                    {/* 4. Deposit */}
-                    <td className="py-3 px-3 text-center align-middle font-mono">
-                      {biz.deposit > 0 ? (
-                        <span className="font-bold text-[#0D93AA]">{biz.deposit.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
+                      {/* 6. Purchase */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {biz.purchase > 0 ? (
+                          <span className="font-bold text-purple-600">{biz.purchase.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
+                        )}
+                      </td>
 
-                    {/* 5. Withdrawal */}
-                    <td className="py-3 px-3 text-center align-middle font-mono">
-                      {biz.withdrawal > 0 ? (
-                        <span className="font-bold text-blue-600">{biz.withdrawal.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
+                      {/* 7. Completed */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {biz.completed > 0 ? (
+                          <span className="font-bold text-emerald-600">{biz.completed.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
+                        )}
+                      </td>
 
-                    {/* 6. Purchase */}
-                    <td className="py-3 px-3 text-center align-middle font-mono">
-                      {biz.purchase > 0 ? (
-                        <span className="font-bold text-purple-600">{biz.purchase.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
+                      {/* 8. Failed/Cancelled */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {biz.failedCancelled > 0 ? (
+                          <span className="font-bold text-red-600">{biz.failedCancelled.toLocaleString()}</span>
+                        ) : (
+                          <span className="text-gray-400 font-normal">0</span>
+                        )}
+                      </td>
 
-                    {/* 7. Completed */}
-                    <td className="py-3 px-3 text-center align-middle font-mono">
-                      {biz.completed > 0 ? (
-                        <span className="font-bold text-emerald-600">{biz.completed.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
-
-                    {/* 8. Failed/Cancelled */}
-                    <td className="py-3 px-3 text-center align-middle font-mono">
-                      {biz.failedCancelled > 0 ? (
-                        <span className="font-bold text-red-600">{biz.failedCancelled.toLocaleString()}</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal">0</span>
-                      )}
-                    </td>
-
-                    {/* 9. Commissions (Coming Soon badge) */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200 select-none whitespace-nowrap">
-                        Coming Soon
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      {/* 9. Service Charge (ZMW) */}
+                      <td className="py-3 px-3 text-center align-middle font-mono">
+                        {hasServiceCharge ? (
+                          <span className="font-bold text-[#0D93AA] whitespace-nowrap">
+                            {formatServiceChargeAmount(biz.serviceCharge)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 font-normal whitespace-nowrap">
+                            0.00
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -729,6 +963,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
             {/* Page Navigation */}
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-2.5 py-1 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -739,6 +974,7 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
                 Page {currentPage} of {totalPages}
               </span>
               <button
+                type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="px-2.5 py-1 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"

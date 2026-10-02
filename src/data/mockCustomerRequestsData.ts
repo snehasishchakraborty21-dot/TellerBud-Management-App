@@ -195,7 +195,7 @@ function generateHistoricalRequests(): PickupRequest[] {
     if (i === 0) {
       records.push({
         id: 'TB-REQ-1028',
-        customerId: 'TB-CUS-1028',
+        customerId: 'TB-CUS-001028',
         customerName: 'Thomas Banda',
         customerPhone: '+260 97 328 1028',
         type: 'Withdrawal',
@@ -222,7 +222,7 @@ function generateHistoricalRequests(): PickupRequest[] {
     }
     const refNum = nextNum;
     const reqId = `TB-REQ-${refNum}`;
-    const cusId = `TB-CUS-${refNum}`;
+    const cusId = `TB-CUS-${String(refNum).padStart(6, '0')}`;
     nextNum--;
     
     // Decrement time: roughly 1.5 to 3 hours step backwards

@@ -522,8 +522,12 @@ class MockAdminService implements IAdminService {
 
   async getCustomerWithdrawalByReference(reference: string): Promise<CustomerWithdrawal | null> {
     const cleanRef = reference.trim().toLowerCase();
+    const cleanDigits = reference.replace(/\D/g, '');
     const item = this.withdrawals.find(
-      (w) => w.reference.toLowerCase() === cleanRef || w.id.toLowerCase() === cleanRef
+      (w) =>
+        w.reference.toLowerCase() === cleanRef ||
+        w.id.toLowerCase() === cleanRef ||
+        (cleanDigits.length > 0 && w.reference.replace(/\D/g, '').endsWith(cleanDigits))
     );
     return item ? { ...item } : null;
   }

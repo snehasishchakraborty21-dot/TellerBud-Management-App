@@ -224,11 +224,11 @@ export function getCustomerProfileData(customerId: string): CustomerProfileData 
  */
 export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest[] {
   // Return dedicated stable records for the primary customer
-  if (customer.id === 'TB-CUS-1021') {
+  if (customer.id === 'TB-CUS-001021') {
     return [
       {
         id: 'TB-REQ-1021',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Purchase',
@@ -249,7 +249,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
       },
       {
         id: 'TB-REQ-1015',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Withdrawal',
@@ -270,7 +270,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
       },
       {
         id: 'TB-REQ-1008',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Deposit',
@@ -291,7 +291,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
       },
       {
         id: 'TB-REQ-0994',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Withdrawal',
@@ -312,7 +312,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
       },
       {
         id: 'TB-REQ-0982',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Deposit',
@@ -333,7 +333,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
       },
       {
         id: 'TB-REQ-0970',
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         type: 'Withdrawal',
@@ -503,7 +503,7 @@ export function getCustomerRequestsList(customer: CustomerRecord): PickupRequest
  */
 export function getCustomerTransactionsList(customer: CustomerRecord): MobileMoneyTransaction[] {
   // Return dedicated stable records for the primary customer
-  if (customer.id === 'TB-CUS-1021') {
+  if (customer.id === 'TB-CUS-001021') {
     return [
       {
         id: 'MMT-PCK-TB-REQ-1021',
@@ -515,7 +515,7 @@ export function getCustomerTransactionsList(customer: CustomerRecord): MobileMon
         vendor: 'Access',
         vendorType: 'Commercial Bank',
         isRegisteredCustomer: true,
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         customerAccountStatus: 'Pending',
@@ -577,7 +577,7 @@ export function getCustomerTransactionsList(customer: CustomerRecord): MobileMon
         vendor: 'MTN',
         vendorType: 'MNO Mobile Money',
         isRegisteredCustomer: true,
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         customerAccountStatus: 'Pending',
@@ -639,7 +639,7 @@ export function getCustomerTransactionsList(customer: CustomerRecord): MobileMon
         vendor: 'Airtel',
         vendorType: 'MNO Mobile Money',
         isRegisteredCustomer: true,
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         customerAccountStatus: 'Pending',
@@ -692,7 +692,7 @@ export function getCustomerTransactionsList(customer: CustomerRecord): MobileMon
         vendor: 'Zanaco',
         vendorType: 'Commercial Bank',
         isRegisteredCustomer: true,
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         customerAccountStatus: 'Pending',
@@ -737,7 +737,7 @@ export function getCustomerTransactionsList(customer: CustomerRecord): MobileMon
         vendor: 'MTN',
         vendorType: 'MNO Mobile Money',
         isRegisteredCustomer: true,
-        customerId: 'TB-CUS-1021',
+        customerId: 'TB-CUS-001021',
         customerName: 'Bupe Chileshe',
         customerPhone: '+260 96 223 5588',
         customerAccountStatus: 'Pending',

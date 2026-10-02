@@ -12,7 +12,13 @@ import {
   Ban,
 } from 'lucide-react';
 import { CustomerWithdrawal, WithdrawalStatus } from '../../types/admin';
-import { formatZmwListingAmount, formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
+import {
+  formatZmwListingAmount,
+  formatWithdrawalDate,
+  formatZambianMobileNumber,
+  formatCustomerId,
+  formatWithdrawalId,
+} from '../../utils/formatters';
 import { useAuth } from '../../context/AuthContext';
 
 export type CustomerWithdrawalSortField =
@@ -116,24 +122,24 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
 
   return (
     <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[calc(100vh-270px)] overflow-y-auto">
         <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-gray-200 bg-slate-50/75 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-              {/* 1. Withdrawal Ref / Submitted */}
+          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs shadow-2xs">
+            <tr className="border-b border-gray-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider select-none">
+              {/* 1. Withdrawal ID */}
               <th scope="col" className="py-3 px-4 min-w-[170px]">
                 <button
                   type="button"
                   onClick={() => onSort('requestedAt')}
                   className="group inline-flex items-center gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
-                  <span>Withdrawal Ref / Submitted</span>
+                  <span>Withdrawal ID</span>
                   {renderSortIcon('requestedAt')}
                 </button>
               </th>
 
               {/* 2. Customer */}
-              <th scope="col" className="py-3 px-4 min-w-[210px]">
+              <th scope="col" className="py-3 px-4 min-w-[190px]">
                 <button
                   type="button"
                   onClick={() => onSort('customer')}
@@ -144,8 +150,8 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 </button>
               </th>
 
-              {/* 3. Vendor (Updated from Provider) */}
-              <th scope="col" className="py-3 px-4 min-w-[160px]">
+              {/* 3. Vendor */}
+              <th scope="col" className="py-3 px-4 min-w-[150px]">
                 <button
                   type="button"
                   onClick={() => onSort('provider')}
@@ -156,30 +162,30 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 </button>
               </th>
 
-              {/* 4. Withdrawal Amount (ZMW) */}
-              <th scope="col" className="py-3 px-4 text-left min-w-[145px] amount-heading">
+              {/* 4. Amount (ZMW) */}
+              <th scope="col" className="py-3 px-4 text-left min-w-[130px] amount-heading">
                 <button
                   type="button"
                   onClick={() => onSort('amount')}
                   className="group inline-flex items-center justify-start gap-1.5 font-bold hover:text-[#0D93AA] focus:outline-none transition-colors"
                 >
-                  <span>Withdrawal Amount (ZMW)</span>
+                  <span>Amount (ZMW)</span>
                   {renderSortIcon('amount')}
                 </button>
               </th>
 
-              {/* 5. Mobile Number */}
-              <th scope="col" className="py-3 px-4 min-w-[160px]">
-                Mobile Number
+              {/* 5. Phone Number */}
+              <th scope="col" className="py-3 px-4 min-w-[150px] text-left">
+                Phone Number
               </th>
 
-              {/* 6. Reserved Funds (ZMW) */}
-              <th scope="col" className="py-3 px-4 text-left min-w-[140px] amount-heading">
-                Reserved Funds (ZMW)
+              {/* 6. Reserved (ZMW) */}
+              <th scope="col" className="py-3 px-4 text-left min-w-[130px] amount-heading">
+                Reserved (ZMW)
               </th>
 
               {/* 7. Status */}
-              <th scope="col" className="py-3 px-4 min-w-[140px]">
+              <th scope="col" className="py-3 px-4 min-w-[145px]">
                 <button
                   type="button"
                   onClick={() => onSort('status')}
@@ -191,7 +197,7 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
               </th>
 
               {/* 8. Action */}
-              <th scope="col" className="py-3 px-4 text-center min-w-[145px] sticky right-0 bg-slate-50/95 backdrop-blur-xs z-10">
+              <th scope="col" className="py-3 px-3 text-center min-w-[80px] sm:min-w-[90px] sticky right-0 bg-slate-50/95 backdrop-blur-xs z-10">
                 Action
               </th>
             </tr>
@@ -212,47 +218,42 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                 ? (record.reservedFunds ?? record.amount)
                 : null;
 
+              const withdrawalId = formatWithdrawalId(record.reference);
+              const customerId = formatCustomerId(record.customerId || 'TB-CUS-001052');
+
               return (
                 <tr
                   key={record.id}
-                  className="hover:bg-slate-50/70 transition-colors"
+                  className="hover:bg-slate-50/70 transition-colors group"
                 >
-                  {/* 1. Withdrawal Ref / Submitted */}
+                  {/* 1. Withdrawal ID */}
                   <td className="py-3 px-4 align-middle">
                     <Link
                       to={`/super-admin/wallets/customer-withdrawals/${record.reference}`}
-                      className="font-mono font-bold text-slate-900 hover:text-[#0D93AA] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 text-xs block"
+                      className="font-mono font-bold text-slate-900 hover:text-[#0D93AA] hover:underline focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 text-xs block whitespace-nowrap"
                     >
-                      {record.reference}
+                      {withdrawalId}
                     </Link>
                     <div className="text-[11px] text-slate-500 font-mono mt-0.5 whitespace-nowrap">
                       {formatWithdrawalDate(record.requestedAt)}
                     </div>
                   </td>
 
-                  {/* 2. Customer: Name, Customer ID, Wallet ID */}
+                  {/* 2. Customer: Name on 1st line, Customer ID on 2nd line */}
                   <td className="py-3 px-4 align-middle">
                     <Link
-                      to={`/super-admin/people/customers/${record.customerId || 'TB-CUS-1052'}`}
-                      className="font-semibold text-slate-900 hover:text-[#0D93AA] transition-colors block leading-tight"
+                      to={`/super-admin/people/customers/${customerId}`}
+                      className="font-semibold text-slate-900 hover:text-[#0D93AA] transition-colors block leading-tight whitespace-nowrap"
                     >
                       {record.customerName}
                     </Link>
-                    <div className="flex items-center gap-1.5 mt-1 font-mono text-[11px]">
+                    <div className="mt-0.5 font-mono text-[11px]">
                       <Link
-                        to={`/super-admin/people/customers/${record.customerId || 'TB-CUS-1052'}`}
+                        to={`/super-admin/people/customers/${customerId}`}
                         className="text-[#0D93AA] hover:underline font-semibold"
-                        title={`Customer ID: ${record.customerId}`}
+                        title={`Customer ID: ${customerId}`}
                       >
-                        {record.customerId}
-                      </Link>
-                      <span className="text-slate-300">/</span>
-                      <Link
-                        to={`/super-admin/wallets/customers/${record.walletId || 'TB-WAL-1052'}`}
-                        className="text-slate-600 hover:text-[#0D93AA] hover:underline font-medium"
-                        title={`Wallet ID: ${record.walletId}`}
-                      >
-                        {record.walletId}
+                        {customerId}
                       </Link>
                     </div>
                   </td>
@@ -264,20 +265,20 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                     </span>
                   </td>
 
-                  {/* 4. Withdrawal Amount (ZMW) (Left-aligned) */}
-                  <td className="py-3 px-4 align-middle text-left font-mono font-bold text-slate-900 text-xs amount-cell">
+                  {/* 4. Amount (ZMW) (Left-aligned) */}
+                  <td className="py-3 px-4 align-middle text-left font-mono font-bold text-slate-900 text-xs amount-cell whitespace-nowrap">
                     {formatZmwListingAmount(record.amount)}
                   </td>
 
-                  {/* 5. Mobile Number (Complete, Unmasked Zambian Format) */}
-                  <td className="py-3 px-4 align-middle">
+                  {/* 5. Phone Number (Complete, Unmasked Zambian Format on one line) */}
+                  <td className="py-3 px-4 align-middle text-left">
                     <span className="font-mono text-slate-800 font-medium select-all text-xs whitespace-nowrap">
                       {fullMobile}
                     </span>
                   </td>
 
-                  {/* 6. Reserved Funds (ZMW) (Left-aligned, Em Dash when inactive) */}
-                  <td className="py-3 px-4 align-middle text-left font-mono text-xs amount-cell">
+                  {/* 6. Reserved (ZMW) (Left-aligned, Em Dash when inactive) */}
+                  <td className="py-3 px-4 align-middle text-left font-mono text-xs amount-cell whitespace-nowrap">
                     {reservedAmount !== null ? (
                       <span className="font-bold text-slate-900">
                         {formatZmwListingAmount(reservedAmount)}
@@ -290,18 +291,19 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
                   </td>
 
                   {/* 7. Status Badge */}
-                  <td className="py-3 px-4 align-middle">
+                  <td className="py-3 px-4 align-middle whitespace-nowrap">
                     {renderStatusBadge(record.status)}
                   </td>
 
-                  {/* 8. Action: View Details */}
-                  <td className="py-3 px-4 align-middle text-center sticky right-0 bg-white/95 group-hover:bg-slate-50/95 transition-colors z-10 whitespace-nowrap">
+                  {/* 8. Action: Small Eye Icon */}
+                  <td className="py-3 px-3 align-middle text-center sticky right-0 bg-white/95 group-hover:bg-slate-50/95 transition-colors z-10 whitespace-nowrap">
                     <Link
                       to={`/super-admin/wallets/customer-withdrawals/${record.reference}`}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-lg transition-colors border border-[#0D93AA]/20 shrink-0 cursor-pointer shadow-2xs whitespace-nowrap"
+                      title="View Withdrawal Details"
+                      aria-label="View Withdrawal Details"
+                      className="inline-flex items-center justify-center p-2 text-slate-600 hover:text-[#0D93AA] hover:bg-[#0D93AA]/10 rounded-lg transition-colors border border-transparent hover:border-[#0D93AA]/20 shrink-0 cursor-pointer shadow-2xs"
                     >
-                      <Eye size={13} className="shrink-0" />
-                      <span className="whitespace-nowrap">View Details</span>
+                      <Eye size={16} className="shrink-0" />
                     </Link>
                   </td>
                 </tr>
@@ -310,6 +312,7 @@ export const WithdrawalTable: React.FC<WithdrawalTableProps> = ({
           </tbody>
         </table>
       </div>
+      <div className="h-2 bg-transparent" />
     </div>
   );
 };

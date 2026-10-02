@@ -121,9 +121,10 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
             path: '/super-admin/people/businesses',
           },
           {
-            id: 'add-business',
-            label: 'Add Business',
-            path: '/super-admin/people/businesses/add',
+            id: 'business-onboarding',
+            label: 'Business Onboarding',
+            path: '/super-admin/people/business-onboarding',
+            badge: 3,
           },
         ],
       },

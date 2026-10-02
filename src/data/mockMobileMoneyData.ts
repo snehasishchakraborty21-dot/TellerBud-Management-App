@@ -11,6 +11,7 @@ import { getLusakaDateString } from '../utils/dateUtils';
 import { MOCK_WALK_IN_TRANSACTIONS } from './mockWalkInData';
 import { MOCK_LIVE_PICKUP_OPERATIONS } from './mockAdminData';
 import { getAllCustomerRequests } from './mockCustomerRequestsData';
+import { MOCK_BUSINESSES } from './mockBusinessData';
 
 // Map existing Walk-In transactions to MobileMoneyTransaction format
 const mappedWalkInTransactions: MobileMoneyTransaction[] = MOCK_WALK_IN_TRANSACTIONS.map((w, idx) => {
@@ -18,7 +19,7 @@ const mappedWalkInTransactions: MobileMoneyTransaction[] = MOCK_WALK_IN_TRANSACT
   const custName = isRegistered
     ? ['Lombe Kasonde', 'Musonda Chanda', 'Precious Mwale', 'Chisomo Banda', 'Sipho Daka', 'Choolwe Hamoonga'][idx % 6]
     : 'Walk-In Customer';
-  const custId = isRegistered ? `TB-CUS-20${(idx + 10).toString()}` : undefined;
+  const custId = isRegistered ? `TB-CUS-000020${(idx + 10).toString()}` : undefined;
 
   let statusMapped: MobileMoneyTransaction['status'] = 'Completed';
   if (w.status === 'Processing') statusMapped = 'Active Service';
@@ -177,7 +178,7 @@ const mappedPickupTransactions: MobileMoneyTransaction[] = rawPickupRequests
       vendorType: ['MTN', 'Airtel', 'Zamtel'].includes(p.vendor) ? 'MNO Mobile Money' : 'Commercial Bank',
 
       isRegisteredCustomer: true,
-      customerId: p.customerId || `TB-CUS-10${(idx + 20).toString()}`,
+      customerId: p.customerId || `TB-CUS-000010${(idx + 20).toString()}`,
       customerName: p.customerName,
       customerPhone: p.customerPhone,
       customerAccountStatus: 'Verified KYC Tier 2',
@@ -266,7 +267,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1052',
+    customerId: 'TB-CUS-001052',
     customerName: 'Mwamba Mulenga',
     customerPhone: '+260 97 778 9012',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -359,7 +360,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1048',
+    customerId: 'TB-CUS-001048',
     customerName: 'Ruth Banda',
     customerPhone: '+260 97 654 3210',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -405,7 +406,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Airtel',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-2012',
+    customerId: 'TB-CUS-002012',
     customerName: 'Precious Mwale',
     customerPhone: '+260 97 445 6789',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -451,7 +452,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Zanaco',
     vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1050',
+    customerId: 'TB-CUS-001050',
     customerName: 'Grace Tembo',
     customerPhone: '+260 97 345 1050',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -496,7 +497,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Airtel',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1049',
+    customerId: 'TB-CUS-001049',
     customerName: 'Chileshe Mumba',
     customerPhone: '+260 95 334 5678',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -539,7 +540,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Airtel',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1046',
+    customerId: 'TB-CUS-001046',
     customerName: 'Lombe Kasonde',
     customerPhone: '+260 96 612 9901',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -623,7 +624,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'FNB',
     vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-2015',
+    customerId: 'TB-CUS-002015',
     customerName: 'Bwembya Musonda',
     customerPhone: '+260 97 334 1122',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -664,7 +665,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'INDO',
     vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1024',
+    customerId: 'TB-CUS-001024',
     customerName: 'Kelvin Phiri Float Fund',
     customerPhone: '+260 97 234 5678',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -712,7 +713,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-3021',
+    customerId: 'TB-CUS-003021',
     customerName: 'Sipho Daka',
     customerPhone: '+260 97 881 2233',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -758,7 +759,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Airtel',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-3022',
+    customerId: 'TB-CUS-003022',
     customerName: 'Choolwe Hamoonga',
     customerPhone: '+260 96 441 5566',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -848,7 +849,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'Zanaco',
     vendorType: 'Commercial Bank',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-4011',
+    customerId: 'TB-CUS-004011',
     customerName: 'Brian Mwape',
     customerPhone: '+260 97 662 1144',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -893,7 +894,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-5011',
+    customerId: 'TB-CUS-005011',
     customerName: 'Musonda Chanda',
     customerPhone: '+260 97 771 8899',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -941,7 +942,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1048',
+    customerId: 'TB-CUS-001048',
     customerName: 'Ruth Banda',
     customerPhone: '+260 97 654 3210',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -1031,7 +1032,7 @@ const DATED_MOBILE_MONEY_TRANSACTIONS: MobileMoneyTransaction[] = [
     vendor: 'MTN',
     vendorType: 'MNO Mobile Money',
     isRegisteredCustomer: true,
-    customerId: 'TB-CUS-1052',
+    customerId: 'TB-CUS-001052',
     customerName: 'Mwamba Mulenga',
     customerPhone: '+260 97 778 9012',
     customerAccountStatus: 'Verified KYC Tier 2',
@@ -1138,19 +1139,19 @@ function generateHistorical2026Transactions(): MobileMoneyTransaction[] {
   ];
 
   const customers = [
-    { name: 'Mwamba Mulenga', phone: '+260 97 778 9012', id: 'TB-CUS-1052' },
-    { name: 'Ruth Banda', phone: '+260 97 654 3210', id: 'TB-CUS-1048' },
-    { name: 'Precious Mwale', phone: '+260 97 445 6789', id: 'TB-CUS-2012' },
-    { name: 'Grace Tembo', phone: '+260 97 345 1050', id: 'TB-CUS-1050' },
-    { name: 'Chileshe Mumba', phone: '+260 95 334 5678', id: 'TB-CUS-1049' },
-    { name: 'Lombe Kasonde', phone: '+260 96 612 9901', id: 'TB-CUS-1046' },
-    { name: 'Bwembya Musonda', phone: '+260 97 334 1122', id: 'TB-CUS-2015' },
-    { name: 'Chisomo Banda', phone: '+260 96 789 0123', id: 'TB-CUS-2016' },
-    { name: 'Sipho Daka', phone: '+260 97 881 2233', id: 'TB-CUS-3021' },
-    { name: 'Choolwe Hamoonga', phone: '+260 97 990 4455', id: 'TB-CUS-3022' },
-    { name: 'Kondwani Phiri', phone: '+260 95 554 1122', id: 'TB-CUS-3023' },
-    { name: 'Mizinga Mwanza', phone: '+260 96 332 9988', id: 'TB-CUS-3024' },
-    { name: 'Mutale Mwila', phone: '+260 97 114 7788', id: 'TB-CUS-3025' },
+    { name: 'Mwamba Mulenga', phone: '+260 97 778 9012', id: 'TB-CUS-001052' },
+    { name: 'Ruth Banda', phone: '+260 97 654 3210', id: 'TB-CUS-001048' },
+    { name: 'Precious Mwale', phone: '+260 97 445 6789', id: 'TB-CUS-002012' },
+    { name: 'Grace Tembo', phone: '+260 97 345 1050', id: 'TB-CUS-001050' },
+    { name: 'Chileshe Mumba', phone: '+260 95 334 5678', id: 'TB-CUS-001049' },
+    { name: 'Lombe Kasonde', phone: '+260 96 612 9901', id: 'TB-CUS-001046' },
+    { name: 'Bwembya Musonda', phone: '+260 97 334 1122', id: 'TB-CUS-002015' },
+    { name: 'Chisomo Banda', phone: '+260 96 789 0123', id: 'TB-CUS-002016' },
+    { name: 'Sipho Daka', phone: '+260 97 881 2233', id: 'TB-CUS-003021' },
+    { name: 'Choolwe Hamoonga', phone: '+260 97 990 4455', id: 'TB-CUS-003022' },
+    { name: 'Kondwani Phiri', phone: '+260 95 554 1122', id: 'TB-CUS-003023' },
+    { name: 'Mizinga Mwanza', phone: '+260 96 332 9988', id: 'TB-CUS-003024' },
+    { name: 'Mutale Mwila', phone: '+260 97 114 7788', id: 'TB-CUS-003025' },
   ];
 
   const vendors: Array<ApprovedVendor> = ['MTN', 'Airtel', 'Zamtel', 'Zanaco', 'FNB'];
@@ -1217,6 +1218,8 @@ function generateHistorical2026Transactions(): MobileMoneyTransaction[] {
         const refNumber = `TB-TXN-26${monthStr}${dayStr}-${String(seq).padStart(2, '0')}`;
         const sourceRef = channel === 'Pickup' ? `TB-REQ-26${monthStr}${dayStr}${seq}` : `TB-WLK-26${monthStr}${dayStr}${seq}`;
 
+        const biz = MOCK_BUSINESSES[itemSeed % MOCK_BUSINESSES.length] || MOCK_BUSINESSES[0];
+
         generated.push({
           id: `MMT-HIST-26${monthStr}${dayStr}-${seq}`,
           reference: refNumber,
@@ -1234,13 +1237,13 @@ function generateHistorical2026Transactions(): MobileMoneyTransaction[] {
           agentId: agent.id,
           agentName: agent.name,
           agentPhone: agent.phone,
-          businessId: 'BIZ-LUS-001',
-          businessName: 'Lusaka Central Express Agency',
-          businessLocation: 'Cairo Road Commercial Suite, Lusaka',
-          pickupLocation: channel === 'Pickup' ? 'Lusaka Commercial District' : undefined,
-          walkInLocation: channel === 'Walk-In' ? `Lusaka Central Express Agency - Counter ${(seq % 2) + 1}` : undefined,
+          businessId: biz.id,
+          businessName: biz.name,
+          businessLocation: `${biz.streetAddress}, ${biz.city}`,
+          pickupLocation: channel === 'Pickup' ? `${biz.city} Commercial District` : undefined,
+          walkInLocation: channel === 'Walk-In' ? `${biz.name} - Counter ${(seq % 2) + 1}` : undefined,
           processingAgent: `${agent.name} (${agent.id})`,
-          terminalId: `POS-LUS-0${(seq % 2) + 1}`,
+          terminalId: `POS-${biz.id.slice(-3)}-0${(seq % 2) + 1}`,
           receiptNumber: `REC-${vendor.slice(0, 3).toUpperCase()}-${monthStr}${dayStr}${seq}`,
           initiationTimestamp: timeIso,
           amount: amount,

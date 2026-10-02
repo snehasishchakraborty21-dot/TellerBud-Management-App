@@ -71,14 +71,15 @@ function buildCustomerWallets(): CustomerWalletRecord[] {
 
     // 3. Derive Customer-Request Holds (Customer Pickup Request pre-authorizations):
     let customerRequestReservation = 0;
-    if (customer.id === 'TB-CUS-1052') {
+    const normCustId = customer.id.replace('TB-CUS-', '').padStart(6, '0');
+    if (normCustId === '001052') {
       // Mwamba Mulenga: approved values
       // Posted Ledger Balance: ZMW 18,450.00
       // Available Balance: ZMW 15,950.00
       // Reserved Funds: ZMW 2,500.00
       // Active pending withdrawal is ZMW 2,250.00 (TB-WDR-8807), remaining ZMW 250.00 is Customer Pickup Request TB-REQ-1052
       customerRequestReservation = 250.0;
-    } else if (customer.id === 'TB-CUS-1021') {
+    } else if (normCustId === '001021') {
       // Bupe Chileshe: approved values
       // Posted Ledger Balance: ZMW 4,300.00
       // Available Balance: ZMW 3,655.00
@@ -107,7 +108,7 @@ function buildCustomerWallets(): CustomerWalletRecord[] {
     const isReservedLowerThanWithdrawal =
       pendingWithdrawalAmount !== null && reservedFunds < pendingWithdrawalAmount;
 
-    if (customer.id === 'TB-CUS-1015') {
+    if (normCustId === '001015') {
       // Brian Lungu: provider switch callback discrepancy
       walletHealth = 'Review Required';
       reviewReason =

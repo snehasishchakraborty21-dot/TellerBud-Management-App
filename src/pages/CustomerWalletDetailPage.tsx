@@ -140,7 +140,7 @@ export const CustomerWalletDetailPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. Header (Identity, IDs, Status badges, Health, "View Customer Profile" internal link) */}
-      <CustomerWalletHeader wallet={wallet} onBack={handleBack} />
+      <CustomerWalletHeader wallet={wallet} />
 
       {/* 2. Balance Cards (Posted Ledger Balance, Available Balance, Reserved Funds — no captions) */}
       <CustomerWalletBalanceCards

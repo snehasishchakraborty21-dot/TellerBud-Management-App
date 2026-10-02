@@ -125,7 +125,7 @@ export const DeleteVendorModal: React.FC<DeleteVendorModalProps> = ({
                   This vendor cannot be permanently deleted because it is connected to financial or historical records.
                 </p>
                 <p className="text-amber-800 text-[11px] leading-normal">
-                  TellerBud financial governance requires complete transactional auditability. In order to preserve ledger consistency, historical statements, and regulatory compliance, providers with recorded transactions cannot be purged.
+                  TellerBud financial governance requires complete transactional auditability. In order to preserve ledger consistency, historical statements, and regulatory compliance, vendors with recorded transactions cannot be purged.
                 </p>
               </div>
             </div>

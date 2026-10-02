@@ -24,6 +24,7 @@ export interface CustomerRecord {
   lastActivityTimestamp: string; // ISO string for sorting
   registeredDate: string; // e.g. '14 Jan 2025'
   registeredDateIso: string; // '2025-01-14' for date filtering
+  createdAt?: string; // Full ISO timestamp e.g. '2025-01-14T11:52:00Z' for precise registration sorting
   city: string; // e.g. 'Lusaka'
 }
 

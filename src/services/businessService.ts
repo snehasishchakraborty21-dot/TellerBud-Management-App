@@ -451,6 +451,7 @@ class BusinessService {
 
       registeredDate: formattedDate,
       registeredDateIso: dateIso,
+      createdAt: now.toISOString(),
       operatingCurrency: 'ZMW',
       timeZone: 'Africa/Lusaka (CAT)',
       status,
@@ -517,6 +518,113 @@ class BusinessService {
 
     this.notify();
     return true;
+  }
+
+  public addActivatedBusiness(params: {
+    id: string;
+    businessId: string;
+    name: string;
+    ownerName: string;
+    ownerEmail: string;
+    ownerPhone: string;
+    ownerUsername?: string;
+    status: BusinessAccountStatus;
+    walletState?: BusinessWalletState;
+    province: string;
+    associatedAgents: number;
+    sharedWalletBalance?: number;
+    availableBalance?: number;
+    reservedBalance?: number;
+    registeredDate: string;
+    registeredDateIso: string;
+    onboardingApplicationId?: string;
+  }): BusinessRecord {
+    const initials = params.name
+      .split(' ')
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() || '')
+      .join('') || 'TB';
+
+    const cleanUsername = (params.ownerUsername || params.ownerEmail.split('@')[0] || params.ownerName.toLowerCase().replace(/\s+/g, '.')).trim().toLowerCase();
+    const now = new Date();
+
+    const newBusiness: BusinessRecord = {
+      id: params.businessId,
+      name: params.name.trim(),
+      registrationNumber: `PACRA-${params.businessId.replace('TB-BIZ-', 'REG-')}`,
+      businessType: 'Private Limited Company (PLC)',
+      logoInitials: initials,
+
+      ownerName: params.ownerName.trim(),
+      ownerId: params.businessId.replace('TB-BIZ-', 'TB-BOO-'),
+      ownerPhone: params.ownerPhone.trim(),
+      ownerPhoneMasked: maskZambianPhoneNumber(params.ownerPhone.trim()),
+      ownerEmail: params.ownerEmail.trim(),
+      ownerUsername: cleanUsername,
+      ownerAccountStatus: params.status,
+      lastSignIn: 'Pending First Sign-In',
+      firstLoginPasswordChangeStatus: 'Completed',
+      temporaryPasswordStatus: 'Permanent Password Active',
+      passwordChangeRequired: false,
+      accountCreatedAt: params.registeredDate,
+      lastAccountUpdate: 'Just now',
+
+      city: params.province,
+      province: params.province,
+      country: 'Zambia',
+      streetAddress: `${params.province} Central Commercial Area`,
+
+      associatedAgents: params.associatedAgents || 5,
+      agentsOnline: Math.max(1, Math.floor((params.associatedAgents || 5) * 0.7)),
+      agentsOffline: Math.max(0, Math.floor((params.associatedAgents || 5) * 0.3)),
+      agentsAssigned: 2,
+      agentsAvailable: Math.max(1, (params.associatedAgents || 5) - 2),
+      contextualAgents: [],
+
+      sharedWalletBalance: params.sharedWalletBalance ?? 25000.0,
+      availableBalance: params.availableBalance ?? 22500.0,
+      reservedFunds: params.reservedBalance ?? 2500.0,
+      walletState: params.walletState || 'Active',
+      lastWalletActivity: 'Activated via Onboarding',
+      recentLedgerEntries: [],
+
+      pendingTopUps: 0,
+      pendingTopUpRequests: [],
+      walletTopUpsList: [],
+
+      lastActivity: 'Just now',
+      lastActivityIso: now.toISOString(),
+      recentActivity: {
+        lastActivity: 'Just now',
+        reference: generateRef('TXN-ZM'),
+        activityType: 'Business Account Activated',
+        actor: 'TellerBud Admin',
+        timestamp: 'Just now',
+      },
+      activityLogs: [
+        {
+          id: generateRef('ACT'),
+          reference: generateRef('ACT-ZM'),
+          activityType: 'Business Account Activated',
+          actor: 'TellerBud Admin',
+          timestamp: 'Just now',
+          result: 'Success',
+          relatedRecord: params.businessId,
+          details: `Business successfully activated from digital onboarding.`,
+        },
+      ],
+
+      registeredDate: params.registeredDate,
+      registeredDateIso: params.registeredDateIso,
+      createdAt: now.toISOString(),
+      operatingCurrency: 'ZMW',
+      timeZone: 'Africa/Lusaka (CAT)',
+      status: params.status,
+    };
+
+    this.businesses.unshift(newBusiness);
+    this.notify();
+    return newBusiness;
   }
 
   public isBusinessNameUnique(name: string): boolean {

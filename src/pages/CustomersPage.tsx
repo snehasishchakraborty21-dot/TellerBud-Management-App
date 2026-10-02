@@ -124,6 +124,8 @@ export const CustomersPage: React.FC = () => {
       toDate: '',
     };
     setFilters(reset);
+    setSortField('registeredDateIso');
+    setSortDirection('desc');
     updateUrlParams(reset);
     setCurrentPage(1);
   };
@@ -142,7 +144,7 @@ export const CustomersPage: React.FC = () => {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortDirection(field === 'name' || field === 'phone' ? 'asc' : 'desc');
+      setSortDirection(field === 'registeredDateIso' ? 'desc' : (field === 'name' || field === 'phone' ? 'asc' : 'desc'));
     }
     setCurrentPage(1);
   };

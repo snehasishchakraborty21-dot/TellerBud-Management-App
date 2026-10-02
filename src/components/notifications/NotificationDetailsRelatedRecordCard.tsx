@@ -38,7 +38,7 @@ export const NotificationDetailsRelatedRecordCard: React.FC<
         );
 
         const customerName = matched?.customerName || 'Lombe Kasonde';
-        const customerId = matched?.customerId || 'TB-CUS-1046';
+        const customerId = matched?.customerId || 'TB-CUS-001046';
         const amount = matched?.amount ? `ZMW ${matched.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'ZMW 7,200.00';
         const provider = matched?.network || 'MTN Mobile Money';
         const phone = matched?.payoutNumber || '+260 96 612 9901';

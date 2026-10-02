@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { MOCK_BUSINESS_WALLETS, formatZMW } from '../data/mockBusinessWalletData';
+import { formatBusinessWalletId } from '../utils/formatters';
 import {
   MOCK_ACTIVE_RESERVATIONS,
   MOCK_BUSINESS_AGENTS,
@@ -41,10 +42,11 @@ export const BusinessGlobalWalletDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Find initial wallet record from registry (default to Lusaka Central Express Agency if matching or fallback)
+  const normalizedId = walletId ? formatBusinessWalletId(walletId) : 'TB-BWL-000002';
   const initialWallet =
     MOCK_BUSINESS_WALLETS.find(
-      (w) => w.walletId === walletId || w.id === walletId
-    ) || MOCK_BUSINESS_WALLETS.find((w) => w.walletId === 'TB-BWL-1007') || MOCK_BUSINESS_WALLETS[6];
+      (w) => w.walletId === walletId || w.walletId === normalizedId || w.id === walletId
+    ) || MOCK_BUSINESS_WALLETS.find((w) => w.walletId === 'TB-BWL-000002') || MOCK_BUSINESS_WALLETS[0];
 
   // Local state for interactive wallet balance updates without reload
   const [wallet, setWallet] = useState<BusinessGlobalWallet>(initialWallet);
@@ -155,8 +157,8 @@ export const BusinessGlobalWalletDetailPage: React.FC = () => {
           Display:
           - Business: Lusaka Central Express Agency
           - Business initials: LC
-          - Business ID: BIZ-LUS-001
-          - Wallet ID: TB-BWL-1007
+          - Business ID: TB-BIZ-000001
+          - Wallet ID: TB-BWL-000002
           - Owner: Chileshe Mwamba
           - Owner ID: USR-BO-001
           - Wallet State: Active

@@ -104,11 +104,24 @@ export const AdminLayout: React.FC = () => {
     }
 
     if (
-      pathname === '/super-admin/people/businesses/add' ||
-      pathname === '/super-admin/businesses/add' ||
-      pathname.endsWith('/businesses/add')
+      pathname.includes('/business-onboarding/') &&
+      pathname.includes('/tablet-onboarding')
     ) {
-      return 'Add Business';
+      return 'Tablet Physical Onboarding';
+    }
+
+    if (
+      pathname.startsWith('/super-admin/people/business-onboarding/') ||
+      pathname.startsWith('/business-onboarding/')
+    ) {
+      return 'Onboarding Application Details';
+    }
+
+    if (
+      pathname === '/super-admin/people/business-onboarding' ||
+      pathname === '/business-onboarding'
+    ) {
+      return 'Business Onboarding';
     }
 
     if (
@@ -116,7 +129,7 @@ export const AdminLayout: React.FC = () => {
       pathname === '/super-admin/businesses' ||
       pathname === '/tellerbud-admin/businesses'
     ) {
-      return 'Businesses';
+      return 'All Businesses';
     }
 
     if (
@@ -654,7 +667,33 @@ export const AdminLayout: React.FC = () => {
     !location.pathname.includes('/configuration/notifications/') &&
     !location.pathname.includes('/notifications/');
 
+  const isServiceModesListing =
+    (location.pathname === '/super-admin/configuration/service-modes' ||
+      location.pathname === '/super-admin/configuration/service-modes/' ||
+      location.pathname === '/configuration/service-modes' ||
+      location.pathname === '/configuration/service-modes/' ||
+      location.pathname === '/service-modes' ||
+      location.pathname === '/service-modes/' ||
+      location.pathname.endsWith('/configuration/service-modes') ||
+      location.pathname.endsWith('/service-modes')) &&
+    !location.pathname.includes('/service-modes/TB-') &&
+    !location.pathname.includes('/configuration/service-modes/TB-');
+
+  const isVendorsListing =
+    (location.pathname === '/super-admin/configuration/vendors' ||
+      location.pathname === '/super-admin/configuration/vendors/' ||
+      location.pathname === '/configuration/vendors' ||
+      location.pathname === '/configuration/vendors/' ||
+      location.pathname === '/vendors' ||
+      location.pathname === '/vendors/' ||
+      location.pathname.endsWith('/configuration/vendors') ||
+      location.pathname.endsWith('/vendors')) &&
+    !location.pathname.includes('/vendors/TB-') &&
+    !location.pathname.includes('/configuration/vendors/TB-');
+
   const isFrozenLayout =
+    isServiceModesListing ||
+    isVendorsListing ||
     isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||

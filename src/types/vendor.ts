@@ -14,7 +14,7 @@ export interface VendorRecord {
   name: string; // e.g. MTN Mobile Money
   type: VendorType;
   services: SupportedService[];
-  integrationMode: string; // e.g. Direct REST API, Merchant REST API, Bank Integration, Manual Settlement
+  integrationMode: string; // e.g. External
   status: VendorStatus;
   lastUpdated: string; // e.g. Today, 11:48 AM
   lastUpdatedTimestamp: number;

@@ -13,12 +13,11 @@ import { CustomerWalletRecord, WalletHealthStatus } from '../../types/customerWa
 
 interface CustomerWalletHeaderProps {
   wallet: CustomerWalletRecord;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 export const CustomerWalletHeader: React.FC<CustomerWalletHeaderProps> = ({
   wallet,
-  onBack,
 }) => {
   const navigate = useNavigate();
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
@@ -65,19 +64,7 @@ export const CustomerWalletHeader: React.FC<CustomerWalletHeaderProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Top back navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#0D93AA] transition-colors group px-2 py-1 -ml-2 rounded-lg hover:bg-slate-100/70"
-        >
-          <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Customer Wallets</span>
-        </button>
-      </div>
-
+    <div className="space-y-0">
       {/* Main card header */}
       <div className="bg-white border border-gray-200/80 rounded-xl p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -168,7 +155,7 @@ export const CustomerWalletHeader: React.FC<CustomerWalletHeaderProps> = ({
 
                 <div className="inline-flex items-center gap-1.5">
                   <span className="text-slate-400 font-sans">Mobile:</span>
-                  <span className="font-semibold text-slate-700 font-sans">{wallet.customerPhoneMasked}</span>
+                  <span className="font-semibold text-slate-700 font-sans">{wallet.customerPhone || wallet.customerPhoneMasked}</span>
                 </div>
 
                 {wallet.city && (

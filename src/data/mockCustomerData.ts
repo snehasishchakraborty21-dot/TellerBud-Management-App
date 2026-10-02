@@ -5,10 +5,11 @@ import {
   CustomerSortField,
   CustomerSortDirection,
 } from '../types/customer';
+import { formatCustomerId } from '../utils/formatters';
 
 export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
   {
-    id: 'TB-CUS-1052',
+    id: 'TB-CUS-001052',
     name: 'Mwamba Mulenga',
     phone: '+260 97 778 9012',
     avatarInitials: 'MM',
@@ -24,7 +25,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1049',
+    id: 'TB-CUS-001049',
     name: 'Chileshe Mumba',
     phone: '+260 95 334 5678',
     avatarInitials: 'CM',
@@ -40,7 +41,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1048',
+    id: 'TB-CUS-001048',
     name: 'Ruth Banda',
     phone: '+260 97 654 3210',
     avatarInitials: 'RB',
@@ -56,7 +57,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1050',
+    id: 'TB-CUS-001050',
     name: 'Grace Tembo',
     phone: '+260 97 345 1050',
     avatarInitials: 'GT',
@@ -72,7 +73,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1046',
+    id: 'TB-CUS-001046',
     name: 'Lombe Kasonde',
     phone: '+260 96 612 9901',
     avatarInitials: 'LK',
@@ -88,7 +89,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1045',
+    id: 'TB-CUS-001045',
     name: 'Bwalya Mwansa',
     phone: '+260 97 245 1045',
     avatarInitials: 'BM',
@@ -104,7 +105,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1044',
+    id: 'TB-CUS-001044',
     name: 'Kondwani Phiri',
     phone: '+260 95 443 2190',
     avatarInitials: 'KP',
@@ -120,7 +121,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1042',
+    id: 'TB-CUS-001042',
     name: 'Mabvuto Sakala',
     phone: '+260 97 334 8871',
     avatarInitials: 'MS',
@@ -137,7 +138,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1040',
+    id: 'TB-CUS-001040',
     name: 'Chilufya Chewe',
     phone: '+260 96 771 2234',
     avatarInitials: 'CC',
@@ -153,7 +154,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1038',
+    id: 'TB-CUS-001038',
     name: 'Njavwa Sinyangwe',
     phone: '+260 97 552 1109',
     avatarInitials: 'NS',
@@ -169,7 +170,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1036',
+    id: 'TB-CUS-001036',
     name: 'Subilo Mukuka',
     phone: '+260 95 221 4455',
     avatarInitials: 'SM',
@@ -185,7 +186,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Kitwe',
   },
   {
-    id: 'TB-CUS-1034',
+    id: 'TB-CUS-001034',
     name: 'Taonga Zulu',
     phone: '+260 97 665 4321',
     avatarInitials: 'TZ',
@@ -202,7 +203,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Kitwe',
   },
   {
-    id: 'TB-CUS-1031',
+    id: 'TB-CUS-001031',
     name: 'Mutinta Haimbe',
     phone: '+260 96 998 7766',
     avatarInitials: 'MH',
@@ -218,7 +219,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Ndola',
   },
   {
-    id: 'TB-CUS-1029',
+    id: 'TB-CUS-001029',
     name: 'Chanda Sikazwe',
     phone: '+260 97 441 3322',
     avatarInitials: 'CS',
@@ -234,7 +235,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Ndola',
   },
   {
-    id: 'TB-CUS-1026',
+    id: 'TB-CUS-001026',
     name: 'Thandiwe Lungu',
     phone: '+260 95 667 8899',
     avatarInitials: 'TL',
@@ -250,7 +251,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1024',
+    id: 'TB-CUS-001024',
     name: 'Mundia Situmbeko',
     phone: '+260 97 119 4433',
     avatarInitials: 'MS',
@@ -267,7 +268,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1021',
+    id: 'TB-CUS-001021',
     name: 'Bupe Chileshe',
     phone: '+260 96 223 5588',
     avatarInitials: 'BC',
@@ -283,7 +284,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1018',
+    id: 'TB-CUS-001018',
     name: 'Sipho Daka',
     phone: '+260 97 881 2244',
     avatarInitials: 'SD',
@@ -299,7 +300,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1015',
+    id: 'TB-CUS-001015',
     name: 'Brian Lungu',
     phone: '+260 97 998 1234',
     avatarInitials: 'BL',
@@ -316,7 +317,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1014',
+    id: 'TB-CUS-001014',
     name: 'Taonga Phiri',
     phone: '+260 96 443 8901',
     avatarInitials: 'TP',
@@ -332,7 +333,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1012',
+    id: 'TB-CUS-001012',
     name: 'Mutale Silwamba',
     phone: '+260 97 332 5678',
     avatarInitials: 'MS',
@@ -348,7 +349,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1010',
+    id: 'TB-CUS-001010',
     name: 'Kunda Chisanga',
     phone: '+260 95 776 3421',
     avatarInitials: 'KC',
@@ -364,7 +365,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1008',
+    id: 'TB-CUS-001008',
     name: 'Precious Mwale',
     phone: '+260 97 889 4433',
     avatarInitials: 'PM',
@@ -380,7 +381,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1006',
+    id: 'TB-CUS-001006',
     name: 'Musonda Chanda',
     phone: '+260 96 112 7788',
     avatarInitials: 'MC',
@@ -396,7 +397,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Kitwe',
   },
   {
-    id: 'TB-CUS-1005',
+    id: 'TB-CUS-001005',
     name: 'Kelvin Phiri',
     phone: '+260 97 554 9900',
     avatarInitials: 'KP',
@@ -412,7 +413,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1004',
+    id: 'TB-CUS-001004',
     name: 'Monde Lisulo',
     phone: '+260 95 887 1122',
     avatarInitials: 'ML',
@@ -428,7 +429,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Ndola',
   },
   {
-    id: 'TB-CUS-1002',
+    id: 'TB-CUS-001002',
     name: 'Natasha Mwaba',
     phone: '+260 97 223 8899',
     avatarInitials: 'NM',
@@ -444,7 +445,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1001',
+    id: 'TB-CUS-001001',
     name: 'Kondwani Banda',
     phone: '+260 96 334 5566',
     avatarInitials: 'KB',
@@ -460,7 +461,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1033',
+    id: 'TB-CUS-001033',
     name: 'Kondwani Banda',
     phone: '+260 96 345 6789',
     avatarInitials: 'KB',
@@ -476,7 +477,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Ndola',
   },
   {
-    id: 'TB-CUS-1035',
+    id: 'TB-CUS-001035',
     name: 'Natasha Tembo',
     phone: '+260 97 556 7890',
     avatarInitials: 'NT',
@@ -492,7 +493,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1041',
+    id: 'TB-CUS-001041',
     name: 'Mutale Mwape',
     phone: '+260 96 123 9900',
     avatarInitials: 'MM',
@@ -508,7 +509,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Kitwe',
   },
   {
-    id: 'TB-CUS-1025',
+    id: 'TB-CUS-001025',
     name: 'Kabwe Musonda',
     phone: '+260 95 667 8899',
     avatarInitials: 'KM',
@@ -524,7 +525,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Livingstone',
   },
   {
-    id: 'TB-CUS-1043',
+    id: 'TB-CUS-001043',
     name: 'Sibeso Mutale',
     phone: '+260 97 555 6677',
     avatarInitials: 'SM',
@@ -540,7 +541,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1038',
+    id: 'TB-CUS-001039',
     name: 'Chilufya Bwalya',
     phone: '+260 97 334 5566',
     avatarInitials: 'CB',
@@ -556,7 +557,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Ndola',
   },
   {
-    id: 'TB-CUS-1029',
+    id: 'TB-CUS-001030',
     name: 'Dalitso Zulu',
     phone: '+260 95 222 3344',
     avatarInitials: 'DZ',
@@ -572,7 +573,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Lusaka',
   },
   {
-    id: 'TB-CUS-1031',
+    id: 'TB-CUS-001032',
     name: 'Mapalo Kangwa',
     phone: '+260 96 998 7766',
     avatarInitials: 'MK',
@@ -588,7 +589,7 @@ export const MOCK_REGISTERED_CUSTOMERS: CustomerRecord[] = [
     city: 'Kabwe',
   },
   {
-    id: 'TB-CUS-1040',
+    id: 'TB-CUS-001037',
     name: 'Precious Chisamba',
     phone: '+260 95 889 0011',
     avatarInitials: 'PC',
@@ -622,9 +623,13 @@ export const getCustomerSummary = (
 
 /**
  * Retrieves a customer by their unique ID.
+ * Normalizes input to 6-digit standard format for robust matching.
  */
 export const getCustomerById = (id: string): CustomerRecord | undefined => {
-  return MOCK_REGISTERED_CUSTOMERS.find((c) => c.id === id);
+  if (!id) return undefined;
+  const cleanId = id.trim();
+  const normId = formatCustomerId(cleanId);
+  return MOCK_REGISTERED_CUSTOMERS.find((c) => c.id === normId || c.id === cleanId);
 };
 
 /**
@@ -741,33 +746,45 @@ export const filterAndSortCustomers = (
     switch (sort.field) {
       case 'name':
         comparison = a.name.localeCompare(b.name);
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'phone':
         comparison = a.phone.localeCompare(b.phone);
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'walletBalance':
         comparison = a.walletBalance - b.walletBalance;
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'activeRequestsCount':
         comparison = a.activeRequestsCount - b.activeRequestsCount;
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'pendingWithdrawalsCount':
         comparison = a.pendingWithdrawalsCount - b.pendingWithdrawalsCount;
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'pendingWithdrawalAmount': {
         const aAmount = a.pendingWithdrawalAmount ?? (a.pendingWithdrawalsCount > 0 ? 1500 : 0);
         const bAmount = b.pendingWithdrawalAmount ?? (b.pendingWithdrawalsCount > 0 ? 1500 : 0);
         comparison = aAmount - bAmount;
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       }
       case 'lastActivityTimestamp':
         comparison = a.lastActivityTimestamp.localeCompare(b.lastActivityTimestamp);
+        if (comparison === 0) comparison = a.id.localeCompare(b.id);
         break;
       case 'registeredDateIso':
-        comparison = a.registeredDateIso.localeCompare(b.registeredDateIso);
+      default: {
+        const timeA = a.createdAt || (a.registeredDateIso ? `${a.registeredDateIso}T12:00:00.000Z` : '');
+        const timeB = b.createdAt || (b.registeredDateIso ? `${b.registeredDateIso}T12:00:00.000Z` : '');
+        comparison = timeA.localeCompare(timeB);
+        if (comparison === 0) {
+          comparison = a.id.localeCompare(b.id);
+        }
         break;
-      default:
-        comparison = 0;
+      }
     }
     return sort.direction === 'asc' ? comparison : -comparison;
   });

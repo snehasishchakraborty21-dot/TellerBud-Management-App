@@ -88,13 +88,13 @@ export const LedgerAuditModal: React.FC<LedgerAuditModalProps> = ({ entry, onClo
           {/* Detailed field pairs */}
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <span className="text-slate-400 block font-medium">Date and Time</span>
-              <span className="font-mono text-slate-800 font-semibold">{entry.dateTime}</span>
+              <span className="text-slate-400 block font-medium">Date & Time</span>
+              <span className="font-mono text-slate-800 font-semibold">{entry.dateTime.replace(', ', ' • ')}</span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-slate-400 block font-medium">Source Gateway / Core</span>
-              <span className="text-slate-800 font-semibold">{entry.source}</span>
+              <span className="text-slate-400 block font-medium">Source</span>
+              <span className="text-slate-800 font-semibold">{entry.source.replace(/\b(Core|Gateway|Engine|Rail|Bridge)\b/gi, '').trim()}</span>
             </div>
 
             <div className="space-y-1">

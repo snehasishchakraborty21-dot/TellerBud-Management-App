@@ -38,7 +38,7 @@ export const LedgerEntryDetailPage: React.FC = () => {
         timestamp: 'Today, 11:20 AM',
         rawDate: '2026-09-10T11:20:00Z',
         holderName: 'Lusaka Central Express Agency',
-        walletId: 'TB-BWL-1007',
+        walletId: 'TB-BWL-000002',
         walletType: 'Business Global Wallet' as const,
         entryType: 'Transaction Credit' as const,
         direction: 'Credit' as const,

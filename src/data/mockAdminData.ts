@@ -49,7 +49,7 @@ export const MOCK_REQUIRES_ATTENTION: RequiresAttentionItem[] = [
 export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   {
     id: 'TB-REQ-1052',
-    customerId: 'TB-CUS-1052',
+    customerId: 'TB-CUS-001052',
     customerName: 'Mwamba Mulenga',
     customerPhone: '+260 97 778 9012',
     type: 'Deposit',
@@ -68,7 +68,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1049',
-    customerId: 'TB-CUS-1049',
+    customerId: 'TB-CUS-001049',
     customerName: 'Chileshe Mumba',
     customerPhone: '+260 95 334 5678',
     type: 'Deposit',
@@ -87,7 +87,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1048',
-    customerId: 'TB-CUS-1048',
+    customerId: 'TB-CUS-001048',
     customerName: 'Ruth Banda',
     customerPhone: '+260 97 654 3210',
     type: 'Withdrawal',
@@ -108,7 +108,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1050',
-    customerId: 'TB-CUS-1050',
+    customerId: 'TB-CUS-001050',
     customerName: 'Grace Tembo',
     customerPhone: '+260 97 345 1050',
     type: 'Purchase',
@@ -129,7 +129,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1046',
-    customerId: 'TB-CUS-1046',
+    customerId: 'TB-CUS-001046',
     customerName: 'Lombe Kasonde',
     customerPhone: '+260 96 612 9901',
     type: 'Withdrawal',
@@ -150,7 +150,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1045',
-    customerId: 'TB-CUS-1045',
+    customerId: 'TB-CUS-001045',
     customerName: 'Bwalya Mwansa',
     customerPhone: '+260 97 245 1045',
     type: 'Deposit',
@@ -171,7 +171,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1044',
-    customerId: 'TB-CUS-1044',
+    customerId: 'TB-CUS-001044',
     customerName: 'Kondwani Phiri',
     customerPhone: '+260 95 443 2190',
     type: 'Withdrawal',
@@ -192,7 +192,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1042',
-    customerId: 'TB-CUS-1042',
+    customerId: 'TB-CUS-001042',
     customerName: 'Mabvuto Sakala',
     customerPhone: '+260 97 334 8871',
     type: 'Purchase',
@@ -213,7 +213,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1040',
-    customerId: 'TB-CUS-1040',
+    customerId: 'TB-CUS-001040',
     customerName: 'Chilufya Chewe',
     customerPhone: '+260 96 771 2234',
     type: 'Deposit',
@@ -234,7 +234,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1038',
-    customerId: 'TB-CUS-1038',
+    customerId: 'TB-CUS-001038',
     customerName: 'Njavwa Sinyangwe',
     customerPhone: '+260 97 552 1109',
     type: 'Withdrawal',
@@ -255,7 +255,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1036',
-    customerId: 'TB-CUS-1036',
+    customerId: 'TB-CUS-001036',
     customerName: 'Subilo Mukuka',
     customerPhone: '+260 95 221 4455',
     type: 'Deposit',
@@ -276,7 +276,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1034',
-    customerId: 'TB-CUS-1034',
+    customerId: 'TB-CUS-001034',
     customerName: 'Taonga Zulu',
     customerPhone: '+260 97 665 4321',
     type: 'Withdrawal',
@@ -297,7 +297,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1031',
-    customerId: 'TB-CUS-1031',
+    customerId: 'TB-CUS-001031',
     customerName: 'Mutinta Haimbe',
     customerPhone: '+260 96 998 7766',
     type: 'Purchase',
@@ -318,7 +318,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1029',
-    customerId: 'TB-CUS-1029',
+    customerId: 'TB-CUS-001029',
     customerName: 'Chanda Sikazwe',
     customerPhone: '+260 97 441 3322',
     type: 'Deposit',
@@ -339,7 +339,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1026',
-    customerId: 'TB-CUS-1026',
+    customerId: 'TB-CUS-001026',
     customerName: 'Thandiwe Lungu',
     customerPhone: '+260 95 667 8899',
     type: 'Withdrawal',
@@ -360,7 +360,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1024',
-    customerId: 'TB-CUS-1024',
+    customerId: 'TB-CUS-001024',
     customerName: 'Mundia Situmbeko',
     customerPhone: '+260 97 119 4433',
     type: 'Deposit',
@@ -381,7 +381,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1021',
-    customerId: 'TB-CUS-1021',
+    customerId: 'TB-CUS-001021',
     customerName: 'Bupe Chileshe',
     customerPhone: '+260 96 223 5588',
     type: 'Purchase',
@@ -402,7 +402,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-1018',
-    customerId: 'TB-CUS-1018',
+    customerId: 'TB-CUS-001018',
     customerName: 'Sipho Daka',
     customerPhone: '+260 97 881 2244',
     type: 'Withdrawal',
@@ -424,7 +424,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   // Multi-tenant demonstration records belonging to OTHER businesses:
   {
     id: 'TB-REQ-2001',
-    customerId: 'TB-CUS-2001',
+    customerId: 'TB-CUS-002001',
     customerName: 'Kavwele Mwanza',
     customerPhone: '+260 97 111 2233',
     type: 'Deposit',
@@ -445,7 +445,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-2002',
-    customerId: 'TB-CUS-2002',
+    customerId: 'TB-CUS-002002',
     customerName: 'Agness Chibwe',
     customerPhone: '+260 96 222 3344',
     type: 'Withdrawal',
@@ -464,7 +464,7 @@ export const MOCK_LIVE_PICKUP_OPERATIONS: PickupRequest[] = [
   },
   {
     id: 'TB-REQ-3001',
-    customerId: 'TB-CUS-3001',
+    customerId: 'TB-CUS-003001',
     customerName: 'Mwewa Chisenga',
     customerPhone: '+260 95 333 4455',
     type: 'Purchase',

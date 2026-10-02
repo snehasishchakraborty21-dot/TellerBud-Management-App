@@ -95,6 +95,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '14 Jan 2023',
     registeredDateIso: '2023-01-14',
+    createdAt: '2023-01-14T09:00:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -145,6 +146,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '02 Mar 2023',
     registeredDateIso: '2023-03-02',
+    createdAt: '2023-03-02T11:05:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -215,6 +217,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '20 Nov 2022',
     registeredDateIso: '2022-11-20',
+    createdAt: '2022-11-20T10:40:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -274,6 +277,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '15 Jul 2023',
     registeredDateIso: '2023-07-15',
+    createdAt: '2023-07-15T09:15:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -322,6 +326,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '10 Aug 2023',
     registeredDateIso: '2023-08-10',
+    createdAt: '2023-08-10T16:30:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -369,6 +374,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '05 May 2024',
     registeredDateIso: '2024-05-05',
+    createdAt: '2024-05-05T08:20:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Active',
@@ -413,6 +419,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '28 Aug 2026',
     registeredDateIso: '2026-08-28',
+    createdAt: '2026-08-28T14:00:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Pending',
@@ -461,6 +468,7 @@ export const MOCK_BUSINESSES: BusinessRecord[] = [
     },
     registeredDate: '18 Feb 2023',
     registeredDateIso: '2023-02-18',
+    createdAt: '2023-02-18T10:00:00.000Z',
     operatingCurrency: 'ZMW',
     timeZone: 'Africa/Lusaka (CAT)',
     status: 'Suspended',
@@ -553,18 +561,32 @@ export function filterAndSortBusinesses(
     switch (sort.field) {
       case 'name':
         comparison = a.name.localeCompare(b.name);
+        if (comparison === 0) {
+          comparison = a.id.localeCompare(b.id);
+        }
         break;
       case 'associatedAgents':
         comparison = a.associatedAgents - b.associatedAgents;
+        if (comparison === 0) {
+          comparison = a.id.localeCompare(b.id);
+        }
         break;
       case 'sharedWalletBalance':
         comparison = a.sharedWalletBalance - b.sharedWalletBalance;
+        if (comparison === 0) {
+          comparison = a.id.localeCompare(b.id);
+        }
         break;
       case 'registeredDateIso':
-        comparison = a.registeredDateIso.localeCompare(b.registeredDateIso);
+      default: {
+        const timeA = a.createdAt || a.registeredDateIso;
+        const timeB = b.createdAt || b.registeredDateIso;
+        comparison = timeA.localeCompare(timeB);
+        if (comparison === 0) {
+          comparison = a.id.localeCompare(b.id);
+        }
         break;
-      default:
-        comparison = 0;
+      }
     }
     return sort.direction === 'asc' ? comparison : -comparison;
   });

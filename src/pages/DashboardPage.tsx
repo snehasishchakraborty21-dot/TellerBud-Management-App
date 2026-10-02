@@ -14,6 +14,7 @@ import {
   BusinessSummaryData,
 } from '../components/dashboard/ActiveBusinessesCard';
 import { MonthlyBusinessTransactionChart } from '../components/dashboard/MonthlyBusinessTransactionChart';
+import { AdminMobileMoneyTransactionMatrix } from '../components/dashboard/AdminMobileMoneyTransactionMatrix';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -144,6 +145,11 @@ export const DashboardPage: React.FC = () => {
       {/* 3. Monthly Business Transaction Amount Bar Chart (Full Width) */}
       <div className="w-full">
         <MonthlyBusinessTransactionChart initialYear={2026} />
+      </div>
+
+      {/* 4. Cross-Business Mobile Money Transactions Year Matrix (Full Width) */}
+      <div className="w-full">
+        <AdminMobileMoneyTransactionMatrix initialYear={2026} />
       </div>
     </div>
   );

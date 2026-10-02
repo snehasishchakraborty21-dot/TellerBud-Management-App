@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import { getNavigationConfigForRole, NavGroup, NavItem } from '../../config/navigation';
 import { TellerBudLogo } from '../shared/TellerBudLogo';
 import { adminService } from '../../services/mockAdminService';
+import { businessOnboardingService } from '../../services/businessOnboardingService';
 import { useAuth } from '../../context/AuthContext';
 
 interface AdminSidebarProps {
@@ -21,6 +22,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const { currentUser } = useAuth();
   const [pendingWithdrawalsBadge, setPendingWithdrawalsBadge] = useState<number>(9);
   const [pendingCashFloatBadge, setPendingCashFloatBadge] = useState<number>(5);
+  const [onboardingAttentionBadge, setOnboardingAttentionBadge] = useState<number>(() =>
+    businessOnboardingService.getSummary().attentionCount
+  );
 
   const navigationConfig = getNavigationConfigForRole(currentUser?.role);
 
@@ -38,10 +42,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     businesses: true,
   });
 
-  // Keep businesses submenu expanded when viewing Businesses list, Business Details, or Add Business
+  // Keep businesses submenu expanded when viewing Businesses list, Details, or Business Onboarding
   const isBusinessesPath =
     (location.pathname.includes('/businesses') ||
-      location.pathname.includes('/people/businesses')) &&
+      location.pathname.includes('/people/businesses') ||
+      location.pathname.includes('/business-onboarding') ||
+      location.pathname.includes('/people/business-onboarding')) &&
     !location.pathname.includes('business-global-wallets');
 
   useEffect(() => {
@@ -70,12 +76,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
         const cfSummary = await adminService.getCashFloatStatusSummary();
         setPendingCashFloatBadge(cfSummary.pendingReview);
+
+        setOnboardingAttentionBadge(businessOnboardingService.getSummary().attentionCount);
       }
     };
 
     updateBadges();
-    const unsubscribe = adminService.subscribe(updateBadges);
-    return () => unsubscribe();
+    const unsubscribeAdmin = adminService.subscribe(updateBadges);
+    const unsubscribeOnboarding = businessOnboardingService.subscribe(() => {
+      setOnboardingAttentionBadge(businessOnboardingService.getSummary().attentionCount);
+    });
+    return () => {
+      unsubscribeAdmin();
+      unsubscribeOnboarding();
+    };
   }, [currentUser?.role, currentUser?.businessName]);
 
   // Handle closing drawer on ESC
@@ -192,13 +206,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     {isSubmenuOpen && !isDesktopCollapsed && (
                       <div className="pl-6 pr-1 space-y-[2px] pt-0.5 pb-1">
                         {item.children.map((sub) => {
-                          const isAdd = sub.id === 'add-business';
-                          const isSubActive = isAdd
-                            ? location.pathname.endsWith('/add')
-                            : !location.pathname.endsWith('/add') &&
+                          const isOnboarding = sub.id === 'business-onboarding';
+                          const isSubActive = isOnboarding
+                            ? location.pathname.includes('/business-onboarding')
+                            : !location.pathname.includes('/business-onboarding') &&
                               (location.pathname.includes('/businesses') ||
                                 location.pathname.includes('/people/businesses')) &&
                               !location.pathname.includes('business-global-wallets');
+
+                          const subBadge = isOnboarding ? onboardingAttentionBadge : sub.badge;
 
                           return (
                             <NavLink
@@ -215,10 +231,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                                   : 'text-slate-600 hover:bg-gray-50 hover:text-slate-900 font-medium'
                               }`}
                             >
-                              <span className="truncate">{sub.label}</span>
-                              {isSubActive && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] shrink-0 ml-1.5" />
-                              )}
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="truncate">{sub.label}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
+                                {subBadge !== undefined && Number(subBadge) > 0 && (
+                                  <span className="px-1.5 py-0.2 rounded-full text-[10.5px] font-bold bg-amber-500 text-white min-w-[18px] text-center leading-tight">
+                                    {subBadge}
+                                  </span>
+                                )}
+                                {isSubActive && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] shrink-0" />
+                                )}
+                              </div>
                             </NavLink>
                           );
                         })}

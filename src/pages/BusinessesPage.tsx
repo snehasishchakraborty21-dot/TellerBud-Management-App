@@ -54,10 +54,10 @@ export const BusinessesPage: React.FC = () => {
 
   // Sorting state (restored if returning from details)
   const [sortField, setSortField] = useState<BusinessSortField>(
-    navState?.sortField || 'name'
+    navState?.sortField || 'registeredDateIso'
   );
   const [sortDirection, setSortDirection] = useState<BusinessSortDirection>(
-    navState?.sortDirection || 'asc'
+    navState?.sortDirection || 'desc'
   );
 
   // Pagination state (restored if returning from details)
@@ -122,6 +122,8 @@ export const BusinessesPage: React.FC = () => {
   // Reset all filters
   const handleClearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
+    setSortField('registeredDateIso');
+    setSortDirection('desc');
     setCurrentPage(1);
   }, []);
 
@@ -162,7 +164,7 @@ export const BusinessesPage: React.FC = () => {
         setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
       } else {
         setSortField(field);
-        setSortDirection('asc');
+        setSortDirection(field === 'registeredDateIso' ? 'desc' : (field === 'name' ? 'asc' : 'desc'));
       }
       setCurrentPage(1);
     },

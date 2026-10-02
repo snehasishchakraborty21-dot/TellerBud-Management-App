@@ -53,7 +53,7 @@ export const DeactivateVendorDialog: React.FC<DeactivateVendorDialogProps> = ({
         <div className="mt-4 space-y-3">
           <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
             Are you sure you want to deactivate <strong className="text-slate-900">{vendor.name}</strong>?
-            Active transaction routing and API collections for this provider will be immediately suspended.
+            Active transaction routing and collections for this vendor will be immediately suspended.
           </p>
 
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-2.5">

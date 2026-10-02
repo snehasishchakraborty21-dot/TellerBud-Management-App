@@ -161,7 +161,7 @@ export const GlobalWalletRequestWithdrawalPage: React.FC = () => {
 
         <div className="flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200 self-start sm:self-auto">
           <Building2 className="w-3.5 h-3.5 text-slate-600" />
-          <span>{wallet?.businessName || currentUser?.businessName || 'Lusaka Central Express Agency'} (BIZ-LUS-001)</span>
+          <span>{wallet?.businessName || currentUser?.businessName || 'Lusaka Central Express Agency'} (TB-BIZ-000001)</span>
         </div>
       </div>
 

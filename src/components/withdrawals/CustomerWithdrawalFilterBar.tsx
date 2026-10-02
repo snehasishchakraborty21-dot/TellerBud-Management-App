@@ -3,7 +3,7 @@ import { Search, X, RotateCcw, Download, ChevronDown, FileSpreadsheet, FileText 
 import * as XLSX from 'xlsx';
 import { WithdrawalStatus, WithdrawalNetwork, CustomerWithdrawal } from '../../types/admin';
 import { getZambiaTodayString } from '../../utils/dateUtils';
-import { formatWithdrawalDate, formatZambianMobileNumber } from '../../utils/formatters';
+import { formatWithdrawalDate, formatZambianMobileNumber, formatWithdrawalId } from '../../utils/formatters';
 
 export interface CustomerWithdrawalFiltersState {
   search: string;
@@ -75,15 +75,12 @@ export const CustomerWithdrawalFilterBar: React.FC<CustomerWithdrawalFilterBarPr
         : 0;
 
       return {
-        'Withdrawal Reference': w.reference,
-        'Submitted Date': formatWithdrawalDate(w.requestedAt),
-        'Customer Name': w.customerName,
-        'Customer ID': w.customerId || '',
-        'Wallet ID': w.walletId || '',
+        'Withdrawal ID': formatWithdrawalId(w.reference),
+        'Customer': w.customerName,
         'Vendor': w.network,
-        'Withdrawal Amount (ZMW)': Number(w.amount.toFixed(2)),
-        'Mobile Number': formatZambianMobileNumber(w.payoutNumber || w.customerPhone),
-        'Reserved Funds (ZMW)': isReservationActive ? Number(reservedAmount.toFixed(2)) : '—',
+        'Amount (ZMW)': Number(w.amount.toFixed(2)),
+        'Phone Number': formatZambianMobileNumber(w.payoutNumber || w.customerPhone),
+        'Reserved (ZMW)': isReservationActive ? Number(reservedAmount.toFixed(2)) : '—',
         'Status': w.status,
       };
     });
@@ -124,15 +121,12 @@ export const CustomerWithdrawalFilterBar: React.FC<CustomerWithdrawalFilterBarPr
 
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [
-      { wch: 22 }, // Withdrawal Reference
-      { wch: 22 }, // Submitted Date
-      { wch: 24 }, // Customer Name
-      { wch: 18 }, // Customer ID
-      { wch: 18 }, // Wallet ID
+      { wch: 20 }, // Withdrawal ID
+      { wch: 24 }, // Customer
       { wch: 20 }, // Vendor
-      { wch: 22 }, // Withdrawal Amount (ZMW)
-      { wch: 20 }, // Mobile Number
-      { wch: 20 }, // Reserved Funds (ZMW)
+      { wch: 18 }, // Amount (ZMW)
+      { wch: 20 }, // Phone Number
+      { wch: 18 }, // Reserved (ZMW)
       { wch: 16 }, // Status
     ];
 
@@ -147,7 +141,7 @@ export const CustomerWithdrawalFilterBar: React.FC<CustomerWithdrawalFilterBarPr
         {/* Left: Search, Vendor, Status, From Date, To Date */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
           {/* Search Input */}
-          <div className="relative w-full sm:w-[220px] lg:w-[240px] shrink-0">
+          <div className="relative w-full sm:w-[240px] lg:w-[260px] shrink-0">
             <Search
               size={14}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -157,9 +151,9 @@ export const CustomerWithdrawalFilterBar: React.FC<CustomerWithdrawalFilterBarPr
               id="withdrawal-search-input"
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value })}
-              placeholder="Search reference, customer, ID or mobile…"
+              placeholder="Search Withdrawal ID, customer or Customer ID"
               className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] h-9 transition-colors"
-              aria-label="Search reference, customer, ID or mobile"
+              aria-label="Search Withdrawal ID, customer or Customer ID"
             />
             {filters.search && (
               <button

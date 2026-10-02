@@ -11,16 +11,20 @@ import {
   Users,
   Layers,
   Eye,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { ServiceModeRecord } from '../../types/serviceMode';
 
 interface ServiceModesTableProps {
   serviceModes: ServiceModeRecord[];
+  totalServiceModesCount?: number;
   onViewDetails: (service: ServiceModeRecord) => void;
 }
 
 export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
   serviceModes,
+  totalServiceModesCount = 4,
   onViewDetails,
 }) => {
   // State for popovers on "+1" transaction type tags
@@ -168,7 +172,7 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs box-border w-full overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs box-border w-full flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* 
         ========================================================================
         DESKTOP TABLE (Hidden on screens < 1024px, converting to stacked cards)
@@ -180,10 +184,10 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
         - Eligible Providers: 14%
         - Scheduling: 11%
         - Action: 11%
-        Total: 100% of available width. No horizontal scrollbar. Right border fully visible.
+        Total: 100% of available width. No horizontal scrollbar.
         ========================================================================
       */}
-      <div className="hidden lg:block w-full box-border">
+      <div className="hidden lg:flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-auto relative w-full">
         <table className="w-full text-left border-collapse table-fixed box-border">
           <colgroup>
             <col style={{ width: '20%' }} />
@@ -195,49 +199,41 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
             <col style={{ width: '11%' }} />
           </colgroup>
 
-          {/* Exact Headings:
-              - Service Mode
-              - Audience
-              - Availability
-              - Transaction Types
-              - Eligible Providers
-              - Scheduling
-              - Action
-          */}
-          <thead className="bg-slate-50/90 border-b border-slate-200">
+          {/* Sticky Frozen Table Header */}
+          <thead className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 shadow-2xs">
             <tr className="text-[11.5px] font-semibold text-slate-600 uppercase tracking-wider select-none">
-              <th className="py-3 px-3">
+              <th className="py-3 px-3.5 bg-slate-50">
                 Service Mode
               </th>
-              <th className="py-3 px-2 whitespace-nowrap">
+              <th className="py-3 px-2.5 whitespace-nowrap bg-slate-50">
                 Audience
               </th>
-              <th className="py-3 px-2 whitespace-nowrap">
+              <th className="py-3 px-2.5 whitespace-nowrap bg-slate-50">
                 Availability
               </th>
-              <th className="py-3 px-2">
+              <th className="py-3 px-2.5 bg-slate-50">
                 Transaction Types
               </th>
-              <th className="py-3 px-2 whitespace-nowrap">
+              <th className="py-3 px-2.5 whitespace-nowrap bg-slate-50">
                 Eligible Providers
               </th>
-              <th className="py-3 px-2 whitespace-nowrap">
+              <th className="py-3 px-2.5 whitespace-nowrap bg-slate-50">
                 Scheduling
               </th>
-              <th className="py-3 px-3 text-right whitespace-nowrap">
+              <th className="py-3 px-3.5 text-right whitespace-nowrap bg-slate-50">
                 Action
               </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
+          <tbody className="divide-y divide-slate-100 text-xs sm:text-sm bg-white">
             {serviceModes.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-12 text-center text-slate-500">
                   <div className="max-w-xs mx-auto text-center space-y-2">
                     <p className="text-sm font-medium text-slate-700">No service modes found</p>
                     <p className="text-xs text-slate-400">
-                      No modes matched your search or filter criteria. Try clearing filters.
+                      No modes matched your filter criteria. Try clearing filters.
                     </p>
                   </div>
                 </td>
@@ -268,7 +264,7 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                     }`}
                   >
                     {/* 1. Service Mode (20%) */}
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-3.5">
                       <div className="flex items-start gap-2.5">
                         {getServiceIcon(service.id)}
                         <div className="min-w-0">
@@ -296,17 +292,17 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                     </td>
 
                     {/* 2. Audience (15%) */}
-                    <td className="py-3 px-2 whitespace-nowrap">
+                    <td className="py-3 px-2.5 whitespace-nowrap">
                       {renderAudience(service.audience)}
                     </td>
 
                     {/* 3. Availability (13%) */}
-                    <td className="py-3 px-2 whitespace-nowrap">
+                    <td className="py-3 px-2.5 whitespace-nowrap">
                       {renderAvailabilityBadge(service)}
                     </td>
 
                     {/* 4. Transaction Types (16%) */}
-                    <td className="py-3 px-2">
+                    <td className="py-3 px-2.5">
                       <div className="flex items-center gap-1 relative">
                         {visibleTags.map((type) => (
                           <span
@@ -362,23 +358,23 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                     </td>
 
                     {/* 5. Eligible Providers (14%) */}
-                    <td className="py-3 px-2 whitespace-nowrap">
+                    <td className="py-3 px-2.5 whitespace-nowrap">
                       {renderProviders(service)}
                     </td>
 
                     {/* 6. Scheduling (11%) */}
-                    <td className="py-3 px-2 whitespace-nowrap">
+                    <td className="py-3 px-2.5 whitespace-nowrap">
                       {renderScheduling(service.scheduling)}
                     </td>
 
-                    {/* 7. Action (11%) - Fully visible View Details button with Eye icon */}
-                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                    {/* 7. Action (11%) */}
+                    <td className="py-3 px-3.5 text-right whitespace-nowrap">
                       <button
                         type="button"
                         id={`btn-view-details-${service.id}`}
                         onClick={() => onViewDetails(service)}
                         aria-label={`View Details for ${service.name}`}
-                        className="inline-flex items-center justify-center gap-1.5 min-w-[100px] px-2.5 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                        className="inline-flex items-center justify-center gap-1.5 min-w-[96px] px-2.5 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
                         title={`View Details for ${service.name}`}
                       >
                         <Eye className="w-3.5 h-3.5 shrink-0" />
@@ -396,16 +392,15 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
       {/* 
         ========================================================================
         SMALLER SCREEN BEHAVIOUR (< 1024px)
-        Convert service records into responsive stacked cards instead of creating horizontal scrolling.
-        Each responsive card shows all attributes and a full View Details button.
+        Convert service records into responsive stacked cards
         ========================================================================
       */}
-      <div className="block lg:hidden divide-y divide-slate-200">
+      <div className="block lg:hidden divide-y divide-slate-200 overflow-y-auto flex-1 min-h-0">
         {serviceModes.length === 0 ? (
           <div className="py-12 text-center text-slate-500">
             <p className="text-sm font-medium text-slate-700">No service modes found</p>
             <p className="text-xs text-slate-400 mt-1">
-              No modes matched your search or filter criteria. Try clearing filters.
+              No modes matched your filter criteria. Try clearing filters.
             </p>
           </div>
         ) : (
@@ -535,7 +530,7 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                     id={`btn-mobile-view-details-${service.id}`}
                     onClick={() => onViewDetails(service)}
                     aria-label={`View Details for ${service.name}`}
-                    className="inline-flex items-center justify-center gap-1.5 min-w-[100px] px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs whitespace-nowrap ml-auto"
+                    className="inline-flex items-center justify-center gap-1.5 min-w-[96px] px-3 py-1.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white border border-[#0D93AA]/20 rounded-lg transition-colors cursor-pointer shadow-2xs whitespace-nowrap ml-auto"
                   >
                     <Eye className="w-3.5 h-3.5 shrink-0" />
                     <span>View Details</span>
@@ -546,8 +541,66 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
           })
         )}
       </div>
+
+      {/* Pinned Pagination Footer */}
+      <div
+        id="service-modes-pagination-footer"
+        className="shrink-0 bg-white border-t border-slate-200 px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 select-none"
+      >
+        {/* Showing count */}
+        <div className="font-medium text-slate-700">
+          Showing{' '}
+          <span className="font-semibold text-slate-900">
+            {serviceModes.length > 0 ? 1 : 0} to {serviceModes.length}
+          </span>{' '}
+          of{' '}
+          <span className="font-semibold text-slate-900">
+            {serviceModes.length}
+          </span>{' '}
+          service modes
+          {serviceModes.length !== totalServiceModesCount && (
+            <span className="text-slate-400 ml-1">
+              (filtered from {totalServiceModesCount} total)
+            </span>
+          )}
+        </div>
+
+        {/* Rows per page & Page info */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-1.5 text-slate-500">
+            <span>Rows per page:</span>
+            <span className="font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/80">
+              10
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500">
+              Page <strong className="font-semibold text-slate-800">1</strong> of{' '}
+              <strong className="font-semibold text-slate-800">1</strong>
+            </span>
+
+            <div className="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50/50 p-0.5">
+              <button
+                type="button"
+                disabled
+                className="p-1 rounded text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                disabled
+                className="p-1 rounded text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
-
-

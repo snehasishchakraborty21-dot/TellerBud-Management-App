@@ -20,7 +20,7 @@ export interface AuthoritativeLedgerRecord {
   timestamp: string;            // e.g. 14 Jan 2025, 10:00 AM
   rawDate: string;              // ISO string for accurate sorting
   holderName: string;           // Customer or Business name
-  walletId: string;             // e.g. TB-WAL-1052 or TB-BWL-1007
+  walletId: string;             // e.g. TB-WAL-1052 or TB-BWL-000002
   walletType: WalletType;
   entryType: LedgerEntryType;
   direction: LedgerDirection;

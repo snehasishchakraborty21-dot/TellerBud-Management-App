@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { PickupRequest } from '../../types/admin';
+import { formatCustomerId } from '../../utils/formatters';
 
 interface CompletedRequestDetailsDrawerProps {
   request: PickupRequest;
@@ -99,7 +100,7 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
 
   // Record values - canonically populated for TB-REQ-1028 with resilient fallbacks
   const reference = request.id || 'TB-REQ-1028';
-  const customerId = request.customerId || 'TB-CUS-1028';
+  const customerId = formatCustomerId(request.customerId, 1028);
   const customerName = request.customerName || 'Thomas Banda';
   const customerPhone = request.customerPhone || '+260 97 328 1028';
   const transactionType = request.type || 'Withdrawal';

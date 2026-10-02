@@ -43,7 +43,7 @@ const ALL_POSSIBLE_SERVICES: Array<{
   },
   {
     name: 'Customer Withdrawal',
-    description: 'Disbursement from customer wallet directly into provider account',
+    description: 'Disbursement from customer wallet directly into vendor account',
   },
   {
     name: 'Walk-In Transaction',
@@ -214,7 +214,7 @@ export const EditVendorModal: React.FC<EditVendorModalProps> = ({
         enabled: isSelected,
         notes: isSelected
           ? `Channel active and configured for ${name}`
-          : 'Service routing currently disabled for this provider',
+          : 'Service routing currently disabled for this vendor',
       };
     });
 
@@ -440,10 +440,7 @@ export const EditVendorModal: React.FC<EditVendorModalProps> = ({
                     onChange={(e) => setIntegrationMode(e.target.value)}
                     className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 focus:bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] transition-colors cursor-pointer"
                   >
-                    <option value="Direct REST API">Direct REST API</option>
-                    <option value="Merchant REST API">Merchant REST API</option>
-                    <option value="Bank Integration">Bank Integration</option>
-                    <option value="Manual Settlement">Manual Settlement</option>
+                    <option value="External">External</option>
                   </select>
                 </div>
 

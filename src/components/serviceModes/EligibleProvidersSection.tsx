@@ -30,7 +30,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Mobile Money',
     status: 'Active',
     logoPath: '/assets/vendors/mtn.svg',
-    integrationMode: 'Direct REST API',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-ATL-002',
@@ -39,7 +39,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Mobile Money',
     status: 'Active',
     logoPath: '/assets/vendors/airtel.svg',
-    integrationMode: 'Merchant REST API',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-ACS-008',
@@ -48,7 +48,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/access.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-FNB-005',
@@ -57,7 +57,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/fnb.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-IND-006',
@@ -66,7 +66,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/indo.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-STB-007',
@@ -75,7 +75,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/stanbic.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-ZNC-004',
@@ -84,7 +84,7 @@ const CASH_PICKUP_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/zanaco.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
 ];
 
@@ -96,7 +96,7 @@ const WALK_IN_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/access.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-FNB-005',
@@ -105,7 +105,7 @@ const WALK_IN_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/fnb.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-IND-006',
@@ -114,7 +114,7 @@ const WALK_IN_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/indo.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-STB-007',
@@ -123,7 +123,7 @@ const WALK_IN_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/stanbic.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
   {
     id: 'TB-VND-ZNC-004',
@@ -132,7 +132,7 @@ const WALK_IN_PROVIDERS: EligibleProviderItem[] = [
     type: 'Bank',
     status: 'Active',
     logoPath: '/assets/vendors/zanaco.svg',
-    integrationMode: 'Bank Integration',
+    integrationMode: 'External',
   },
 ];
 

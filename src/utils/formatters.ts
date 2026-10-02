@@ -34,6 +34,58 @@ export function formatZmwListingAmount(
   }).format(amount);
 }
 
+/**
+ * Automatically formats Zambian NRC number progressively into canonical format:
+ * ######/##/# (e.g. 123456/00/1)
+ *
+ * Progressive input:
+ * - 1 -> 1
+ * - 123456 -> 123456
+ * - 1234560 -> 123456/0
+ * - 12345600 -> 123456/00
+ * - 123456001 -> 123456/00/1
+ */
+export function formatZambianNrc(input: string | null | undefined): string {
+  if (!input) return '';
+  const digits = String(input).replace(/\D/g, '').slice(0, 9);
+  if (digits.length === 0) return '';
+  if (digits.length <= 6) {
+    return digits;
+  }
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 6)}/${digits.slice(6)}`;
+  }
+  return `${digits.slice(0, 6)}/${digits.slice(6, 8)}/${digits.slice(8, 9)}`;
+}
+
+/**
+ * Strips all non-digit characters and returns up to 9 normalized digits (e.g. 123456001).
+ */
+export function normalizeNrcDigits(input: string | null | undefined): string {
+  if (!input) return '';
+  return String(input).replace(/\D/g, '').slice(0, 9);
+}
+
+/**
+ * Validates whether the NRC has exactly 9 digits matching ######/##/#.
+ */
+export function isValidZambianNrc(input: string | null | undefined): boolean {
+  if (!input) return false;
+  const digits = normalizeNrcDigits(input);
+  return digits.length === 9 && /^\d{6}\/\d{2}\/\d$/.test(input.trim());
+}
+
+/**
+ * Masks an NRC number for general listings (e.g. 123*** / ** / 1).
+ */
+export function maskZambianNrc(input: string | null | undefined): string {
+  if (!input) return '—';
+  const formatted = formatZambianNrc(input);
+  if (formatted.length < 11) return formatted;
+  return `${formatted.slice(0, 3)}***/${formatted.slice(7, 9)}/${formatted.slice(10)}`;
+}
+
+
 
 /**
  * Formats an ISO date string in the Africa/Lusaka timezone (UTC+2) with 12-hour AM/PM.
@@ -124,6 +176,214 @@ export const getWithdrawalDateParts = (isoStr: string): { datePart: string; time
  * Formats a Zambian mobile number as "+260 XX XXX XXXX", e.g. "+260 96 123 9900"
  * Never masks, truncates, or replaces digits with asterisks.
  */
+/**
+ * Formats any Customer ID to the exact standard format: TB-CUS-000000 (6 digits with leading zeros).
+ * e.g. "TB-CUS-1021" -> "TB-CUS-001021"
+ * e.g. "TB-CUS-1040" -> "TB-CUS-001040"
+ * e.g. "TB-CUS-1" -> "TB-CUS-000001"
+ * e.g. 1021 -> "TB-CUS-001021"
+ */
+export function formatCustomerId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  if (!id && fallbackSeq !== undefined) {
+    return `TB-CUS-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  if (!id) return fallbackSeq !== undefined ? `TB-CUS-${String(fallbackSeq).padStart(6, '0')}` : '';
+  const strId = String(id).trim();
+  if (!strId) return fallbackSeq !== undefined ? `TB-CUS-${String(fallbackSeq).padStart(6, '0')}` : '';
+
+  const match = strId.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    return `TB-CUS-${String(num).padStart(6, '0')}`;
+  }
+
+  if (fallbackSeq !== undefined) {
+    return `TB-CUS-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  return strId;
+}
+
+/**
+ * Formats any Withdrawal reference/ID to the exact standard format: TB-WDL-000000 (6 digits with leading zeros).
+ * e.g. "TB-WDR-8812" -> "TB-WDL-008812"
+ * e.g. "TB-WDL-8812" -> "TB-WDL-008812"
+ * e.g. "8812" -> "TB-WDL-008812"
+ */
+export function formatWithdrawalId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  if (!id && fallbackSeq !== undefined) {
+    return `TB-WDL-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  if (!id) return fallbackSeq !== undefined ? `TB-WDL-${String(fallbackSeq).padStart(6, '0')}` : '';
+  const strId = String(id).trim();
+  if (!strId) return fallbackSeq !== undefined ? `TB-WDL-${String(fallbackSeq).padStart(6, '0')}` : '';
+
+  const match = strId.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    return `TB-WDL-${String(num).padStart(6, '0')}`;
+  }
+
+  if (fallbackSeq !== undefined) {
+    return `TB-WDL-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  return strId;
+}
+
+/**
+ * Formats any Business Wallet ID to the exact standard format: TB-BWL-000000 (6 digits with leading zeros).
+ * e.g. "TB-BWL-1002" -> "TB-BWL-000001" (Copperbelt Financial Services)
+ * e.g. "TB-BWL-1007" -> "TB-BWL-000002" (Lusaka Central Express Agency)
+ * e.g. "TB-BWL-1005" -> "TB-BWL-000003" (Kabwe Central Agency)
+ * e.g. "TB-BWL-1004" -> "TB-BWL-000004" (Kabwata Market Agency)
+ * e.g. "TB-BWL-1003" -> "TB-BWL-000005" (Copperbelt Liquidity Hub)
+ * e.g. "TB-BWL-1008" -> "TB-BWL-000006" (Ndola Copperbelt Agency)
+ * e.g. "TB-BWL-1006" -> "TB-BWL-000007" (Livingstone Tourist Kiosk Agency)
+ * e.g. "TB-BWL-1001" -> "TB-BWL-000008" (Chipata Eastern Financial Agency)
+ */
+export function formatBusinessWalletId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  if (!id && fallbackSeq !== undefined) {
+    return `TB-BWL-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  if (!id) return fallbackSeq !== undefined ? `TB-BWL-${String(fallbackSeq).padStart(6, '0')}` : '';
+  const strId = String(id).trim();
+  if (!strId) return fallbackSeq !== undefined ? `TB-BWL-${String(fallbackSeq).padStart(6, '0')}` : '';
+
+  const OLD_TO_NEW_BWL_MAP: Record<string, string> = {
+    'TB-BWL-1002': 'TB-BWL-000001',
+    'TB-BWL-1007': 'TB-BWL-000002',
+    'TB-BWL-1005': 'TB-BWL-000003',
+    'TB-BWL-1004': 'TB-BWL-000004',
+    'TB-BWL-1003': 'TB-BWL-000005',
+    'TB-BWL-1008': 'TB-BWL-000006',
+    'TB-BWL-1006': 'TB-BWL-000007',
+    'TB-BWL-1001': 'TB-BWL-000008',
+  };
+
+  if (OLD_TO_NEW_BWL_MAP[strId]) {
+    return OLD_TO_NEW_BWL_MAP[strId];
+  }
+
+  // If already matches TB-BWL-000000 with 6 digits
+  if (/^TB-BWL-\d{6}$/.test(strId)) {
+    return strId;
+  }
+
+  const match = strId.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    return `TB-BWL-${String(num).padStart(6, '0')}`;
+  }
+
+  if (fallbackSeq !== undefined) {
+    return `TB-BWL-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  return strId;
+}
+
+/**
+ * General helper to format any record ID with an approved 3-letter prefix into TB-[PREFIX]-000000.
+ */
+export function formatMasterId(
+  id: string | number | null | undefined,
+  prefix: string,
+  fallbackSeq?: number
+): string {
+  if (!id && fallbackSeq !== undefined) {
+    return `TB-${prefix}-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  if (!id) return fallbackSeq !== undefined ? `TB-${prefix}-${String(fallbackSeq).padStart(6, '0')}` : '';
+  const strId = String(id).trim();
+  if (!strId) return fallbackSeq !== undefined ? `TB-${prefix}-${String(fallbackSeq).padStart(6, '0')}` : '';
+
+  // If already exactly matches TB-[PREFIX]-[6 digits]
+  if (new RegExp(`^TB-${prefix}-\\d{6}$`).test(strId)) {
+    return strId;
+  }
+
+  const match = strId.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    return `TB-${prefix}-${String(num).padStart(6, '0')}`;
+  }
+
+  if (fallbackSeq !== undefined) {
+    return `TB-${prefix}-${String(fallbackSeq).padStart(6, '0')}`;
+  }
+  return strId;
+}
+
+export function formatBusinessId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'BIZ', fallbackSeq);
+}
+
+export function formatBusinessOwnerId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'BOO', fallbackSeq);
+}
+
+export function formatAgentId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'AGT', fallbackSeq);
+}
+
+export function formatStoreCode(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'STR', fallbackSeq);
+}
+
+export function formatBoothCode(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'BTH', fallbackSeq);
+}
+
+export function formatDeviceId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'DEV', fallbackSeq);
+}
+
+export function formatAdminId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'ADM', fallbackSeq);
+}
+
+export function formatAuditorId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'AUD', fallbackSeq);
+}
+
+export function formatEmployeeId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'EMP', fallbackSeq);
+}
+
+export function formatCustomerRequestId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'REQ', fallbackSeq);
+}
+
+export function formatCashFloatRequestId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'CFR', fallbackSeq);
+}
+
+export function formatAgentLiquidityId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'AAL', fallbackSeq);
+}
+
+export function formatPurchaseTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'PUR', fallbackSeq);
+}
+
+export function formatDepositTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'DEP', fallbackSeq);
+}
+
+export function formatFundingTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'FND', fallbackSeq);
+}
+
+export function formatCommissionTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'CMS', fallbackSeq);
+}
+
+export function formatChargeTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'CHG', fallbackSeq);
+}
+
+export function formatAdjustmentTransactionId(id: string | number | null | undefined, fallbackSeq?: number): string {
+  return formatMasterId(id, 'ADJ', fallbackSeq);
+}
+
 export const formatZambianMobileNumber = (phone?: string | null): string => {
   if (!phone) return '';
   const digits = phone.replace(/\D/g, '');

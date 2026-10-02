@@ -6,6 +6,7 @@ import {
   MatrixEligibleService,
   SupportedService,
   EligibilityChangeLogEntry,
+  VendorRecord,
 } from '../types/vendor';
 import { useVendor } from '../context/VendorContext';
 import { EligibilitySummaryCards } from '../components/vendorEligibility/EligibilitySummaryCards';
@@ -146,14 +147,6 @@ export const VendorEligibilityPage: React.FC = () => {
   // Filtered vendors list
   const filteredVendors = useMemo(() => {
     return vendors.filter((vendor) => {
-      // Search
-      if (filters.search.trim()) {
-        const query = filters.search.toLowerCase().trim();
-        const matchesName = vendor.name.toLowerCase().includes(query);
-        const matchesId = vendor.id.toLowerCase().includes(query);
-        if (!matchesName && !matchesId) return false;
-      }
-
       // Vendor Type
       if (filters.type !== 'All' && vendor.type !== filters.type) {
         return false;
@@ -256,7 +249,7 @@ export const VendorEligibilityPage: React.FC = () => {
 
       if (remainingActiveCount === 0) {
         violations.push(
-          `Disabling this would leave 0 active vendors for "${service}". Transaction routing requires at least one active provider.`
+          `Disabling this would leave 0 active vendors for "${service}". Transaction routing requires at least one active vendor.`
         );
       }
     });
@@ -277,10 +270,8 @@ export const VendorEligibilityPage: React.FC = () => {
   // Cancel button click logic
   const handleCancelClick = useCallback(() => {
     if (pendingChanges.length === 0) {
-      // Exit edit mode immediately
       handleCancelEdit();
     } else {
-      // Display confirmation dialog
       setIsDiscardDialogOpen(true);
     }
   }, [pendingChanges.length, handleCancelEdit]);
@@ -370,41 +361,197 @@ export const VendorEligibilityPage: React.FC = () => {
     }, 400);
   }, []);
 
+  // Format date helper for filename
+  const getExportDateStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper to build CSV/Excel data rows
+  const buildExportRows = useCallback(
+    (targetVendors: VendorRecord[]) => {
+      return targetVendors.map((v) => {
+        const isInactive = v.status === 'Inactive';
+        const getServiceText = (serviceName: SupportedService) => {
+          const isConfigured = v.services.includes(serviceName);
+          if (isInactive) {
+            return isConfigured ? 'Configured' : 'Disabled';
+          }
+          return isConfigured ? 'Enabled' : 'Disabled';
+        };
+
+        return [
+          v.name,
+          v.id,
+          v.type,
+          getServiceText('Cash Pickup'),
+          getServiceText('Wallet Funding'),
+          getServiceText('Customer Withdrawal'),
+          getServiceText('Walk-In Transaction'),
+          v.status,
+          v.lastUpdated,
+        ];
+      });
+    },
+    []
+  );
+
+  // Trigger file download helper
+  const triggerDownload = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Export CSV Handler
+  const handleExportCSV = useCallback(() => {
+    try {
+      const targetVendors = filteredVendors.length > 0 ? filteredVendors : vendors;
+      const headers = [
+        'Vendor Name',
+        'Vendor ID',
+        'Vendor Type',
+        'Cash Pickup',
+        'Wallet Funding',
+        'Customer Withdrawal',
+        'Walk-In Transaction',
+        'Vendor Status',
+        'Last Updated',
+      ];
+
+      const rows = buildExportRows(targetVendors);
+      const csvContent = [
+        headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+        ...rows.map((row) =>
+          row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(',')
+        ),
+      ].join('\r\n');
+
+      const filename = `TellerBud_Vendor_Eligibility_${getExportDateStr()}.csv`;
+      triggerDownload(csvContent, filename, 'text/csv;charset=utf-8;');
+      setToastMessage('Vendor eligibility exported as CSV.');
+    } catch (err) {
+      console.error('Export CSV error:', err);
+      setToastMessage('Failed to export CSV. Please try again.');
+    }
+  }, [filteredVendors, vendors, buildExportRows]);
+
+  // Export Excel Handler (Tab-delimited spreadsheet XML/CSV compatible with Microsoft Excel)
+  const handleExportExcel = useCallback(() => {
+    try {
+      const targetVendors = filteredVendors.length > 0 ? filteredVendors : vendors;
+      const headers = [
+        'Vendor Name',
+        'Vendor ID',
+        'Vendor Type',
+        'Cash Pickup',
+        'Wallet Funding',
+        'Customer Withdrawal',
+        'Walk-In Transaction',
+        'Vendor Status',
+        'Last Updated',
+      ];
+
+      const rows = buildExportRows(targetVendors);
+      // Construct clean Excel-compatible XML Spreadsheet or tab-delimited text
+      const excelHeader =
+        '<?xml version="1.0"?>\r\n' +
+        '<?mso-application progid="Excel.Sheet"?>\r\n' +
+        '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\r\n' +
+        ' xmlns:o="urn:schemas-microsoft-com:office:office"\r\n' +
+        ' xmlns:x="urn:schemas-microsoft-com:office:excel"\r\n' +
+        ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\r\n' +
+        '<Styles>\r\n' +
+        ' <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style>\r\n' +
+        '</Styles>\r\n' +
+        '<Worksheet ss:Name="Vendor Eligibility">\r\n' +
+        '<Table>\r\n';
+
+      const excelHeaderRow =
+        ' <Row ss:StyleID="Header">\r\n' +
+        headers
+          .map(
+            (h) => `  <Cell><Data ss:Type="String">${h}</Data></Cell>\r\n`
+          )
+          .join('') +
+        ' </Row>\r\n';
+
+      const excelDataRows = rows
+        .map(
+          (row) =>
+            ' <Row>\r\n' +
+            row
+              .map(
+                (cell) =>
+                  `  <Cell><Data ss:Type="String">${String(cell)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')}</Data></Cell>\r\n`
+              )
+              .join('') +
+            ' </Row>\r\n'
+        )
+        .join('');
+
+      const excelFooter = '</Table>\r\n</Worksheet>\r\n</Workbook>';
+
+      const excelContent = excelHeader + excelHeaderRow + excelDataRows + excelFooter;
+      const filename = `TellerBud_Vendor_Eligibility_${getExportDateStr()}.xlsx`;
+      triggerDownload(
+        excelContent,
+        filename,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8'
+      );
+      setToastMessage('Vendor eligibility exported as Excel.');
+    } catch (err) {
+      console.error('Export Excel error:', err);
+      setToastMessage('Failed to export Excel. Please try again.');
+    }
+  }, [filteredVendors, vendors, buildExportRows]);
+
   return (
     <div
       id="vendor-eligibility-page-container"
-      className="w-full flex flex-col gap-4 sm:gap-5 px-3 sm:px-6 pt-1 pb-6 min-h-0 h-auto"
+      className="w-full flex flex-col gap-3.5 sm:gap-4 px-3 sm:px-6 pt-1 pb-6 min-h-0 h-auto"
     >
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-200">
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 bg-slate-900 text-white text-[13px] font-medium leading-[18px] rounded-xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-top-3 duration-200">
           <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
-            className="ml-2 text-slate-400 hover:text-white p-0.5 rounded"
+            className="ml-2 text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Top Page Header: Second title removed; Edit Eligibility / Edit Action Bar in normal document flow */}
+      {/* Top Page Header: Action Bar in normal document flow */}
       {isEditing ? (
-        /* Edit action bar: In normal document flow, no sticky/fixed/absolute positioning */
         <div
           id="edit-action-bar"
-          className="w-full min-h-[56px] h-14 bg-white border border-slate-200/90 shadow-xs rounded-xl px-4 py-2 flex items-center justify-between"
+          className="w-full min-h-[50px] bg-white border border-slate-200/90 shadow-2xs rounded-xl px-4 py-2.5 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#0D93AA] animate-pulse" />
-              <span className="text-sm font-bold text-slate-900 tracking-tight">
+              <span className="text-[14px] font-bold leading-[20px] text-slate-900 tracking-normal">
                 Editing Eligibility
               </span>
             </div>
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] whitespace-nowrap ${
                 hasUnsavedChanges
                   ? 'bg-amber-50 text-amber-800 border border-amber-200'
                   : 'bg-slate-100 text-slate-600 border border-slate-200'
@@ -419,9 +566,9 @@ export const VendorEligibilityPage: React.FC = () => {
               id="btn-cancel-eligibility"
               type="button"
               onClick={handleCancelClick}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium leading-[18px] text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4 text-slate-500" />
+              <X className="w-3.5 h-3.5 text-slate-500" />
               <span>Cancel</span>
             </button>
 
@@ -430,43 +577,51 @@ export const VendorEligibilityPage: React.FC = () => {
               type="button"
               disabled={!hasUnsavedChanges}
               onClick={handleOpenSaveModal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] active:bg-[#09697a] rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold leading-[18px] text-white bg-[#0D93AA] hover:bg-[#0b8094] active:bg-[#09697a] rounded-lg shadow-2xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
               <span>Save Changes</span>
             </button>
           </div>
         </div>
       ) : (
-        /* Read-only: Edit Eligibility button at the top-right of page header (no duplicate title) */
+        /* Read-only: Edit Eligibility button at the top-right */
         <div className="flex items-center justify-end py-0.5">
           <button
             id="btn-edit-eligibility"
             type="button"
             onClick={() => setIsEditing(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] active:bg-[#09697a] rounded-lg shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold leading-[18px] text-white bg-[#0D93AA] hover:bg-[#0b8094] active:bg-[#09697a] rounded-lg shadow-2xs transition-colors cursor-pointer"
             title="Enter editing mode to configure service eligibility"
           >
-            <Sliders className="w-4 h-4" />
+            <Sliders className="w-3.5 h-3.5" />
             <span>Edit Eligibility</span>
           </button>
         </div>
       )}
 
-      {/* Five Compact Summary Cards: No descriptions beneath values; Customer Withdrawal wrapping */}
-      <EligibilitySummaryCards vendors={vendors} />
+      {/* COMBINED FROZEN STICKY BLOCK: KPI Cards + Filter Bar */}
+      <div
+        id="frozen-kpi-filter-section"
+        className="sticky top-0 z-20 bg-[#FAFAFA] pt-1.5 pb-2.5 space-y-3 -mx-3 sm:-mx-6 px-3 sm:px-6 border-b border-slate-200/80 shadow-2xs transition-all"
+      >
+        {/* Five Compact Summary Cards */}
+        <EligibilitySummaryCards vendors={vendors} />
 
-      {/* Filter Row: Complete Clear Filters button, disabled when no filters, editing conflict prevention */}
-      <EligibilityFilterBar
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-        isEditing={isEditing}
-      />
+        {/* Filter Row with Export Dropdown */}
+        <EligibilityFilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          onRefresh={handleRefresh}
+          onExportCSV={handleExportCSV}
+          onExportExcel={handleExportExcel}
+          isRefreshing={isRefreshing}
+          isEditing={isEditing}
+        />
+      </div>
 
-      {/* Main Full-Width Eligibility Table with Sticky Header */}
+      {/* Main Full-Width Eligibility Table */}
       <EligibilityMatrixTable
         vendors={filteredVendors}
         isEditing={isEditing}
@@ -475,7 +630,7 @@ export const VendorEligibilityPage: React.FC = () => {
         highlightVendorId={highlightVendorId}
       />
 
-      {/* Recent Eligibility Changes Compact Table (Latest 5) with Sililo Lubinda / Super Admin */}
+      {/* Recent Eligibility Changes Compact Table (Latest 5) */}
       <RecentEligibilityChangesTable
         entries={eligibilityAuditLog}
         onViewFullHistory={() => setIsHistoryModalOpen(true)}
@@ -508,3 +663,5 @@ export const VendorEligibilityPage: React.FC = () => {
     </div>
   );
 };
+
+export default VendorEligibilityPage;

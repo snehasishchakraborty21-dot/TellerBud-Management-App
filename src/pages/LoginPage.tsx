@@ -274,6 +274,18 @@ export const LoginPage: React.FC = () => {
                 </div>
 
               </div>
+
+              {/* Website Registration Entry Point */}
+              <div className="mt-5 text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate('/business-signup')}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0D93AA] hover:bg-teal-50/50 text-xs font-semibold text-slate-700 hover:text-[#0D93AA] transition-all cursor-pointer shadow-2xs"
+                >
+                  <span>New Business? Submit Registration Request on TellerBud Website</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </section>
         ) : (

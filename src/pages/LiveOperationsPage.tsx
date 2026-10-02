@@ -22,6 +22,7 @@ import { PickupRequest } from '../types/admin';
 import { adminService } from '../services/mockAdminService';
 import { useAuth } from '../context/AuthContext';
 import { formatZMW, formatZmwListingAmount } from '../config/appConfig';
+import { formatCustomerId } from '../utils/formatters';
 import { StatusChip } from '../components/shared/StatusChip';
 import { LiveRequestDetailsDrawer } from '../components/admin/LiveRequestDetailsDrawer';
 
@@ -592,9 +593,9 @@ export const LiveOperationsPage: React.FC = () => {
                       </div>
                       <div
                         className="cell-secondary text-[11px] font-mono text-gray-500"
-                        title={req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
+                        title={formatCustomerId(req.customerId, parseInt(req.id.replace(/\D/g, '') || '1045', 10))}
                       >
-                        {req.customerId || `TB-CUS-${req.id.replace('TB-REQ-', '')}`}
+                        {formatCustomerId(req.customerId, parseInt(req.id.replace(/\D/g, '') || '1045', 10))}
                       </div>
                     </div>
 

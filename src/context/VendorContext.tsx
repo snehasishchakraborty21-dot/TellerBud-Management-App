@@ -43,7 +43,7 @@ const INITIAL_ELIGIBILITY_AUDIT_LOG: EligibilityChangeLogEntry[] = [
     service: 'Walk-In Transaction',
     previousStatus: 'Disabled',
     newStatus: 'Enabled',
-    changedBy: 'System Integration',
+    changedBy: 'TellerBud Admin',
     dateTime: '04 Sep 2026, 09:30 CAT',
   },
   {

@@ -23,7 +23,7 @@ export const AddVendorModal: React.FC<AddVendorModalProps> = ({
 }) => {
   const [vendorName, setVendorName] = useState('');
   const [vendorType, setVendorType] = useState<VendorType>('Mobile Money');
-  const [integrationMode, setIntegrationMode] = useState('Direct REST API');
+  const [integrationMode, setIntegrationMode] = useState('External');
   const [selectedServices, setSelectedServices] = useState<SupportedService[]>([
     'Cash Pickup',
   ]);
@@ -92,7 +92,7 @@ export const AddVendorModal: React.FC<AddVendorModalProps> = ({
             <div>
               <h3 className="text-sm font-bold text-slate-900">Add New Vendor</h3>
               <p className="text-xs text-slate-500">
-                Register a new gateway provider for TellerBud
+                Register a new external vendor for TellerBud
               </p>
             </div>
           </div>
@@ -157,10 +157,7 @@ export const AddVendorModal: React.FC<AddVendorModalProps> = ({
                 onChange={(e) => setIntegrationMode(e.target.value)}
                 className="w-full px-3 py-2 text-xs sm:text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA]"
               >
-                <option value="Direct REST API">Direct REST API</option>
-                <option value="Merchant REST API">Merchant REST API</option>
-                <option value="Bank Integration">Bank Integration</option>
-                <option value="Manual Settlement">Manual Settlement</option>
+                <option value="External">External</option>
               </select>
             </div>
           </div>

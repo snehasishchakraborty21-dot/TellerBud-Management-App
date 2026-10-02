@@ -4,7 +4,7 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { adminService } from '../services/mockAdminService';
 import { CustomerWithdrawal, CustomerWalletPosition, WithdrawalStatus } from '../types/admin';
 import { StatusChip } from '../components/shared/StatusChip';
-import { formatZMW, formatWithdrawalDate } from '../utils/formatters';
+import { formatZMW, formatWithdrawalDate, formatWithdrawalId } from '../utils/formatters';
 import { WithdrawalDetailInfo } from '../components/withdrawals/WithdrawalDetailInfo';
 import { WithdrawalCustomerInfo } from '../components/withdrawals/WithdrawalCustomerInfo';
 import { WithdrawalWalletPositionSection } from '../components/withdrawals/WithdrawalWalletPosition';
@@ -208,10 +208,10 @@ export const CustomerWithdrawalDetailPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             <div>
               <span className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                Reference
+                Withdrawal ID
               </span>
               <span className="font-mono text-base font-bold text-[#102025]">
-                {withdrawal.reference}
+                {formatWithdrawalId(withdrawal.reference)}
               </span>
             </div>
 

@@ -8,11 +8,7 @@ import {
   Info,
   Clock,
 } from 'lucide-react';
-import {
-  VendorRecord,
-  MatrixEligibleService,
-  SupportedService,
-} from '../../types/vendor';
+import { MatrixEligibleService } from '../../types/vendor';
 
 export interface PendingEligibilityChange {
   vendorId: string;
@@ -74,10 +70,10 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
               )}
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-[16px] font-bold leading-[22px] text-slate-900">
                 Confirm Vendor Eligibility Changes
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] font-normal leading-[15px] text-slate-500 mt-0.5">
                 Review {changes.length} proposed service configuration change{changes.length === 1 ? '' : 's'}
               </p>
             </div>
@@ -85,7 +81,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
           <button
             onClick={onClose}
             aria-label="Close dialog"
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -97,7 +93,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
           {isSafeguardViolated && (
             <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3">
               <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div className="text-xs text-rose-900">
+              <div className="text-[12px] leading-[16px] text-rose-900">
                 <p className="font-bold">System Safeguard Triggered</p>
                 <p className="mt-0.5">
                   Platform policy prevents disabling the last active vendor for a required service:
@@ -118,7 +114,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
           {hasDisablingWithActiveRequests && !isSafeguardViolated && (
             <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="text-xs text-amber-900">
+              <div className="text-[12px] leading-[16px] text-amber-900">
                 <p className="font-bold">Active Transaction Requests In Flight</p>
                 <p className="mt-1 leading-relaxed">
                   {changes.some(
@@ -142,7 +138,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
 
           {/* List of Changes */}
           <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-            <div className="bg-slate-100/80 px-4 py-2.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wider grid grid-cols-12 gap-2">
+            <div className="bg-slate-100/80 px-4 py-2.5 text-[11px] font-bold leading-[16px] text-slate-600 uppercase tracking-[0.03em] grid grid-cols-12 gap-2">
               <span className="col-span-4">Vendor</span>
               <span className="col-span-3">Service</span>
               <span className="col-span-3">Status Change</span>
@@ -156,32 +152,27 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
                 return (
                   <div
                     key={`${change.vendorId}-${change.service}-${idx}`}
-                    className="px-4 py-3 grid grid-cols-12 gap-2 items-center text-xs hover:bg-slate-50/70 transition-colors"
+                    className="px-4 py-3 grid grid-cols-12 gap-2 items-center text-[13px] leading-[18px] hover:bg-slate-50/70 transition-colors"
                   >
-                    {/* Vendor */}
-                    <div className="col-span-4 flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded bg-white border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
-                        <img
-                          src={change.vendorLogo}
-                          alt={change.vendorName}
-                          className="w-5 h-5 object-contain"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <span className="font-semibold text-slate-900 truncate">
+                    {/* Vendor (Text-Only) */}
+                    <div className="col-span-4 flex flex-col justify-center min-w-0">
+                      <span className="text-[13px] font-semibold leading-[18px] text-slate-900 truncate">
                         {change.vendorName}
+                      </span>
+                      <span className="font-mono text-[11px] font-normal leading-[15px] text-slate-500">
+                        {change.vendorId}
                       </span>
                     </div>
 
                     {/* Service */}
-                    <div className="col-span-3 font-medium text-slate-700">
+                    <div className="col-span-3 text-[13px] font-medium leading-[18px] text-slate-700">
                       {change.service}
                     </div>
 
                     {/* Previous -> New */}
                     <div className="col-span-3 flex items-center gap-1.5">
                       <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-medium ${
+                        className={`px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] whitespace-nowrap ${
                           change.previousValue === 'Enabled'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-slate-100 text-slate-600 border border-slate-200'
@@ -189,9 +180,9 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
                       >
                         {change.previousValue}
                       </span>
-                      <ArrowRight className="w-3 h-3 text-slate-400" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                        className={`px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] whitespace-nowrap ${
                           change.newValue === 'Enabled'
                             ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                             : 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -201,18 +192,18 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
                       </span>
                     </div>
 
-                    {/* In-Flight Count: "8 requests" */}
+                    {/* In-Flight Count */}
                     <div className="col-span-2 text-right">
                       {isDisabling && hasPending ? (
                         <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800"
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-medium leading-[16px] bg-amber-100 text-amber-800"
                           title={`${change.activeRequestsCount} active in-flight requests`}
                         >
                           <Clock className="w-3 h-3" />
                           <span>{change.activeRequestsCount} requests</span>
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">0 requests</span>
+                        <span className="text-slate-400 text-[11px] font-normal leading-[15px]">0 requests</span>
                       )}
                     </div>
                   </div>
@@ -222,11 +213,11 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
           </div>
 
           {/* Informational routing note */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start gap-2.5">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-normal leading-[16px] text-slate-600 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <p>
               Applying these updates will synchronize TellerBud routing tables immediately.
-              Customer Mobile App and Agent Mobile App provider listings will reflect these choices
+              Customer Mobile App and Agent Mobile App vendor listings will reflect these choices
               for all new transactions.
             </p>
           </div>
@@ -238,7 +229,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
             id="btn-cancel-confirm-eligibility"
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 text-[13px] font-medium leading-[18px] text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -248,7 +239,7 @@ export const EligibilityConfirmModal: React.FC<EligibilityConfirmModalProps> = (
             type="button"
             disabled={isSafeguardViolated}
             onClick={onConfirm}
-            className="px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7d91] active:bg-[#09697a] rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="px-4 py-2 text-[13px] font-semibold leading-[18px] text-white bg-[#0D93AA] hover:bg-[#0b7d91] active:bg-[#09697a] rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             Confirm Changes
           </button>

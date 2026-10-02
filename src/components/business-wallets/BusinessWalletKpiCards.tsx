@@ -92,7 +92,7 @@ export const BusinessWalletKpiCards: React.FC<BusinessWalletKpiCardsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-3.5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
       {cards.map((card) => {
         const Icon = card.icon;
         const isSelected = activeKpiFilter === card.id;
@@ -113,26 +113,27 @@ export const BusinessWalletKpiCards: React.FC<BusinessWalletKpiCardsProps> = ({
             type="button"
             onClick={handleClick}
             aria-pressed={isSelected}
-            className={`text-left p-3.5 sm:p-4 rounded-xl border transition-all duration-150 relative flex flex-col justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] cursor-pointer ${
+            className={`text-left py-2.5 px-3 sm:py-3 sm:px-3.5 rounded-xl border transition-all duration-150 relative flex flex-col justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0D93AA] cursor-pointer ${
               isSelected
                 ? 'border-[#0D93AA] ring-2 ring-[#0D93AA]/20 bg-[#0D93AA]/5 shadow-xs'
                 : 'bg-white border-gray-200/90 hover:border-gray-300 hover:shadow-xs'
             }`}
           >
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-medium text-slate-600 leading-snug">
+            <div className="flex items-center justify-between gap-1.5 mb-1.5">
+              <span className="text-[11px] sm:text-xs font-medium text-slate-600 leading-tight truncate">
                 {card.title}
               </span>
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${card.colorClasses.iconBg} ${card.colorClasses.iconText}`}
+                className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${card.colorClasses.iconBg} ${card.colorClasses.iconText}`}
               >
-                <Icon size={15} />
+                <Icon size={13} />
               </div>
             </div>
 
             <div className="flex items-baseline">
               <span
-                className={`text-lg sm:text-xl font-bold tracking-tight ${card.colorClasses.valueText} whitespace-nowrap`}
+                className={`text-sm sm:text-base lg:text-[17px] font-bold tracking-tight ${card.colorClasses.valueText} whitespace-nowrap overflow-hidden text-ellipsis`}
+                title={card.value}
               >
                 {card.value}
               </span>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CustomerWithdrawal } from '../../types/admin';
 import { ArrowRight } from 'lucide-react';
+import { formatCustomerId } from '../../utils/formatters';
 
 interface WithdrawalCustomerInfoProps {
   withdrawal: CustomerWithdrawal;
@@ -18,7 +19,7 @@ export const WithdrawalCustomerInfo: React.FC<WithdrawalCustomerInfoProps> = ({ 
         </h2>
         <button
           type="button"
-          onClick={() => navigate(`/super-admin/people/customers/${withdrawal.customerId || 'TB-CUS-1046'}`)}
+          onClick={() => navigate(`/super-admin/people/customers/${formatCustomerId(withdrawal.customerId || 'TB-CUS-001046')}`)}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0D93AA] hover:text-[#0b8296] transition-colors focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded px-2 py-1 hover:bg-[#0D93AA]/5"
         >
           <span>View Customer Profile</span>
@@ -26,13 +27,22 @@ export const WithdrawalCustomerInfo: React.FC<WithdrawalCustomerInfoProps> = ({ 
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-y-4 gap-x-6 text-sm">
         <div>
           <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
             Customer Name
           </span>
           <span className="font-semibold text-[#102025]">
             {withdrawal.customerName}
+          </span>
+        </div>
+
+        <div>
+          <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+            Customer ID
+          </span>
+          <span className="font-mono font-bold text-[#0D93AA]">
+            {formatCustomerId(withdrawal.customerId || 'TB-CUS-001046')}
           </span>
         </div>
 

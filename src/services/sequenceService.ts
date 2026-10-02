@@ -5,10 +5,11 @@
  * across all subsystems of the TellerBud platform according to official specifications.
  * 
  * Rules:
- * - Six-digit, zero-padded sequential number (e.g. 000001).
+ * - Approved format: TB-[APPROVED THREE-LETTER PREFIX]-[EXACTLY SIX DIGITS]
+ * - Six-digit, zero-padded sequential number (e.g. TB-CUS-000001).
  * - 000000 represents the format placeholder only.
- * - Monotonic counter per reference type; deletion does NOT reuse numbers.
- * - Generation is atomic, platform-wide, and unique.
+ * - Monotonic counter per reference type; deletion/suspension does NOT reuse numbers.
+ * - Generation is atomic, platform-wide, permanent, and unique.
  */
 
 export interface ReferenceFormatDefinition {
@@ -19,26 +20,51 @@ export interface ReferenceFormatDefinition {
   initialSequence: number;
 }
 
+export const APPROVED_ID_PREFIXES = [
+  'REQ',
+  'CFR',
+  'AAL',
+  'PUR',
+  'WDL',
+  'DEP',
+  'AGT',
+  'STR',
+  'BTH',
+  'BIZ',
+  'CUS',
+  'BOO',
+  'AUD',
+  'ADM',
+  'DEV',
+  'ADJ',
+  'EMP',
+  'FND',
+  'CMS',
+  'CHG',
+] as const;
+
+export type ApprovedIdPrefix = typeof APPROVED_ID_PREFIXES[number];
+
 export const TELLERBUD_REFERENCE_REGISTRY: Record<string, ReferenceFormatDefinition> = {
   CUSTOMER_REQUEST: {
     type: 'CUSTOMER_REQUEST',
     prefix: 'TB-REQ',
     formatPattern: 'TB-REQ-000000',
-    purpose: 'Customer Request Reference',
+    purpose: 'Customer Request Reference Number',
     initialSequence: 1,
   },
   CASH_FLOAT_REQUEST: {
     type: 'CASH_FLOAT_REQUEST',
     prefix: 'TB-CFR',
     formatPattern: 'TB-CFR-000000',
-    purpose: 'Cash/Float Request Reference',
+    purpose: 'Cash/Float Request Reference Number',
     initialSequence: 1,
   },
   AGENT_LIQUIDITY: {
     type: 'AGENT_LIQUIDITY',
     prefix: 'TB-AAL',
     formatPattern: 'TB-AAL-000000',
-    purpose: 'Agent-to-Agent Liquidity Reference',
+    purpose: 'Agent-to-Agent Liquidity Reference Number',
     initialSequence: 1,
   },
   PURCHASE_TRANSACTION: {
@@ -74,14 +100,14 @@ export const TELLERBUD_REFERENCE_REGISTRY: Record<string, ReferenceFormatDefinit
     prefix: 'TB-STR',
     formatPattern: 'TB-STR-000000',
     purpose: 'Store Code',
-    initialSequence: 5, // Prototype stores are 1..4 (TB-STR-000001 .. TB-STR-000004)
+    initialSequence: 1,
   },
   BOOTH: {
     type: 'BOOTH',
     prefix: 'TB-BTH',
     formatPattern: 'TB-BTH-000000',
     purpose: 'Booth Code',
-    initialSequence: 9, // Prototype booths are 1..8 (TB-BTH-000001 .. TB-BTH-000008)
+    initialSequence: 1,
   },
   BUSINESS: {
     type: 'BUSINESS',
@@ -164,7 +190,7 @@ export const TELLERBUD_REFERENCE_REGISTRY: Record<string, ReferenceFormatDefinit
 
 export type TellerBudReferenceType = keyof typeof TELLERBUD_REFERENCE_REGISTRY;
 
-const SEQUENCE_STORAGE_KEY = 'tellerbud_sequence_counters_v2';
+const SEQUENCE_STORAGE_KEY = 'tellerbud_sequence_counters_v3';
 
 class SequenceService {
   private counters: Record<string, number> = {};
@@ -223,17 +249,143 @@ class SequenceService {
   }
 
   /**
-   * Generates next Store Code: TB-STR-000001, TB-STR-000002, etc.
+   * Generates next Customer Request Reference: TB-REQ-000001, etc.
+   */
+  public nextCustomerRequestId(): string {
+    return this.nextReference('CUSTOMER_REQUEST');
+  }
+
+  /**
+   * Generates next Cash/Float Request Reference: TB-CFR-000001, etc.
+   */
+  public nextCashFloatRequestId(): string {
+    return this.nextReference('CASH_FLOAT_REQUEST');
+  }
+
+  /**
+   * Generates next Agent-to-Agent Liquidity Reference: TB-AAL-000001, etc.
+   */
+  public nextAgentLiquidityId(): string {
+    return this.nextReference('AGENT_LIQUIDITY');
+  }
+
+  /**
+   * Generates next Purchase Transaction ID: TB-PUR-000001, etc.
+   */
+  public nextPurchaseTransactionId(): string {
+    return this.nextReference('PURCHASE_TRANSACTION');
+  }
+
+  /**
+   * Generates next Withdrawal Transaction ID: TB-WDL-000001, etc.
+   */
+  public nextWithdrawalTransactionId(): string {
+    return this.nextReference('WITHDRAWAL_TRANSACTION');
+  }
+
+  /**
+   * Generates next Deposit Transaction ID: TB-DEP-000001, etc.
+   */
+  public nextDepositTransactionId(): string {
+    return this.nextReference('DEPOSIT_TRANSACTION');
+  }
+
+  /**
+   * Generates next Agent ID: TB-AGT-000001, etc.
+   */
+  public nextAgentId(): string {
+    return this.nextReference('AGENT');
+  }
+
+  /**
+   * Generates next Store Code: TB-STR-000001, etc.
    */
   public nextStoreCode(): string {
     return this.nextReference('STORE');
   }
 
   /**
-   * Generates next Booth Code: TB-BTH-000001, TB-BTH-000002, etc.
+   * Generates next Booth Code: TB-BTH-000001, etc.
    */
   public nextBoothCode(): string {
     return this.nextReference('BOOTH');
+  }
+
+  /**
+   * Generates next Business ID: TB-BIZ-000001, etc.
+   */
+  public nextBusinessId(): string {
+    return this.nextReference('BUSINESS');
+  }
+
+  /**
+   * Generates next Customer ID: TB-CUS-000001, etc.
+   */
+  public nextCustomerId(): string {
+    return this.nextReference('CUSTOMER');
+  }
+
+  /**
+   * Generates next Business Owner ID: TB-BOO-000001, etc.
+   */
+  public nextBusinessOwnerId(): string {
+    return this.nextReference('BUSINESS_OWNER');
+  }
+
+  /**
+   * Generates next Auditor ID: TB-AUD-000001, etc.
+   */
+  public nextAuditorId(): string {
+    return this.nextReference('AUDITOR');
+  }
+
+  /**
+   * Generates next Admin ID: TB-ADM-000001, etc.
+   */
+  public nextAdminId(): string {
+    return this.nextReference('ADMIN');
+  }
+
+  /**
+   * Generates next Device ID: TB-DEV-000001, etc.
+   */
+  public nextDeviceId(): string {
+    return this.nextReference('DEVICE');
+  }
+
+  /**
+   * Generates next Adjustment Transaction ID: TB-ADJ-000001, etc.
+   */
+  public nextAdjustmentTransactionId(): string {
+    return this.nextReference('ADJUSTMENT');
+  }
+
+  /**
+   * Generates next Employee ID: TB-EMP-000001, etc.
+   */
+  public nextEmployeeId(): string {
+    return this.nextReference('EMPLOYEE');
+  }
+
+  /**
+   * Generates next Funding Transaction ID: TB-FND-000001, etc.
+   */
+  public nextFundingTransactionId(): string {
+    return this.nextReference('FUNDING');
+  }
+
+  /**
+   * Generates next Earnings / Commission Transaction ID: TB-CMS-000001, etc.
+   */
+  public nextCommissionTransactionId(): string {
+    return this.nextReference('COMMISSION');
+  }
+
+  /**
+   * Generates next Charge Transaction ID: TB-CHG-000001, etc.
+   */
+  public nextChargeTransactionId(): string {
+    return this.nextReference('CHARGE');
   }
 
   /**
@@ -251,14 +403,17 @@ class SequenceService {
   }
 
   /**
-   * Validates if a code matches the standard 6-digit format.
+   * Validates if a code matches the approved 6-digit format with an approved 3-letter prefix.
    */
   public isValidCode(code: string, expectedPrefix?: string): boolean {
     if (!code || typeof code !== 'string') return false;
-    const regex = expectedPrefix
-      ? new RegExp(`^${expectedPrefix}-\\d{6}$`)
-      : /^TB-[A-Z]{3}-\\d{6}$/;
-    return regex.test(code.trim());
+    const clean = code.trim();
+    if (expectedPrefix) {
+      return new RegExp(`^${expectedPrefix}-\\d{6}$`).test(clean);
+    }
+    const match = clean.match(/^TB-([A-Z]{3})-\d{6}$/);
+    if (!match) return false;
+    return APPROVED_ID_PREFIXES.includes(match[1] as ApprovedIdPrefix);
   }
 }
 

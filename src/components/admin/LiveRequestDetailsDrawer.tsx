@@ -13,7 +13,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { PickupRequest } from '../../types/admin';
-import { formatZMW } from '../../utils/formatters';
+import { formatZMW, formatCustomerId } from '../../utils/formatters';
 
 interface LiveRequestDetailsDrawerProps {
   request: PickupRequest | null;
@@ -138,16 +138,16 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
 
   // Customer Data
   const customerId = isTB1045
-    ? 'TB-CUS-1045'
+    ? 'TB-CUS-001045'
     : isTB1050
-    ? 'TB-CUS-1050'
+    ? 'TB-CUS-001050'
     : isTB1048
-    ? 'TB-CUS-1048'
+    ? 'TB-CUS-001048'
     : isTB1052
-    ? 'TB-CUS-1052'
+    ? 'TB-CUS-001052'
     : isCompleted && request.id === 'TB-REQ-1028'
-    ? 'TB-CUS-1028'
-    : request.customerId || 'TB-CUS-1045';
+    ? 'TB-CUS-001028'
+    : formatCustomerId(request.customerId, 1045);
 
   const customerName = isTB1045
     ? 'Bwalya Mwansa'

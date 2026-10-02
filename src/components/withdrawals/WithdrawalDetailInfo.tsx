@@ -1,7 +1,7 @@
 import React from 'react';
 import { CustomerWithdrawal } from '../../types/admin';
 import { StatusChip } from '../shared/StatusChip';
-import { formatZMW, formatWithdrawalDate } from '../../utils/formatters';
+import { formatZMW, formatWithdrawalDate, formatWithdrawalId } from '../../utils/formatters';
 import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 
 interface WithdrawalDetailInfoProps {
@@ -18,10 +18,10 @@ export const WithdrawalDetailInfo: React.FC<WithdrawalDetailInfoProps> = ({ with
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
         <div>
           <span className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-            Reference
+            Withdrawal ID
           </span>
           <span className="font-mono font-bold text-[#102025] text-base">
-            {withdrawal.reference}
+            {formatWithdrawalId(withdrawal.reference)}
           </span>
         </div>
 

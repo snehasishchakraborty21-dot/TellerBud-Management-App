@@ -8,18 +8,20 @@ export type BusinessWalletHealth =
 
 export interface BusinessGlobalWallet {
   id: string; // Internal id
-  businessId: string; // e.g. 'BIZ-CHI-001'
-  businessName: string; // e.g. 'Chipata Eastern Financial Agency'
-  businessInitials: string; // e.g. 'CE'
-  walletId: string; // e.g. 'TB-BWL-1001'
-  ownerName: string; // e.g. 'Aliness Phiri'
-  ownerId: string; // e.g. 'USR-BO-007'
-  postedBalance: number; // e.g. 0.00
-  availableBalance: number; // e.g. 0.00
-  reservedFunds: number; // e.g. 0.00
+  businessId: string; // e.g. 'TB-BIZ-000001'
+  businessName: string; // e.g. 'Lusaka Central Express Agency'
+  businessInitials: string; // e.g. 'LC'
+  walletId: string; // e.g. 'TB-BWL-000002'
+  ownerName: string; // e.g. 'Chileshe Mwamba'
+  ownerId: string; // e.g. 'USR-BO-001'
+  postedBalance: number; // e.g. 164350.00
+  availableBalance: number; // e.g. 145900.00
+  reservedFunds: number; // e.g. 18450.00
   health: BusinessWalletHealth;
   state: BusinessWalletState;
   updatedAt: string; // ISO timestamp
+  createdAt?: string; // Registration timestamp e.g. '2023-01-14T09:00:00.000Z'
+  registeredDateIso?: string; // '2023-01-14'
 }
 
 export type BalanceRangeFilter =
@@ -30,7 +32,7 @@ export type BalanceRangeFilter =
   | 'above-100000';
 
 export interface BusinessWalletFilters {
-  search: string;
+  search?: string;
   state: BusinessWalletState | 'ALL';
   balanceRange: BalanceRangeFilter;
   updatedFrom: string;
@@ -40,12 +42,16 @@ export interface BusinessWalletFilters {
 
 export type BusinessWalletSortField =
   | 'businessName'
+  | 'businessId'
   | 'ownerName'
   | 'postedBalance'
+  | 'walletId'
   | 'availableBalance'
   | 'reservedFunds'
   | 'state'
-  | 'updatedAt';
+  | 'updatedAt'
+  | 'createdAt'
+  | 'registeredDateIso';
 
 export type BusinessWalletSortDirection = 'asc' | 'desc';
 

@@ -3,23 +3,70 @@ import {
   Search,
   RotateCcw,
   ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  ArrowDownLeft,
-  ArrowUpRight,
   Eye,
   ShieldCheck,
-  Calendar,
-  Lock,
-  Filter,
 } from 'lucide-react';
-import { CustomerWalletLedgerEntry, WalletLedgerEntryType } from '../../types/customerWallet';
-import { formatZMW } from '../../data/mockCustomerWalletData';
+import { CustomerWalletLedgerEntry } from '../../types/customerWallet';
 import { formatZmwListingAmount } from '../../utils/formatters';
 
 interface CustomerWalletLedgerTabProps {
   ledger: CustomerWalletLedgerEntry[];
   onSelectEntry: (entry: CustomerWalletLedgerEntry) => void;
+}
+
+/**
+ * Simplifies Source values to maximum 2 words, removing 'Core', 'Gateway', 'Engine', 'Rail', etc.
+ */
+export function simplifyLedgerSource(rawSource: string): string {
+  if (!rawSource) return '';
+  const trimmed = rawSource.trim();
+  const map: Record<string, string> = {
+    'Customer Withdrawal Core': 'Customer Withdrawal',
+    'TellerBud Fee Engine': 'TellerBud Fee',
+    'MTN MoMo Gateway': 'MTN MoMo',
+    'Pickup Point Core': 'Pickup Point',
+    'Airtel Money Gateway': 'Airtel Money',
+    'Zamtel Kwacha Gateway': 'Zamtel Kwacha',
+    'Zanaco Bank Rail': 'Zanaco Bank',
+    'Counter Cash Desk Core': 'Counter Cash',
+  };
+  if (map[trimmed]) return map[trimmed];
+  return trimmed
+    .replace(/\b(Core|Gateway|Engine|Rail|Bridge)\b/gi, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Splits date and time for 2-line rendering (no comma)
+ */
+function splitDateTime(dateTimeStr: string, timestamp?: string): { date: string; time: string } {
+  if (dateTimeStr && dateTimeStr.includes(',')) {
+    const parts = dateTimeStr.split(',');
+    return {
+      date: parts[0].trim(),
+      time: parts.slice(1).join(',').trim(),
+    };
+  }
+
+  if (timestamp) {
+    try {
+      const d = new Date(timestamp);
+      if (!isNaN(d.getTime())) {
+        return {
+          date: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  return {
+    date: dateTimeStr || '—',
+    time: '',
+  };
 }
 
 export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = ({
@@ -68,13 +115,16 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      result = result.filter(
-        (e) =>
+      result = result.filter((e) => {
+        const simplifiedSrc = simplifyLedgerSource(e.source).toLowerCase();
+        return (
           e.reference.toLowerCase().includes(q) ||
           e.relatedReference.toLowerCase().includes(q) ||
           e.source.toLowerCase().includes(q) ||
+          simplifiedSrc.includes(q) ||
           e.description.toLowerCase().includes(q)
-      );
+        );
+      });
     }
 
     if (typeFilter !== 'ALL') {
@@ -117,7 +167,7 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
   return (
     <div className="space-y-4">
       {/* Top Filter Bar */}
-      <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-xs space-y-3">
+      <div className="bg-white border border-gray-200/80 rounded-xl p-3.5 sm:p-4 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search */}
           <div className="relative flex-1">
@@ -202,7 +252,7 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
               type="button"
               onClick={handleRefresh}
               title="Refresh ledger records"
-              className="p-2 rounded-lg border border-gray-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+              className="p-2 rounded-lg border border-gray-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <RotateCcw size={14} className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''} />
             </button>
@@ -213,43 +263,66 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
       {/* Ledger Table */}
       <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[960px]">
             <thead>
               <tr className="border-b border-gray-200 bg-slate-50/70 text-[11px] font-bold text-slate-600 uppercase tracking-wider select-none">
+                {/* 1. Ledger Entry */}
                 <th
                   onClick={() => handleSort('reference')}
-                  className="py-3 px-4 cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-slate-900 group whitespace-nowrap"
                 >
                   <div className="flex items-center gap-1">
                     <span>Ledger Entry</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
+
+                {/* 2. Date & Time */}
                 <th
                   onClick={() => handleSort('date')}
-                  className="py-3 px-4 cursor-pointer hover:text-slate-900 group"
+                  className="py-3 px-3.5 sm:px-4 cursor-pointer hover:text-slate-900 group whitespace-nowrap w-[115px]"
                 >
                   <div className="flex items-center gap-1">
-                    <span>Date and Time</span>
+                    <span>Date & Time</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
-                <th className="py-3 px-4">Entry Type</th>
-                <th className="py-3 px-4">Source</th>
-                <th className="py-3 px-4 text-left amount-heading">Credit (ZMW)</th>
-                <th className="py-3 px-4 text-left amount-heading">Debit (ZMW)</th>
+
+                {/* 3. Entry Type */}
+                <th className="py-3 px-3.5 sm:px-4 whitespace-nowrap">Entry Type</th>
+
+                {/* 4. Source */}
+                <th className="py-3 px-3.5 sm:px-4 whitespace-nowrap">Source</th>
+
+                {/* 5. Credit */}
+                <th className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap amount-heading">
+                  Credit (ZMW)
+                </th>
+
+                {/* 6. Debit */}
+                <th className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap amount-heading">
+                  Debit (ZMW)
+                </th>
+
+                {/* 7. Balance After */}
                 <th
                   onClick={() => handleSort('balance')}
-                  className="py-3 px-4 text-left cursor-pointer hover:text-slate-900 group amount-heading"
+                  className="py-3 px-3.5 sm:px-4 text-left cursor-pointer hover:text-slate-900 group whitespace-nowrap amount-heading"
                 >
                   <div className="flex items-center justify-start gap-1">
                     <span>Balance After (ZMW)</span>
                     <ArrowUpDown size={12} className="text-slate-400 group-hover:text-slate-600" />
                   </div>
                 </th>
-                <th className="py-3 px-4">Related Reference</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-center">Action</th>
+
+                {/* 8. Related Reference */}
+                <th className="py-3 px-3.5 sm:px-4 whitespace-nowrap">Related Reference</th>
+
+                {/* 9. Status */}
+                <th className="py-3 px-3.5 sm:px-4 whitespace-nowrap">Status</th>
+
+                {/* 10. Action */}
+                <th className="py-3 px-3.5 sm:px-4 text-center whitespace-nowrap">Action</th>
               </tr>
             </thead>
 
@@ -258,56 +331,67 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                 paginatedEntries.map((entry) => {
                   const isCredit = entry.credit !== null && entry.credit > 0;
                   const isDebit = entry.debit !== null && entry.debit > 0;
+                  const { date, time } = splitDateTime(entry.dateTime, entry.timestamp);
+                  const simplifiedSource = simplifyLedgerSource(entry.source);
 
                   return (
                     <tr
-                      key={entry.id}
+                      key={entry.id || entry.reference}
                       className="hover:bg-slate-50/60 transition-colors group"
                     >
-                      {/* 1. Ledger Entry */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      {/* 1. Ledger Entry (TB-LED-000001) */}
+                      <td className="py-3 px-3.5 sm:px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                         {entry.reference}
                       </td>
 
-                      {/* 2. Date and Time */}
-                      <td className="py-3.5 px-4 text-slate-600 font-mono whitespace-nowrap">
-                        {entry.dateTime}
+                      {/* 2. Date & Time (2-line stacked without comma) */}
+                      <td className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap">
+                        <div className="flex flex-col justify-center">
+                          <span className="font-mono text-slate-800 font-medium text-xs leading-snug">
+                            {date}
+                          </span>
+                          {time && (
+                            <span className="font-mono text-slate-500 text-[11px] leading-snug mt-0.5">
+                              {time}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* 3. Entry Type */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3.5 sm:px-4 whitespace-nowrap">
                         <span className="font-semibold text-slate-800">
                           {entry.entryType}
                         </span>
                       </td>
 
-                      {/* 4. Source */}
-                      <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
-                        {entry.source}
+                      {/* 4. Source (Max 2 words, clean & readable) */}
+                      <td className="py-3 px-3.5 sm:px-4 text-slate-700 font-medium whitespace-nowrap">
+                        {simplifiedSource}
                       </td>
 
                       {/* 5. Credit */}
-                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-bold text-emerald-600 amount-cell">
+                      <td className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap font-mono font-bold text-emerald-600 amount-cell">
                         {isCredit ? `+ ${formatZmwListingAmount(entry.credit)}` : '—'}
                       </td>
 
                       {/* 6. Debit */}
-                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-bold text-rose-600 amount-cell">
+                      <td className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap font-mono font-bold text-rose-600 amount-cell">
                         {isDebit ? `- ${formatZmwListingAmount(entry.debit)}` : '—'}
                       </td>
 
                       {/* 7. Balance After */}
-                      <td className="py-3.5 px-4 text-left whitespace-nowrap font-mono font-black text-slate-900 amount-cell">
+                      <td className="py-3 px-3.5 sm:px-4 text-left whitespace-nowrap font-mono font-black text-slate-900 amount-cell">
                         {formatZmwListingAmount(entry.balanceAfter)}
                       </td>
 
                       {/* 8. Related Reference */}
-                      <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+                      <td className="py-3 px-3.5 sm:px-4 font-mono text-slate-700 whitespace-nowrap">
                         {entry.relatedReference}
                       </td>
 
                       {/* 9. Status */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-3 px-3.5 sm:px-4 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <ShieldCheck size={11} />
                           {entry.status}
@@ -315,11 +399,11 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                       </td>
 
                       {/* 10. Action */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <td className="py-3 px-3.5 sm:px-4 text-center whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => onSelectEntry(entry)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0D93AA] text-slate-700 hover:text-white transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-[#0D93AA] text-slate-700 hover:text-white transition-colors cursor-pointer shadow-2xs"
                         >
                           <Eye size={12} />
                           <span>View</span>
@@ -343,7 +427,7 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
         </div>
 
         {/* Footer info & pagination */}
-        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 bg-slate-50/40">
+        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 bg-slate-50/40 select-none">
           <div>
             Showing <span className="font-semibold text-slate-700">{totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}</span> to{' '}
             <span className="font-semibold text-slate-700">{Math.min(totalItems, currentPage * pageSize)}</span> of{' '}
@@ -356,7 +440,7 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 rounded border border-gray-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
+                className="px-2.5 py-1 rounded border border-gray-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
               >
                 Previous
               </button>
@@ -367,7 +451,7 @@ export const CustomerWalletLedgerTab: React.FC<CustomerWalletLedgerTabProps> = (
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 rounded border border-gray-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
+                className="px-2.5 py-1 rounded border border-gray-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
               >
                 Next
               </button>

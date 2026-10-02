@@ -12,13 +12,8 @@ import {
   Printer,
   Smartphone,
   Landmark,
-  ShieldCheck,
-  Clock,
-  Zap,
-  Activity,
   Calendar,
   User,
-  Sliders,
   AlertCircle,
   ChevronDown,
   Trash2,
@@ -198,7 +193,7 @@ export const VendorDetailsPage: React.FC = () => {
   return (
     <div
       id="vendor-details-page-container"
-      className="w-full h-auto min-h-0 space-y-4 px-3 sm:px-6 pt-2 pb-6"
+      className="w-full h-auto min-h-0 space-y-3.5 px-3 sm:px-6 pt-1 pb-6"
     >
       {/* Toast Notification */}
       {toastMessage && (
@@ -212,26 +207,17 @@ export const VendorDetailsPage: React.FC = () => {
         </div>
       )}
 
-      {/* TOP BAR: Back Navigation and Single Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <button
-            id="back-to-vendors-btn"
-            onClick={handleBackToVendors}
-            aria-label="Back to Vendors"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/90 transition-colors cursor-pointer border border-slate-200/80 bg-white shadow-2xs"
-          >
-            <ArrowLeft size={14} className="text-slate-500" />
-            <span>Back to Vendors</span>
-          </button>
-
-          <div className="h-4 w-px bg-slate-300" />
-
-          {/* Single Page Title Display */}
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-            Vendor Details
-          </h1>
-        </div>
+      {/* TOP NAVIGATION ROW: Single Back to Vendors Button (Duplicate header removed) */}
+      <div className="flex items-center py-0.5">
+        <button
+          id="back-to-vendors-btn"
+          onClick={handleBackToVendors}
+          aria-label="Back to Vendors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/90 transition-colors cursor-pointer border border-slate-200/80 bg-white shadow-2xs"
+        >
+          <ArrowLeft size={14} className="text-slate-500" />
+          <span>Back to Vendors</span>
+        </button>
       </div>
 
       {/* UPPER VENDOR IDENTITY BANNER WITH ACTIONS */}
@@ -240,80 +226,67 @@ export const VendorDetailsPage: React.FC = () => {
         className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Logo, Name, ID, Type, Status */}
-          <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
-            {/* Official Vendor Logo Box */}
-            <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-xl border border-slate-200 bg-white p-2.5 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
-              <img
-                src={vendor.logo}
-                alt={`${vendor.name} logo`}
-                className="max-h-full max-w-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+          {/* Vendor Details (Left-aligned, text-only without logo) */}
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                {vendor.name}
+              </h2>
+
+              {/* Status Badge */}
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${
+                  vendor.status === 'Active'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : vendor.status === 'Archived'
+                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                    vendor.status === 'Active'
+                      ? 'bg-emerald-500'
+                      : vendor.status === 'Archived'
+                      ? 'bg-purple-500'
+                      : 'bg-slate-400'
+                  }`}
+                />
+                {vendor.status}
+              </span>
+
+              {/* Vendor Type Badge */}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                {vendor.type === 'Mobile Money' ? (
+                  <Smartphone size={12} className="text-slate-500" />
+                ) : (
+                  <Landmark size={12} className="text-slate-500" />
+                )}
+                <span>{vendor.type}</span>
+              </span>
             </div>
 
-            {/* Vendor Name & Badges */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  {vendor.name}
-                </h2>
-
-                {/* Status Badge */}
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${
-                    vendor.status === 'Active'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : vendor.status === 'Archived'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                      vendor.status === 'Active'
-                        ? 'bg-emerald-500'
-                        : vendor.status === 'Archived'
-                        ? 'bg-purple-500'
-                        : 'bg-slate-400'
-                    }`}
-                  />
-                  {vendor.status}
-                </span>
-
-                {/* Vendor Type Badge */}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                  {vendor.type === 'Mobile Money' ? (
-                    <Smartphone size={12} className="text-slate-500" />
-                  ) : (
-                    <Landmark size={12} className="text-slate-500" />
-                  )}
-                  <span>{vendor.type}</span>
-                </span>
-              </div>
-
-              {/* Vendor ID with quick copy */}
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span className="font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-700">
-                  {vendor.id}
-                </span>
-                <button
-                  onClick={() => handleCopy(vendor.id, 'vendorId')}
-                  title="Copy Vendor ID"
-                  aria-label="Copy Vendor ID"
-                  className="p-1 hover:text-slate-800 text-slate-400 rounded transition-colors cursor-pointer"
-                >
-                  {copiedField === 'vendorId' ? (
-                    <Check size={13} className="text-emerald-600" />
-                  ) : (
-                    <Copy size={13} />
-                  )}
-                </button>
-                <span className="text-slate-300">•</span>
-                <span>Zambia (ZMW)</span>
-              </div>
+            {/* Vendor ID with quick copy & Country/Currency */}
+            <div className="flex items-center gap-2 text-xs text-slate-600">
+              <span className="font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-800 font-semibold">
+                {vendor.id}
+              </span>
+              <button
+                onClick={() => handleCopy(vendor.id, 'vendorId')}
+                title="Copy Vendor ID"
+                aria-label="Copy Vendor ID"
+                className="p-1 hover:text-slate-900 text-slate-400 rounded transition-colors cursor-pointer"
+              >
+                {copiedField === 'vendorId' ? (
+                  <Check size={13} className="text-emerald-600" />
+                ) : (
+                  <Copy size={13} />
+                )}
+              </button>
+              <span className="text-slate-300">•</span>
+              <span className="font-medium text-slate-700">
+                {vendor.country || 'Zambia'} ({vendor.currency || 'ZMW'})
+              </span>
             </div>
           </div>
 
@@ -420,108 +393,102 @@ export const VendorDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* FOUR COMPACT SUMMARY CARDS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* FOUR COMPACT KPI CARDS (Single horizontal line per card) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* 1. Vendor Status */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs h-auto">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-medium">Vendor Status</span>
-            <Activity size={14} className="text-slate-400" />
-          </div>
-          <div className="flex items-center gap-2 mt-1">
+        <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider truncate mr-2">
+            Vendor Status
+          </span>
+          <span className="flex items-center gap-1.5 shrink-0 text-xs sm:text-sm font-bold text-slate-900">
             <span
               className={`w-2 h-2 rounded-full ${
                 isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
               }`}
             />
-            <span className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-              {vendor.status}
-            </span>
-          </div>
+            <span>{vendor.status}</span>
+          </span>
         </div>
 
         {/* 2. Integration Mode */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs h-auto">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-medium">Integration Mode</span>
-            <Zap size={14} className="text-[#0D93AA]" />
-          </div>
-          <div className="text-sm sm:text-base font-bold text-slate-900 truncate mt-1">
-            {vendor.integrationMode}
-          </div>
+        <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider truncate mr-2">
+            Integration Mode
+          </span>
+          <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 shrink-0">
+            {vendor.integrationMode || 'External'}
+          </span>
         </div>
 
-        {/* 3. Supported Services Count */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs h-auto">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-medium">Supported Services</span>
-            <Sliders size={14} className="text-slate-400" />
-          </div>
-          <div className="text-base sm:text-lg font-bold text-slate-900 mt-1">
-            {vendor.services.length}
-          </div>
+        {/* 3. Supported Services */}
+        <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider truncate mr-2">
+            Supported Services
+          </span>
+          <span className="text-xs sm:text-sm font-bold font-mono text-[#0D93AA] shrink-0">
+            {vendor.services.length} Enabled
+          </span>
         </div>
 
         {/* 4. Last Updated */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs h-auto">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-medium">Last Updated</span>
-            <Clock size={14} className="text-slate-400" />
-          </div>
-          <div className="text-xs sm:text-sm font-bold text-slate-900 truncate mt-1">
+        <div className="bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 shadow-2xs flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider truncate mr-2">
+            Last Updated
+          </span>
+          <span className="text-xs sm:text-sm font-bold text-slate-800 shrink-0 truncate max-w-[140px]">
             {vendor.lastUpdated}
-          </div>
+          </span>
         </div>
       </div>
 
-      {/* SECTION 1: VENDOR INFORMATION & SECTION 2: SUPPORTED SERVICES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* SECTION 1: VENDOR INFORMATION & SECTION 2: SUPPORTED SERVICES (Matched Height & Compact) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         {/* Section 1: Vendor Information */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs h-auto">
-          <div className="pb-3 border-b border-slate-100 mb-4">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col justify-between">
+          <div className="pb-2.5 border-b border-slate-100 mb-3">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
               Vendor Information
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Vendor Name</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Vendor Name</span>
               <span className="font-semibold text-slate-900">{vendor.name}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Vendor ID</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Vendor ID</span>
               <span className="font-mono font-semibold text-slate-800 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                 {vendor.id}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Vendor Type</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Vendor Type</span>
               <span className="font-semibold text-slate-900">{vendor.type}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Country & Currency</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Country & Currency</span>
               <span className="font-semibold text-slate-900">
                 {vendor.country} ({vendor.currency})
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Integration Mode</span>
-              <span className="font-semibold text-slate-900">{vendor.integrationMode}</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Integration Mode</span>
+              <span className="font-semibold text-slate-900">{vendor.integrationMode || 'External'}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Added Date</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Added Date</span>
               <span className="font-semibold text-slate-900 flex items-center gap-1">
                 <Calendar size={12} className="text-slate-400" />
                 {vendor.addedDate}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Last Updated</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Last Updated</span>
               <span className="font-semibold text-slate-900">{vendor.lastUpdated}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px] mb-0.5">Updated By</span>
+              <span className="text-slate-600 block text-[11px] font-medium mb-0.5">Updated By</span>
               <span className="font-semibold text-slate-900 flex items-center gap-1">
                 <User size={12} className="text-slate-400" />
                 {vendor.updatedBy}
@@ -530,9 +497,9 @@ export const VendorDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Supported Services */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs h-auto">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        {/* Section 2: Supported Services (Matching Height with Internal Scrollable List) */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 mb-3 shrink-0">
             <div className="flex items-center gap-2">
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
                 Supported Services
@@ -550,12 +517,12 @@ export const VendorDetailsPage: React.FC = () => {
             </button>
           </div>
 
-          {/* List of services with Enabled / Disabled statuses */}
-          <div className="space-y-2.5">
+          {/* Internal Scrollable List of Services */}
+          <div className="flex-1 min-h-0 overflow-y-auto max-h-[190px] sm:max-h-[210px] pr-1 space-y-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
             {vendor.serviceEligibilities.map((srv) => (
               <div
                 key={srv.name}
-                className={`p-3 rounded-lg border flex items-center justify-between transition-colors ${
+                className={`p-2.5 rounded-lg border flex items-center justify-between transition-colors ${
                   srv.enabled
                     ? 'bg-slate-50/70 border-slate-200/90'
                     : 'bg-white border-slate-200/60 opacity-60'
@@ -577,7 +544,7 @@ export const VendorDetailsPage: React.FC = () => {
                     )}
                   </div>
                   {srv.notes && (
-                    <p className="text-[11px] text-slate-500 leading-normal">{srv.notes}</p>
+                    <p className="text-[11px] text-slate-600 leading-normal">{srv.notes}</p>
                   )}
                 </div>
               </div>
@@ -586,192 +553,97 @@ export const VendorDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* SECTION 3: INTEGRATION AND API STATUS */}
+      {/* SECTION 3: EXTERNAL SETTLEMENT DETAILS */}
       <div className="bg-white border border-slate-200/90 rounded-xl p-4 sm:p-5 shadow-2xs h-auto">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
           <div className="flex items-center gap-2.5">
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Integration &amp; API Status
+              External Settlement Details
             </h2>
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                vendor.connectionStatus === 'Operational'
+                vendor.status === 'Active'
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : 'bg-slate-100 text-slate-600 border border-slate-200'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  vendor.connectionStatus === 'Operational' ? 'bg-emerald-500' : 'bg-amber-500'
+                  vendor.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'
                 }`}
               />
-              {vendor.connectionStatus}
+              {vendor.status}
             </span>
           </div>
         </div>
 
-        {/* API Details if API-connected (MTN, Airtel) */}
-        {vendor.isApiConnected ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Collections API */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-medium text-slate-500">Collections API</span>
-                {vendor.collectionsApi && (
-                  <button
-                    onClick={() => handleCopy(vendor.collectionsApi!, 'collectionsApi')}
-                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                    title="Copy Endpoint"
-                  >
-                    {copiedField === 'collectionsApi' ? (
-                      <Check size={12} className="text-emerald-600" />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs font-mono font-semibold text-slate-800 break-all">
-                {vendor.collectionsApi || 'N/A'}
-              </p>
-            </div>
-
-            {/* Payout API */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-medium text-slate-500">Payout API</span>
-                {vendor.payoutApi && (
-                  <button
-                    onClick={() => handleCopy(vendor.payoutApi!, 'payoutApi')}
-                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                    title="Copy Endpoint"
-                  >
-                    {copiedField === 'payoutApi' ? (
-                      <Check size={12} className="text-emerald-600" />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs font-mono font-semibold text-slate-800 break-all">
-                {vendor.payoutApi || 'N/A'}
-              </p>
-            </div>
-
-            {/* Callback Endpoint */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-medium text-slate-500">Callback Endpoint</span>
-                {vendor.callbackEndpoint && (
-                  <button
-                    onClick={() => handleCopy(vendor.callbackEndpoint!, 'callbackEndpoint')}
-                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                    title="Copy Endpoint"
-                  >
-                    {copiedField === 'callbackEndpoint' ? (
-                      <Check size={12} className="text-emerald-600" />
-                    ) : (
-                      <Copy size={12} />
-                    )}
-                  </button>
-                )}
-              </div>
-              <p className="text-xs font-mono font-semibold text-slate-800 break-all">
-                {vendor.callbackEndpoint || 'N/A'}
-              </p>
-            </div>
-
-            {/* Last Successful Callback */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Last Successful Callback
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.lastSuccessfulCallback || 'N/A'}
-              </p>
-            </div>
-
-            {/* Success Rate */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Gateway Success Rate (24h)
-              </span>
-              <p className="text-xs font-semibold text-emerald-700">
-                {vendor.successRate || 'N/A'}
-              </p>
-            </div>
-
-            {/* Last Connection Check */}
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Last Connection Ping
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.lastConnectionCheck || 'N/A'}
-              </p>
-            </div>
+        {/* Phase 1 External Settlement Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+          {/* 1. Settlement Method */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Settlement Method
+            </span>
+            <p className="text-xs font-semibold text-slate-900">
+              External Settlement
+            </p>
           </div>
-        ) : (
-          /* Host-to-Host / Batch Bank Details (Zanaco, FNB, Indo, Stanbic, Access, Zamtel) */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Settlement Mechanism
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.nonApiDetails?.settlementMechanism || vendor.settlementMethod}
-              </p>
-            </div>
 
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Processing Window
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.nonApiDetails?.processingWindow || 'Standard BoZ Clearing Hours'}
-              </p>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Dispatch Channel
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.nonApiDetails?.dispatchChannel || 'Direct Host Clearing Portal'}
-              </p>
-            </div>
-
-            {vendor.nonApiDetails?.settlementAccount && (
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-                <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                  Settlement Account
-                </span>
-                <p className="text-xs font-mono font-semibold text-slate-800">
-                  {vendor.nonApiDetails.settlementAccount}
-                </p>
-              </div>
-            )}
-
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Last Batch / Ping
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.nonApiDetails?.lastBatchOrPing || vendor.lastUpdated}
-              </p>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-              <span className="text-[11px] font-medium text-slate-500 block mb-1">
-                Operational Status
-              </span>
-              <p className="text-xs font-semibold text-slate-800">
-                {vendor.nonApiDetails?.operationalStatus || 'Active Clearing Member'}
-              </p>
-            </div>
+          {/* 2. Processing Window */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Processing Window
+            </span>
+            <p className="text-xs font-semibold text-slate-900">
+              Vendor-Dependent
+            </p>
           </div>
-        )}
+
+          {/* 3. Processing Channel */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Processing Channel
+            </span>
+            <p className="text-xs font-semibold text-slate-900">
+              External Vendor Channel
+            </p>
+          </div>
+
+          {/* 4. Settlement Management */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Settlement Management
+            </span>
+            <p className="text-xs font-semibold text-slate-900">
+              Managed Externally
+            </p>
+          </div>
+
+          {/* 5. Last Updated */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Last Updated
+            </span>
+            <p className="text-xs font-semibold text-slate-900">
+              {vendor.lastUpdated}
+            </p>
+          </div>
+
+          {/* 6. Vendor Status */}
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200/80">
+            <span className="text-[11px] font-medium text-slate-600 block mb-1">
+              Vendor Status
+            </span>
+            <p className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  vendor.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-400'
+                }`}
+              />
+              <span>{vendor.status}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* SECTION 4: CONFIGURATION */}
@@ -782,10 +654,10 @@ export const VendorDetailsPage: React.FC = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-          {/* Minimum Amount */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 text-xs">
+          {/* 1. Minimum Amount */}
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80">
+            <span className="text-slate-600 block text-[11px] font-medium mb-1">
               Minimum Transaction Amount
             </span>
             <span className="font-mono font-bold text-slate-900 text-sm">
@@ -793,9 +665,9 @@ export const VendorDetailsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Maximum Amount */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">
+          {/* 2. Maximum Amount */}
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80">
+            <span className="text-slate-600 block text-[11px] font-medium mb-1">
               Maximum Transaction Amount
             </span>
             <span className="font-mono font-bold text-slate-900 text-sm">
@@ -803,9 +675,9 @@ export const VendorDetailsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Reservation Charge Eligibility */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">
+          {/* 3. Reservation Charge Eligibility */}
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80">
+            <span className="text-slate-600 block text-[11px] font-medium mb-1">
               Reservation Charge Eligibility
             </span>
             <span className="font-semibold text-slate-900">
@@ -813,67 +685,20 @@ export const VendorDetailsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Settlement Method */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">Settlement Method</span>
-            <span className="font-semibold text-slate-900">{vendor.settlementMethod}</span>
+          {/* 4. Settlement Method */}
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80">
+            <span className="text-slate-600 block text-[11px] font-medium mb-1">
+              Settlement Method
+            </span>
+            <span className="font-semibold text-slate-900">External Settlement</span>
           </div>
 
-          {/* Automated Reconciliation */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">
-              Automated Reconciliation
+          {/* 5. Reconciliation Method */}
+          <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 sm:col-span-2 lg:col-span-2">
+            <span className="text-slate-600 block text-[11px] font-medium mb-1">
+              Reconciliation Method
             </span>
-            <div className="flex items-center gap-2">
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${
-                  vendor.reconciliationEnabled
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-600 border border-slate-200'
-                }`}
-              >
-                {vendor.reconciliationEnabled ? (
-                  <>
-                    <CheckCircle2 size={10} />
-                    Enabled
-                  </>
-                ) : (
-                  <>
-                    <XCircle size={10} />
-                    Disabled
-                  </>
-                )}
-              </span>
-              <span className="text-[11px] text-slate-500">
-                ({vendor.reconciliationSchedule})
-              </span>
-            </div>
-          </div>
-
-          {/* Callback Verification */}
-          <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80">
-            <span className="text-slate-500 block text-[11px] mb-1">
-              Callback Signature Verification
-            </span>
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold ${
-                vendor.automaticCallbackVerification
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-slate-100 text-slate-600 border border-slate-200'
-              }`}
-            >
-              {vendor.automaticCallbackVerification ? (
-                <>
-                  <ShieldCheck size={10} />
-                  HMAC-SHA256 Active
-                </>
-              ) : (
-                <>
-                  <XCircle size={10} />
-                  Bypassed
-                </>
-              )}
-            </span>
+            <span className="font-semibold text-slate-900">Manual / External</span>
           </div>
         </div>
       </div>
@@ -884,13 +709,13 @@ export const VendorDetailsPage: React.FC = () => {
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
             Recent Vendor Activity
           </h2>
-          <span className="text-[11px] text-slate-400">(Latest 5 Events)</span>
+          <span className="text-[11px] font-medium text-slate-500">(Latest 5 Events)</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+              <tr className="border-b border-slate-100 text-slate-600 text-[11px] font-semibold uppercase tracking-wider">
                 <th className="py-2.5 px-3">Event</th>
                 <th className="py-2.5 px-3">Service</th>
                 <th className="py-2.5 px-3">Reference</th>
@@ -902,9 +727,15 @@ export const VendorDetailsPage: React.FC = () => {
               {vendor.recentActivities.length > 0 ? (
                 vendor.recentActivities.map((act) => (
                   <tr key={act.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-2.5 px-3 font-medium text-slate-900">{act.event}</td>
-                    <td className="py-2.5 px-3 text-slate-600">{act.service}</td>
-                    <td className="py-2.5 px-3 font-mono text-slate-700">{act.reference}</td>
+                    <td className="py-2.5 px-3 font-semibold text-slate-900">{act.event}</td>
+                    <td className="py-2.5 px-3 text-slate-700">{act.service}</td>
+                    <td className="py-2.5 px-3 font-mono font-medium text-slate-800">
+                      {act.reference === '—' ? (
+                        <span className="text-slate-400 font-sans">—</span>
+                      ) : (
+                        act.reference
+                      )}
+                    </td>
                     <td className="py-2.5 px-3">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
@@ -916,15 +747,15 @@ export const VendorDetailsPage: React.FC = () => {
                         {act.status}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right text-slate-600 font-medium whitespace-nowrap">
                       {act.dateTime}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-slate-400 italic">
-                    No recent vendor telemetry logged.
+                  <td colSpan={5} className="py-6 text-center text-slate-500 italic">
+                    No recent vendor activity logged.
                   </td>
                 </tr>
               )}
@@ -944,7 +775,7 @@ export const VendorDetailsPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+              <tr className="border-b border-slate-100 text-slate-600 text-[11px] font-semibold uppercase tracking-wider">
                 <th className="py-2.5 px-3">Event</th>
                 <th className="py-2.5 px-3">Previous Value</th>
                 <th className="py-2.5 px-3">New Value</th>
@@ -957,21 +788,21 @@ export const VendorDetailsPage: React.FC = () => {
                 vendor.changeHistory.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-2.5 px-3 font-semibold text-slate-900">{item.event}</td>
-                    <td className="py-2.5 px-3 text-slate-500 max-w-[220px] truncate" title={item.previousValue}>
+                    <td className="py-2.5 px-3 text-slate-600 max-w-[220px] truncate" title={item.previousValue}>
                       {item.previousValue}
                     </td>
                     <td className="py-2.5 px-3 font-medium text-slate-800 max-w-[260px] truncate" title={item.newValue}>
                       {item.newValue}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600">{item.changedBy}</td>
-                    <td className="py-2.5 px-3 text-right text-slate-500 whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-slate-700">{item.changedBy}</td>
+                    <td className="py-2.5 px-3 text-right text-slate-600 font-medium whitespace-nowrap">
                       {item.dateTime}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-slate-400 italic">
+                  <td colSpan={5} className="py-6 text-center text-slate-500 italic">
                     No administrative changes recorded yet.
                   </td>
                 </tr>
@@ -1006,3 +837,4 @@ export const VendorDetailsPage: React.FC = () => {
     </div>
   );
 };
+export default VendorDetailsPage;

@@ -119,6 +119,7 @@ export interface BusinessRecord {
   // Registration
   registeredDate: string; // Formatted date e.g. '14 Jan 2023'
   registeredDateIso: string; // ISO date e.g. '2023-01-14'
+  createdAt?: string; // Full ISO timestamp e.g. '2023-01-14T09:00:00Z' for precise registration sorting
 
   // Account information
   operatingCurrency: 'ZMW';
