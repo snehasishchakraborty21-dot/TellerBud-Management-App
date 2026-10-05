@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { PickupRequest } from '../../types/admin';
 import { formatZMW, formatCustomerId } from '../../utils/formatters';
+import { calculateReservationFee } from '../../utils/reservationFeeUtils';
 
 interface LiveRequestDetailsDrawerProps {
   request: PickupRequest | null;
@@ -186,19 +187,29 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
     ? 8000.0
     : request.amount;
 
-  const reservationCharge = (isCancelled || isNoAgent)
-    ? 0.0
-    : isTB1045
-    ? 25.0
+  const durationMinutes = isTB1045
+    ? 15
     : isTB1050
-    ? 15.0
+    ? 20
     : isTB1048
-    ? 12.0
+    ? 25
+    : isTB1052
+    ? 30
     : isCompleted && request.id === 'TB-REQ-1028'
-    ? 25.0
-    : 25.0;
+    ? 30
+    : 30;
 
-  const customerTotal = transactionAmount + reservationCharge;
+  const idNum = parseInt((request?.id || '1045').replace(/\D/g, ''), 10) || 1045;
+  const feeBreakdown = calculateReservationFee(
+    (isCancelled || isNoAgent) ? 0 : transactionAmount,
+    (isCancelled || isNoAgent) ? 0 : durationMinutes,
+    { chargeIndex: idNum }
+  );
+
+  const reservationFee = (isCancelled || isNoAgent) ? 0.0 : feeBreakdown.fullReservationFee;
+  const reservationCharge = reservationFee; // backward alias
+
+  const customerTotal = transactionAmount + reservationFee;
 
   const transactionType = isTB1045
     ? 'Deposit'
@@ -649,9 +660,9 @@ export const LiveRequestDetailsDrawer: React.FC<LiveRequestDetailsDrawerProps> =
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium">Reservation Charge:</span>
+                    <span className="text-gray-600 font-medium">Reservation Fee:</span>
                     <span className="font-mono font-medium text-gray-700">
-                      {formatZMW(reservationCharge)}
+                      {formatZMW(reservationFee)}
                     </span>
                   </div>
 

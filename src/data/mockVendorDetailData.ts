@@ -60,7 +60,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 10.0,
     maxTransactionAmount: 25000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -192,7 +192,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 10.0,
     maxTransactionAmount: 20000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -324,7 +324,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 20.0,
     maxTransactionAmount: 10000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: false,
     reconciliationSchedule: 'Manual / External',
@@ -456,7 +456,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 50.0,
     maxTransactionAmount: 75000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -580,7 +580,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 50.0,
     maxTransactionAmount: 80000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -696,7 +696,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 50.0,
     maxTransactionAmount: 60000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -812,7 +812,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 50.0,
     maxTransactionAmount: 90000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',
@@ -928,7 +928,7 @@ export const MOCK_VENDOR_DETAILS_MAP: Record<string, VendorDetailData> = {
 
     minTransactionAmount: 50.0,
     maxTransactionAmount: 100000.0,
-    reservationChargeEligibility: 'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+    reservationChargeEligibility: 'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
     settlementMethod: 'External Settlement',
     reconciliationEnabled: true,
     reconciliationSchedule: 'Manual / External',

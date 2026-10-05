@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Search,
   RotateCw,
   RotateCcw,
   Download,
@@ -13,6 +12,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Building2,
+  Users,
+  X,
+  ArrowUpRight,
+  ExternalLink,
 } from 'lucide-react';
 import {
   MOCK_ALL_TRANSACTIONS,
@@ -20,8 +24,9 @@ import {
   AllTransactionRecord,
   TransactionSource,
 } from '../data/mockAllTransactionsData';
+import { MOCK_BUSINESSES } from '../data/mockBusinessData';
 import { TransactionStatusBadge } from '../components/transactions/TransactionStatusBadge';
-import { formatZmwListingAmount } from '../utils/formatters';
+import { formatZmwListingAmount, formatZMW } from '../utils/formatters';
 
 const getVendorDisplayName = (vendorOrProvider: string): string => {
   if (vendorOrProvider === 'MTN Mobile Money' || vendorOrProvider === 'MTN') return 'MTN Mobile Money';
@@ -36,6 +41,25 @@ const getVendorDisplayName = (vendorOrProvider: string): string => {
   return vendorOrProvider;
 };
 
+interface BusinessTransactionSummary {
+  businessId: string;
+  businessName: string;
+  ownerName: string;
+  ownerPhone: string;
+  city: string;
+  province: string;
+  associatedAgents: number;
+  agentsOnline: number;
+  totalTransactions: number;
+  completedTransactions: number;
+  pendingTransactions: number;
+  failedTransactions: number;
+  totalVolume: number;
+  lastActivity: string;
+  recentTxRef?: string;
+  transactions: AllTransactionRecord[];
+}
+
 export const AllTransactionsPage: React.FC = () => {
   const navigate = useNavigate();
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +69,9 @@ export const AllTransactionsPage: React.FC = () => {
   // Primary Data State
   const [transactions, setTransactions] = useState<AllTransactionRecord[]>(MOCK_ALL_TRANSACTIONS);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Selected Business for Detailed Transaction Drawer
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessTransactionSummary | null>(null);
 
   const parseStatusParam = (param: string | null): string => {
     if (!param) return 'ALL';
@@ -57,10 +84,7 @@ export const AllTransactionsPage: React.FC = () => {
     return param;
   };
 
-  // Filter States
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sourceFilter, setSourceFilter] = useState<string>('ALL');
-  const [serviceFilter, setServiceFilter] = useState<string>('ALL');
+  // Filter States (Clean 1-line controls: Type, Vendor, Status, From Date, To Date)
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [vendorFilter, setVendorFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>(() => parseStatusParam(searchParams.get('status')));
@@ -74,15 +98,23 @@ export const AllTransactionsPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Pagination State (Default 20 per specification)
+  // Check if any filter is active
+  const isFilterActive = useMemo(() => {
+    return (
+      typeFilter !== 'ALL' ||
+      vendorFilter !== 'ALL' ||
+      statusFilter !== 'ALL' ||
+      fromDate !== '' ||
+      toDate !== ''
+    );
+  }, [typeFilter, vendorFilter, statusFilter, fromDate, toDate]);
+
+  // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(20);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
   // Filter Handling
   const handleClearFilters = () => {
-    setSearchQuery('');
-    setSourceFilter('ALL');
-    setServiceFilter('ALL');
     setTypeFilter('ALL');
     setVendorFilter('ALL');
     setStatusFilter('ALL');
@@ -101,59 +133,15 @@ export const AllTransactionsPage: React.FC = () => {
     }, 350);
   };
 
-  // Filter logic
+  // Filter individual transactions first based on active filters
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchesRef = tx.reference.toLowerCase().includes(q);
-        const matchesCustName = tx.customerName ? tx.customerName.toLowerCase().includes(q) : false;
-        const matchesCustId = tx.customerId ? tx.customerId.toLowerCase().includes(q) : false;
-        const matchesAgent = tx.agentName ? tx.agentName.toLowerCase().includes(q) : false;
-        const matchesAgentId = tx.agentId ? tx.agentId.toLowerCase().includes(q) : false;
-        const matchesSending = tx.sendingAgent ? tx.sendingAgent.toLowerCase().includes(q) : false;
-        const matchesReceiving = tx.receivingAgent ? tx.receivingAgent.toLowerCase().includes(q) : false;
-        const matchesBiz = tx.businessName ? tx.businessName.toLowerCase().includes(q) : false;
-        const matchesVendor =
-          tx.provider.toLowerCase().includes(q) ||
-          getVendorDisplayName(tx.provider).toLowerCase().includes(q);
-        const matchesService = tx.service.toLowerCase().includes(q);
-        const matchesType = tx.transactionType.toLowerCase().includes(q);
-
-        if (
-          !matchesRef &&
-          !matchesCustName &&
-          !matchesCustId &&
-          !matchesAgent &&
-          !matchesAgentId &&
-          !matchesSending &&
-          !matchesReceiving &&
-          !matchesBiz &&
-          !matchesVendor &&
-          !matchesService &&
-          !matchesType
-        ) {
-          return false;
-        }
-      }
-
-      // 2. Source
-      if (sourceFilter !== 'ALL' && tx.source !== sourceFilter) {
-        return false;
-      }
-
-      // 3. Service
-      if (serviceFilter !== 'ALL' && tx.service !== serviceFilter) {
-        return false;
-      }
-
-      // 4. Transaction Type
+      // 1. Transaction Type
       if (typeFilter !== 'ALL' && tx.transactionType !== typeFilter) {
         return false;
       }
 
-      // 5. Vendor
+      // 2. Vendor
       if (vendorFilter !== 'ALL') {
         if (vendorFilter === 'Access' || vendorFilter === 'Access Bank') {
           if ((tx.provider as string) !== 'Access' && (tx.provider as string) !== 'Access Bank') return false;
@@ -162,12 +150,12 @@ export const AllTransactionsPage: React.FC = () => {
         }
       }
 
-      // 6. Status
+      // 3. Status
       if (statusFilter !== 'ALL' && tx.status !== statusFilter) {
         return false;
       }
 
-      // 7. Date Range
+      // 4. Date Range
       if (fromDate && tx.rawDate < fromDate) {
         return false;
       }
@@ -177,50 +165,109 @@ export const AllTransactionsPage: React.FC = () => {
 
       return true;
     });
-  }, [
-    transactions,
-    searchQuery,
-    sourceFilter,
-    serviceFilter,
-    typeFilter,
-    vendorFilter,
-    statusFilter,
-    fromDate,
-    toDate,
-  ]);
+  }, [transactions, typeFilter, vendorFilter, statusFilter, fromDate, toDate]);
 
-  // Export Filtered Transactions
+  // Aggregate Transactions by Registered Business
+  const businessSummaries = useMemo<BusinessTransactionSummary[]>(() => {
+    // Map of normalized business names / IDs to registered business records
+    return MOCK_BUSINESSES.map((biz) => {
+      // Find all matching transactions for this business
+      const bizTransactions = filteredTransactions.filter((tx) => {
+        if (tx.businessId && (tx.businessId === biz.id || tx.businessId === biz.id.replace('TB-BIZ-', 'BIZ-LUS-').slice(0, 11))) {
+          return true;
+        }
+        if (tx.businessName && tx.businessName.toLowerCase() === biz.name.toLowerCase()) {
+          return true;
+        }
+        return false;
+      });
+
+      const totalVolume = bizTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+      const completed = bizTransactions.filter((tx) => tx.status === 'Completed' || tx.status === 'Paid').length;
+      const pending = bizTransactions.filter((tx) =>
+        tx.status.includes('Pending') ||
+        tx.status === 'Processing' ||
+        tx.status === 'Finding an Agent' ||
+        tx.status === 'Agent Confirmed' ||
+        tx.status === 'Ready for Pickup'
+      ).length;
+      const failed = bizTransactions.filter((tx) =>
+        tx.status === 'Failed' ||
+        tx.status === 'Cancelled' ||
+        tx.status === 'Rejected'
+      ).length;
+
+      // Find latest transaction activity
+      const latestTx = bizTransactions.length > 0 ? bizTransactions[0] : null;
+
+      return {
+        businessId: biz.id,
+        businessName: biz.name,
+        ownerName: biz.ownerName,
+        ownerPhone: biz.ownerPhone,
+        city: biz.city,
+        province: biz.province,
+        associatedAgents: biz.associatedAgents,
+        agentsOnline: biz.agentsOnline,
+        totalTransactions: bizTransactions.length,
+        completedTransactions: completed,
+        pendingTransactions: pending,
+        failedTransactions: failed,
+        totalVolume,
+        lastActivity: latestTx ? latestTx.dateTime : biz.lastActivity || '—',
+        recentTxRef: latestTx ? latestTx.reference : undefined,
+        transactions: bizTransactions,
+      };
+    });
+  }, [filteredTransactions]);
+
+  // Summary Card Metrics
+  const summaryMetrics = useMemo(() => {
+    const totalTx = businessSummaries.reduce((acc, b) => acc + b.totalTransactions, 0);
+    const completedTx = businessSummaries.reduce((acc, b) => acc + b.completedTransactions, 0);
+    const pendingTx = businessSummaries.reduce((acc, b) => acc + b.pendingTransactions, 0);
+    const failedTx = businessSummaries.reduce((acc, b) => acc + b.failedTransactions, 0);
+    const totalVal = businessSummaries.reduce((acc, b) => acc + b.totalVolume, 0);
+
+    return {
+      total: totalTx || ALL_TRANSACTIONS_SUMMARY.total,
+      completed: completedTx || ALL_TRANSACTIONS_SUMMARY.completed,
+      pending: pendingTx || ALL_TRANSACTIONS_SUMMARY.pendingOrProcessing,
+      failed: failedTx || ALL_TRANSACTIONS_SUMMARY.failedOrCancelled,
+      totalValue: totalVal || ALL_TRANSACTIONS_SUMMARY.totalValue,
+    };
+  }, [businessSummaries]);
+
+  // Export Filtered Business Summary
   const handleExport = useCallback(() => {
     const headers = [
-      'Transaction Reference',
-      'Date and Time',
-      'Source',
-      'Customer Name',
-      'Customer ID',
-      'Agent / Counterparty',
+      'Business ID',
       'Business Name',
-      'Service',
-      'Transaction Type',
-      'Vendor',
-      'Amount (ZMW)',
-      'Status',
+      'Owner Name',
+      'Owner Phone',
+      'City',
+      'Associated Agents',
+      'Total Transactions',
+      'Completed Transactions',
+      'Pending Transactions',
+      'Failed Transactions',
+      'Total Transaction Volume (ZMW)',
+      'Last Activity',
     ];
 
-    const rows = filteredTransactions.map((tx) => [
-      tx.reference,
-      tx.dateTime,
-      tx.source,
-      tx.customerName || '—',
-      tx.customerId || '—',
-      tx.service === 'Agent-to-Agent Liquidity'
-        ? `Sender: ${tx.sendingAgent || '—'} -> Receiver: ${tx.receivingAgent || '—'}`
-        : `${tx.agentName}${tx.agentId ? ` (${tx.agentId})` : ''}`,
-      tx.businessName || '—',
-      tx.service,
-      tx.transactionType,
-      getVendorDisplayName(tx.provider),
-      tx.amount.toFixed(2),
-      tx.status,
+    const rows = businessSummaries.map((b) => [
+      b.businessId,
+      b.businessName,
+      b.ownerName,
+      b.ownerPhone,
+      b.city,
+      `${b.associatedAgents} (${b.agentsOnline} Online)`,
+      b.totalTransactions,
+      b.completedTransactions,
+      b.pendingTransactions,
+      b.failedTransactions,
+      b.totalVolume.toFixed(2),
+      b.lastActivity,
     ]);
 
     const csvContent =
@@ -230,293 +277,217 @@ export const AllTransactionsPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `TellerBud_Transactions_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `TellerBud_Business_Transactions_Summary_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [filteredTransactions]);
+  }, [businessSummaries]);
 
   // Pagination Math
-  const totalFilteredCount = filteredTransactions.length;
-  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / rowsPerPage));
+  const totalCount = businessSummaries.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / rowsPerPage));
   const validCurrentPage = Math.min(currentPage, totalPages);
 
-  const paginatedTransactions = useMemo(() => {
+  const paginatedBusinesses = useMemo(() => {
     const start = (validCurrentPage - 1) * rowsPerPage;
-    return filteredTransactions.slice(start, start + rowsPerPage);
-  }, [filteredTransactions, validCurrentPage, rowsPerPage]);
+    return businessSummaries.slice(start, start + rowsPerPage);
+  }, [businessSummaries, validCurrentPage, rowsPerPage]);
 
-  const startIndex = totalFilteredCount === 0 ? 0 : (validCurrentPage - 1) * rowsPerPage + 1;
-  const endIndex = Math.min(validCurrentPage * rowsPerPage, totalFilteredCount);
-
-  // Helper for source badge
-  const renderSourceBadge = (source: TransactionSource) => {
-    let classes = 'bg-slate-100 text-slate-700 border-slate-200';
-    if (source === 'Customer App') {
-      classes = 'bg-sky-50 text-sky-700 border-sky-200';
-    } else if (source === 'Agent App') {
-      classes = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-    } else if (source === 'Business Owner Portal') {
-      classes = 'bg-slate-100 text-slate-700 border-slate-200';
-    } else if (source === 'TellerBud Admin') {
-      classes = 'bg-teal-50 text-teal-700 border-teal-200';
-    } else if (source === 'Provider API') {
-      classes = 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-
-    return (
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${classes}`}>
-        {source}
-      </span>
-    );
-  };
+  const startIndex = totalCount === 0 ? 0 : (validCurrentPage - 1) * rowsPerPage + 1;
+  const endIndex = Math.min(validCurrentPage * rowsPerPage, totalCount);
 
   return (
     <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-5 gap-3 sm:gap-4 max-w-[1720px] w-full mx-auto">
       {/* 1. SUMMARY CARDS (5 Compact Cards per specification - Frozen upper section) */}
       <div className="shrink-0">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_1fr_1.25fr] gap-3 sm:gap-4">
-        {/* Card 1: Total Transactions */}
-        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-          <div className="min-w-0 flex-1 pr-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
-              Total Transactions
-            </span>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
-              {ALL_TRANSACTIONS_SUMMARY.total}
+          {/* Card 1: Total Transactions */}
+          <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+            <div className="min-w-0 flex-1 pr-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+                Total Transactions
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {summaryMetrics.total}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
+              <Receipt size={20} className="stroke-[2.2]" />
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
-            <Receipt size={20} className="stroke-[2.2]" />
-          </div>
-        </div>
 
-        {/* Card 2: Completed */}
-        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-          <div className="min-w-0 flex-1 pr-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
-              Completed
-            </span>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
-              {ALL_TRANSACTIONS_SUMMARY.completed}
+          {/* Card 2: Completed */}
+          <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+            <div className="min-w-0 flex-1 pr-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+                Completed
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {summaryMetrics.completed}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
+              <CheckCircle2 size={20} className="stroke-[2.2]" />
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-100">
-            <CheckCircle2 size={20} className="stroke-[2.2]" />
-          </div>
-        </div>
 
-        {/* Card 3: Pending or Processing (reconciles with completed: 276, pending: 40, failed: 12) */}
-        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-          <div className="min-w-0 flex-1 pr-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
-              Pending or Processing
-            </span>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
-              {ALL_TRANSACTIONS_SUMMARY.pendingOrProcessing}
+          {/* Card 3: Pending or Processing */}
+          <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+            <div className="min-w-0 flex-1 pr-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+                Pending or Processing
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {summaryMetrics.pending}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100">
+              <Clock size={20} className="stroke-[2.2]" />
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100">
-            <Clock size={20} className="stroke-[2.2]" />
-          </div>
-        </div>
 
-        {/* Card 4: Failed or Cancelled */}
-        <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-          <div className="min-w-0 flex-1 pr-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
-              Failed or Cancelled
-            </span>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
-              {ALL_TRANSACTIONS_SUMMARY.failedOrCancelled}
+          {/* Card 4: Failed or Cancelled */}
+          <div className="bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+            <div className="min-w-0 flex-1 pr-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+                Failed or Cancelled
+              </span>
+              <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+                {summaryMetrics.failed}
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 border border-rose-100">
+              <XCircle size={20} className="stroke-[2.2]" />
             </div>
           </div>
-          <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 shrink-0 border border-rose-100">
-            <XCircle size={20} className="stroke-[2.2]" />
-          </div>
-        </div>
 
-        {/* Card 5: Total Transaction Value - Complete info, no ellipsis, single line */}
-        <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
-          <div className="min-w-0 flex-1 pr-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
-              Total Transaction Value
-            </span>
-            <div className="text-base sm:text-lg xl:text-xl font-bold text-slate-900 mt-1 whitespace-nowrap">
-              ZMW {ALL_TRANSACTIONS_SUMMARY.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {/* Card 5: Total Transaction Value */}
+          <div className="col-span-2 sm:col-span-1 bg-white border border-gray-200/90 rounded-xl p-4 sm:p-5 shadow-2xs flex items-center justify-between">
+            <div className="min-w-0 flex-1 pr-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block whitespace-nowrap">
+                Total Transaction Value
+              </span>
+              <div className="text-base sm:text-lg xl:text-xl font-bold text-slate-900 mt-1 whitespace-nowrap">
+                ZMW {summaryMetrics.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
             </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
-            <Wallet size={20} className="stroke-[2.2]" />
+            <div className="w-10 h-10 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
+              <Wallet size={20} className="stroke-[2.2]" />
+            </div>
           </div>
         </div>
       </div>
-      </div>
 
-      {/* 2. COMPACT TWO-ROW FILTER AREA (Frozen upper section) */}
-      <div className="shrink-0 bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
-        {/* Row 1: Search + Source + Service + Transaction Type */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 items-center">
-          {/* Search Box */}
-          <div className="lg:col-span-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={15} />
-            <input
-              type="text"
-              placeholder="Search transaction, customer, agent, business or mobile..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-800 placeholder-slate-400 transition-colors"
-            />
+      {/* 2. COMPACT SINGLE-ROW FILTER & ACTION BAR (All controls on one horizontal line) */}
+      <div className="shrink-0 bg-white border border-gray-200/90 rounded-xl p-2.5 sm:p-3 shadow-2xs">
+        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 justify-between">
+          {/* Left: Filter Controls (Transaction Types, Vendors, Statuses, From Date, To Date) */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 flex-1 min-w-0">
+            {/* 1. All Transaction Types */}
+            <div className="w-full sm:w-auto min-w-[150px] flex-1">
+              <select
+                value={typeFilter}
+                onChange={(e) => {
+                  setTypeFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="ALL">All Transaction Types</option>
+                <option value="Deposit">Deposit</option>
+                <option value="Withdrawal">Withdrawal</option>
+                <option value="Purchase">Purchase</option>
+                <option value="Liquidity Transfer">Liquidity Transfer</option>
+                <option value="Wallet Funding">Wallet Funding</option>
+                <option value="Wallet Payout">Wallet Payout</option>
+              </select>
+            </div>
+
+            {/* 2. All Vendors */}
+            <div className="w-full sm:w-auto min-w-[140px] flex-1">
+              <select
+                value={vendorFilter}
+                onChange={(e) => {
+                  setVendorFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="ALL">All Vendors</option>
+                <option value="MTN Mobile Money">MTN Mobile Money</option>
+                <option value="Airtel Money">Airtel Money</option>
+                <option value="Zamtel">Zamtel</option>
+                <option value="Zanaco">Zanaco</option>
+                <option value="FNB">FNB</option>
+                <option value="INDO">INDO</option>
+                <option value="Stanbic">Stanbic</option>
+                <option value="Access">Access Bank</option>
+                <option value="TellerBud Ledger">TellerBud Ledger</option>
+              </select>
+            </div>
+
+            {/* 3. All Statuses */}
+            <div className="w-full sm:w-auto min-w-[135px] flex-1">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-2.5 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="Completed">Completed</option>
+                <option value="Paid">Paid</option>
+                <option value="Finding an Agent">Finding an Agent</option>
+                <option value="Agent Confirmed">Agent Confirmed</option>
+                <option value="Ready for Pickup">Ready for Pickup</option>
+                <option value="Pending Review">Pending Review</option>
+                <option value="Approved">Approved</option>
+                <option value="Processing">Processing</option>
+                <option value="Pending Confirmation">Pending Confirmation</option>
+                <option value="Pending">Pending</option>
+                <option value="Failed">Failed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* 4. From Date */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">From</span>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
+              />
+            </div>
+
+            {/* 5. To Date */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">To</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
+              />
+            </div>
           </div>
 
-          {/* Transaction Source */}
-          <div className="lg:col-span-2">
-            <select
-              value={sourceFilter}
-              onChange={(e) => {
-                setSourceFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
-            >
-              <option value="ALL">All Sources</option>
-              <option value="Customer App">Customer App</option>
-              <option value="Agent App">Agent App</option>
-              <option value="Business Owner Portal">Business Owner Portal</option>
-              <option value="TellerBud Admin">TellerBud Admin</option>
-              <option value="Provider API">Provider API</option>
-            </select>
-          </div>
-
-          {/* Service */}
-          <div className="lg:col-span-3">
-            <select
-              value={serviceFilter}
-              onChange={(e) => {
-                setServiceFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
-            >
-              <option value="ALL">All Services</option>
-              <option value="Cash Pickup">Cash Pickup</option>
-              <option value="Walk-In Transaction">Walk-In Transaction</option>
-              <option value="Agent-to-Agent Liquidity">Agent-to-Agent Liquidity</option>
-              <option value="Wallet Funding">Wallet Funding</option>
-              <option value="Customer Withdrawal">Customer Withdrawal</option>
-              <option value="Business Wallet Transaction">Business Wallet Transaction</option>
-            </select>
-          </div>
-
-          {/* Transaction Type */}
-          <div className="lg:col-span-3">
-            <select
-              value={typeFilter}
-              onChange={(e) => {
-                setTypeFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
-            >
-              <option value="ALL">All Transaction Types</option>
-              <option value="Deposit">Deposit</option>
-              <option value="Withdrawal">Withdrawal</option>
-              <option value="Purchase">Purchase</option>
-              <option value="Liquidity Transfer">Liquidity Transfer</option>
-              <option value="Wallet Funding">Wallet Funding</option>
-              <option value="Wallet Payout">Wallet Payout</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Row 2: Vendor + Status + Date Range + Action Buttons */}
-        <div className="flex flex-wrap lg:flex-nowrap items-center gap-2.5 pt-0.5">
-          {/* Vendor */}
-          <div className="w-full sm:w-auto min-w-[150px] flex-1">
-            <select
-              value={vendorFilter}
-              onChange={(e) => {
-                setVendorFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
-            >
-              <option value="ALL">All Vendors</option>
-              <option value="MTN Mobile Money">MTN Mobile Money</option>
-              <option value="Airtel Money">Airtel Money</option>
-              <option value="Zamtel">Zamtel</option>
-              <option value="Zanaco">Zanaco</option>
-              <option value="FNB">FNB</option>
-              <option value="INDO">INDO</option>
-              <option value="Stanbic">Stanbic</option>
-              <option value="Access">Access Bank</option>
-              <option value="TellerBud Ledger">TellerBud Ledger</option>
-            </select>
-          </div>
-
-          {/* Status - Standardized "Finding an Agent", "Pending Review", "Paid" */}
-          <div className="w-full sm:w-auto min-w-[145px] flex-1">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-2.5 py-2 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] text-slate-700 font-medium"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="Completed">Completed</option>
-              <option value="Paid">Paid</option>
-              <option value="Finding an Agent">Finding an Agent</option>
-              <option value="Agent Confirmed">Agent Confirmed</option>
-              <option value="Ready for Pickup">Ready for Pickup</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Approved">Approved</option>
-              <option value="Processing">Processing</option>
-              <option value="Pending Confirmation">Pending Confirmation</option>
-              <option value="Pending">Pending</option>
-              <option value="Failed">Failed</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-          </div>
-
-          {/* Date: From */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">From</span>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => {
-                setFromDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
-            />
-          </div>
-
-          {/* Date: To */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">To</span>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => {
-                setToDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-2 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D93AA] text-slate-700"
-            />
-          </div>
-
-          {/* Action Buttons: Clear Filters, Refresh, Export Transactions */}
-          <div className="flex items-center gap-2 ml-auto shrink-0 w-full sm:w-auto justify-end">
+          {/* Right: Actions (Clear Filters, Refresh, Export) */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto justify-end">
             <button
               onClick={handleClearFilters}
-              className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              disabled={!isFilterActive}
+              className="inline-flex items-center gap-1 h-[32px] px-3 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-45 disabled:cursor-not-allowed rounded-lg transition-colors cursor-pointer"
               title="Reset all filters"
             >
               <RotateCcw size={13} />
@@ -525,7 +496,7 @@ export const AllTransactionsPage: React.FC = () => {
 
             <button
               onClick={handleRefresh}
-              className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 h-[32px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
               title="Refresh transaction records"
             >
               <RotateCw size={13} className={isRefreshing ? 'animate-spin text-[#0D93AA]' : ''} />
@@ -534,205 +505,144 @@ export const AllTransactionsPage: React.FC = () => {
 
             <button
               onClick={handleExport}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
-              title="Export currently filtered records to CSV"
+              className="inline-flex items-center gap-1.5 h-[32px] px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
+              title="Export currently filtered business summaries to CSV"
             >
               <Download size={13} />
-              <span>Export Transactions</span>
+              <span>Export</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 3. TRANSACTION TABLE CARD (Flex-1 min-h-0 container with sticky header, scrollable rows, and fixed pagination) */}
+      {/* 3. BUSINESS TRANSACTION SUMMARY TABLE CARD */}
       <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200/90 rounded-xl shadow-2xs overflow-hidden">
-        {/* Scrollable Transaction Listing Table Container */}
         <div
           ref={tableContainerRef}
           tabIndex={0}
           role="region"
-          aria-label="All Transactions List"
+          aria-label="Business Transactions Summary List"
           className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-auto transaction-table-scroll focus:outline-none"
         >
           <table className="all-transactions-table w-full text-left text-xs border-collapse table-fixed">
             <colgroup>
-              <col style={{ width: '12%' }} />
-              <col style={{ width: '12%' }} />
+              <col style={{ width: '22%' }} />
               <col style={{ width: '18%' }} />
-              <col style={{ width: '13%' }} />
               <col style={{ width: '12%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '14%' }} />
               <col style={{ width: '10%' }} />
-              <col style={{ width: '11%' }} />
-              <col style={{ width: '12%' }} />
+              <col style={{ width: '10%' }} />
             </colgroup>
             <thead className="sticky top-0 z-20 bg-[#F9FAFB] shadow-[0_1px_0_0_#E5E7EB]">
               <tr className="border-b border-gray-200 text-slate-600 font-bold uppercase tracking-wider text-[11px] bg-[#F9FAFB] h-[44px]">
-                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Transaction</th>
-                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Customer</th>
-                <th scope="col" style={{ width: '18%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Agent / Business</th>
-                <th scope="col" style={{ width: '13%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Service</th>
-                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold whitespace-nowrap text-left align-middle">Vendor</th>
-                <th scope="col" style={{ width: '10%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle amount-heading">Amount (ZMW)</th>
-                <th scope="col" style={{ width: '11%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Status</th>
-                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3 font-semibold text-left whitespace-nowrap align-middle">Action</th>
+                <th scope="col" style={{ width: '22%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold whitespace-nowrap text-left align-middle">Business</th>
+                <th scope="col" style={{ width: '18%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold whitespace-nowrap text-left align-middle">Owner / Contact</th>
+                <th scope="col" style={{ width: '12%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold whitespace-nowrap text-left align-middle">Agents</th>
+                <th scope="col" style={{ width: '14%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold whitespace-nowrap text-left align-middle">Transactions</th>
+                <th scope="col" style={{ width: '14%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold text-left whitespace-nowrap align-middle">Total Volume</th>
+                <th scope="col" style={{ width: '10%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold text-left whitespace-nowrap align-middle">Status</th>
+                <th scope="col" style={{ width: '10%' }} className="sticky top-0 z-20 bg-[#F9FAFB] border-b border-gray-200 py-3 px-3.5 font-semibold text-left whitespace-nowrap align-middle">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {paginatedTransactions.length === 0 ? (
+              {paginatedBusinesses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
-                    <Receipt size={32} className="mx-auto text-slate-300 mb-2" />
-                    <p className="font-semibold text-sm text-slate-700">No matching transactions found</p>
-                    <p className="text-xs text-slate-400 mt-1">Try adjusting your filters or search terms.</p>
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                    <Building2 size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="font-semibold text-sm text-slate-700">No matching business transaction summaries found</p>
+                    <p className="text-xs text-slate-400 mt-1">Try adjusting your filters.</p>
                   </td>
                 </tr>
               ) : (
-                paginatedTransactions.map((tx) => (
+                paginatedBusinesses.map((biz) => (
                   <tr
-                    key={tx.id}
-                    className="hover:bg-slate-50/70 transition-colors group"
+                    key={biz.businessId}
+                    className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
+                    onClick={() => setSelectedBusiness(biz)}
                   >
-                    {/* 1. TRANSACTION COLUMN (12%) */}
-                    <td className="py-3 px-3 align-middle text-left">
+                    {/* 1. BUSINESS COLUMN (22%) */}
+                    <td className="py-3 px-3.5 align-middle text-left">
                       <div className="space-y-0.5 min-w-0">
-                        <span className="font-mono font-bold text-slate-900 text-xs block whitespace-nowrap group-hover:text-[#0D93AA] transition-colors truncate" title={tx.reference}>
-                          {tx.reference}
-                        </span>
-                        <span className="text-[11px] text-slate-600 block whitespace-nowrap font-medium">
-                          {tx.dateTime}
-                        </span>
-                        <div className="pt-0.5">{renderSourceBadge(tx.source)}</div>
-                      </div>
-                    </td>
-
-                    {/* 2. CUSTOMER COLUMN (12%) */}
-                    <td className="py-3 px-3 align-middle text-left">
-                      {tx.customerName === '—' ? (
-                        <div className="text-slate-400 font-medium text-xs">—</div>
-                      ) : (
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="font-semibold text-slate-900 text-xs truncate" title={tx.customerName}>
-                            {tx.customerName}
-                          </div>
-                          {tx.customerId && tx.customerId !== '—' && (
-                            <div className="text-[11px] font-mono text-slate-600 font-medium whitespace-nowrap">
-                              {tx.customerId}
-                            </div>
-                          )}
+                        <div className="font-semibold text-slate-900 text-xs sm:text-[13px] group-hover:text-[#0D93AA] transition-colors truncate" title={biz.businessName}>
+                          {biz.businessName}
                         </div>
-                      )}
-                    </td>
-
-                    {/* 3. AGENT / BUSINESS COLUMN (18%) */}
-                    <td className="py-3 px-3 align-middle text-left">
-                      {tx.service === 'Agent-to-Agent Liquidity' ? (
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="text-xs text-slate-800 leading-tight truncate">
-                            <span className="text-slate-500 font-medium">From: </span>
-                            <span className="font-semibold text-slate-900">{tx.sendingAgent || '—'}</span>
-                            {tx.sendingAgentId && (
-                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1">
-                                ({tx.sendingAgentId})
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-800 leading-tight truncate">
-                            <span className="text-slate-500 font-medium">To: </span>
-                            <span className="font-semibold text-slate-900">{tx.receivingAgent || '—'}</span>
-                            {tx.receivingAgentId && (
-                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1">
-                                ({tx.receivingAgentId})
-                              </span>
-                            )}
-                          </div>
-                          {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2 mt-0.5" title={tx.businessName}>
-                              {tx.businessName}
-                            </div>
-                          )}
-                        </div>
-                      ) : tx.agentName === 'Automated Provider API' ? (
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="font-semibold text-slate-800 text-xs truncate">
-                            Automated Provider API
-                          </div>
-                          <div className="text-[11px] text-slate-600 truncate">
-                            System Integration
-                          </div>
-                        </div>
-                      ) : tx.agentName === '—' ? (
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="text-xs text-slate-400 font-medium">—</div>
-                          {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2" title={tx.businessName}>
-                              {tx.businessName}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="text-xs text-slate-900 truncate" title={tx.agentName}>
-                            <span className="font-semibold">{tx.agentName}</span>
-                            {tx.agentId && (
-                              <span className="text-[11px] font-mono text-slate-600 font-medium ml-1.5 whitespace-nowrap">
-                                {tx.agentId}
-                              </span>
-                            )}
-                          </div>
-                          {tx.businessName && tx.businessName !== '—' && (
-                            <div className="text-[11px] text-slate-600 leading-snug break-words line-clamp-2" title={tx.businessName}>
-                              {tx.businessName}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* 4. SERVICE COLUMN (13%) */}
-                    <td className="py-3 px-3 align-middle text-left">
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="font-semibold text-slate-900 text-xs truncate" title={tx.service}>
-                          {tx.service}
-                        </div>
-                        <div className="text-[11px] text-slate-600 font-medium whitespace-nowrap">
-                          {tx.transactionType}
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                          <span className="font-mono text-slate-600">{biz.businessId}</span>
+                          <span>•</span>
+                          <span>{biz.city}</span>
                         </div>
                       </div>
                     </td>
 
-                    {/* 5. VENDOR COLUMN (12%) - Plain text vendor name without logo */}
-                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
-                      <span className="font-semibold text-slate-800 text-xs truncate block" title={getVendorDisplayName(tx.provider)}>
-                        {getVendorDisplayName(tx.provider)}
+                    {/* 2. OWNER / CONTACT COLUMN (18%) */}
+                    <td className="py-3 px-3.5 align-middle text-left">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-medium text-slate-900 text-xs truncate" title={biz.ownerName}>
+                          {biz.ownerName}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-mono">
+                          {biz.ownerPhone}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* 3. AGENTS COLUMN (12%) */}
+                    <td className="py-3 px-3.5 align-middle text-left whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100/80 text-slate-700 text-xs font-medium">
+                        <Users size={12} className="text-slate-500 shrink-0" />
+                        <span>{biz.associatedAgents} Agents</span>
+                        <span className="text-emerald-600 text-[11px] font-semibold">({biz.agentsOnline} online)</span>
+                      </div>
+                    </td>
+
+                    {/* 4. TRANSACTIONS COLUMN (14%) */}
+                    <td className="py-3 px-3.5 align-middle text-left whitespace-nowrap">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-semibold text-slate-900 text-xs">
+                          {biz.totalTransactions} transactions
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                          <span className="text-emerald-600 font-semibold">{biz.completedTransactions} completed</span>
+                          {biz.pendingTransactions > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-amber-600 font-semibold">{biz.pendingTransactions} pending</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* 5. TOTAL VOLUME COLUMN (14%) */}
+                    <td className="py-3 px-3.5 align-middle text-left whitespace-nowrap">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-bold text-slate-900 text-xs sm:text-[13px] tabular-nums">
+                          ZMW {biz.totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10.5px] text-slate-400">
+                          Last: {biz.lastActivity}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* 6. STATUS COLUMN (10%) */}
+                    <td className="py-3 px-3.5 align-middle text-left whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Active
                       </span>
                     </td>
 
-                    {/* 6. AMOUNT COLUMN (10%) - Single line, no currency prefix repetition, left-aligned */}
-                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap amount-cell">
-                      <span className="font-semibold text-slate-900 text-xs sm:text-[13px] tabular-nums whitespace-nowrap">
-                        {formatZmwListingAmount(tx.amount)}
-                      </span>
-                    </td>
-
-                    {/* 7. STATUS COLUMN (11%) - Left aligned badge */}
-                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
-                      <div className="flex items-center justify-start">
-                        <TransactionStatusBadge status={tx.status} />
-                      </div>
-                    </td>
-
-                    {/* 8. ACTION COLUMN (12%) - Fully visible View Details button */}
-                    <td className="py-3 px-3 align-middle text-left whitespace-nowrap">
+                    {/* 7. ACTION COLUMN (10%) */}
+                    <td className="py-3 px-3.5 align-middle text-left whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        id={`btn-view-details-${tx.reference.toLowerCase()}`}
-                        onClick={() => {
-                          const isBo = window.location.pathname.startsWith('/business-owner');
-                          navigate(isBo ? `/business-owner/transactions/${tx.reference}` : `/super-admin/transactions/${tx.reference}`);
-                        }}
-                        className="inline-flex items-center gap-1.5 h-[32px] px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-                        title={`View Details for ${tx.reference}`}
-                        aria-label={`View Details for ${tx.reference}`}
+                        id={`btn-view-business-${biz.businessId.toLowerCase()}`}
+                        onClick={() => setSelectedBusiness(biz)}
+                        className="inline-flex items-center gap-1.5 h-[30px] px-2.5 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded-md transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                        title={`View Transactions for ${biz.businessName}`}
+                        aria-label={`View Transactions for ${biz.businessName}`}
                       >
                         <Eye size={13} className="shrink-0 stroke-[2.2]" />
                         <span>View Details</span>
@@ -751,7 +661,7 @@ export const AllTransactionsPage: React.FC = () => {
             <span className="font-medium text-slate-700">
               Showing <span className="font-bold text-slate-900">{startIndex}</span> to{' '}
               <span className="font-bold text-slate-900">{endIndex}</span> of{' '}
-              <span className="font-bold text-slate-900">{totalFilteredCount}</span> transactions
+              <span className="font-bold text-slate-900">{totalCount}</span> businesses
             </span>
 
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -765,10 +675,10 @@ export const AllTransactionsPage: React.FC = () => {
                 }}
                 className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
               >
+                <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
-                <option value={100}>100</option>
               </select>
             </div>
           </div>
@@ -806,6 +716,173 @@ export const AllTransactionsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 5. BUSINESS TRANSACTION DETAILS DRAWER / MODAL */}
+      {selectedBusiness && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in"
+          onClick={() => setSelectedBusiness(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900">{selectedBusiness.businessName}</h2>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-100 text-slate-700">
+                    {selectedBusiness.businessId}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Owner: {selectedBusiness.ownerName} ({selectedBusiness.ownerPhone}) • {selectedBusiness.city}, {selectedBusiness.province}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/super-admin/people/businesses/${selectedBusiness.businessId}`)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Building2 size={13} />
+                  <span>Business Profile</span>
+                  <ExternalLink size={11} className="text-slate-400" />
+                </button>
+                <button
+                  onClick={() => setSelectedBusiness(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Key Summary Cards */}
+            <div className="grid grid-cols-4 gap-3 p-4 bg-slate-50/70 border-b border-slate-100 text-xs">
+              <div className="bg-white p-3 rounded-lg border border-slate-200/80">
+                <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Total Transactions
+                </span>
+                <span className="text-base font-bold text-slate-900 mt-0.5 block">
+                  {selectedBusiness.totalTransactions}
+                </span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-slate-200/80">
+                <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Completed
+                </span>
+                <span className="text-base font-bold text-emerald-600 mt-0.5 block">
+                  {selectedBusiness.completedTransactions}
+                </span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-slate-200/80">
+                <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Pending / Review
+                </span>
+                <span className="text-base font-bold text-amber-600 mt-0.5 block">
+                  {selectedBusiness.pendingTransactions}
+                </span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-slate-200/80">
+                <span className="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Total Volume
+                </span>
+                <span className="text-base font-bold text-[#0D93AA] mt-0.5 block">
+                  ZMW {selectedBusiness.totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Transactions Table */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-4">
+              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+                Transactions ({selectedBusiness.transactions.length})
+              </h3>
+              {selectedBusiness.transactions.length === 0 ? (
+                <div className="py-8 text-center text-slate-500">
+                  <Receipt size={28} className="mx-auto text-slate-300 mb-2" />
+                  <p className="text-xs font-medium text-slate-600">No transactions recorded for this business under active filters.</p>
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-[11px] uppercase">
+                      <tr>
+                        <th className="py-2.5 px-3">Reference</th>
+                        <th className="py-2.5 px-3">Date & Time</th>
+                        <th className="py-2.5 px-3">Agent / Customer</th>
+                        <th className="py-2.5 px-3">Service & Type</th>
+                        <th className="py-2.5 px-3">Vendor</th>
+                        <th className="py-2.5 px-3">Amount</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {selectedBusiness.transactions.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
+                            {tx.reference}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {tx.dateTime}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="font-medium text-slate-900">{tx.agentName || '—'}</div>
+                            <div className="text-[11px] text-slate-500">{tx.customerName || '—'}</div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="font-medium text-slate-900">{tx.service}</div>
+                            <div className="text-[11px] text-slate-500">{tx.transactionType}</div>
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-700 font-medium">
+                            {getVendorDisplayName(tx.provider)}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-slate-900">
+                            {formatZmwListingAmount(tx.amount)}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <TransactionStatusBadge status={tx.status} />
+                          </td>
+                          <td className="py-2.5 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isBo = window.location.pathname.startsWith('/business-owner');
+                                navigate(isBo ? `/business-owner/transactions/${tx.reference}` : `/super-admin/transactions/${tx.reference}`);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA] hover:text-white rounded transition-colors cursor-pointer"
+                              title={`View Details for ${tx.reference}`}
+                            >
+                              <Eye size={12} />
+                              <span>Details</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedBusiness(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

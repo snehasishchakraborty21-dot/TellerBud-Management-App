@@ -21,6 +21,7 @@ import {
   INITIAL_SERVICE_MODES,
 } from '../data/mockServiceModes';
 import { ServiceModeSummaryCards } from '../components/serviceModes/ServiceModeSummaryCards';
+import { ReservationFeeConfigSection } from '../components/serviceModes/ReservationFeeConfigSection';
 import { ServiceConfigurationSection } from '../components/serviceModes/ServiceConfigurationSection';
 import { EligibleProvidersSection } from '../components/serviceModes/EligibleProvidersSection';
 import { ChangeHistorySection } from '../components/serviceModes/ChangeHistorySection';
@@ -30,6 +31,7 @@ import {
 } from '../components/serviceModes/ConfirmOperationalChangesModal';
 import { StatusToggleModal } from '../components/serviceModes/StatusToggleModal';
 import { ToastNotification } from '../components/shared/ToastNotification';
+import { isServiceModeEligibleForReservationFee } from '../utils/reservationFeeUtils';
 
 export const ServiceModeDetailPage: React.FC = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -196,6 +198,7 @@ export const ServiceModeDetailPage: React.FC = () => {
 
   // Can activate/deactivate only when permitted (Cash Delivery is locked against activation)
   const canToggleStatus = service.canActivateInPhase1 && service.availability !== 'Coming Soon';
+  const hasReservationFee = isServiceModeEligibleForReservationFee(service.id);
 
   return (
     <div
@@ -317,7 +320,12 @@ export const ServiceModeDetailPage: React.FC = () => {
       {/* 3. Four Compact Summary Cards */}
       <ServiceModeSummaryCards service={service} />
 
-      {/* 4 & 6. Service Configuration Section (View & Edit Mode) */}
+      {/* 4. Dedicated Reservation Fee Configuration Section (Only for Cash Pickup & A2A Liquidity) */}
+      {hasReservationFee && (
+        <ReservationFeeConfigSection service={service} />
+      )}
+
+      {/* 5. Service Configuration Section (View & Edit Mode) */}
       <ServiceConfigurationSection
         service={service}
         isEditing={isEditing}
@@ -326,10 +334,10 @@ export const ServiceModeDetailPage: React.FC = () => {
         onRequestSave={handleRequestSave}
       />
 
-      {/* 5. Eligible Providers Section */}
+      {/* 6. Eligible Providers Section */}
       <EligibleProvidersSection service={service} />
 
-      {/* 8. Change History Table */}
+      {/* 7. Change History Table */}
       <ChangeHistorySection history={history} serviceName={service.name} />
 
       {/* Confirmation Dialog for Operational Edits */}

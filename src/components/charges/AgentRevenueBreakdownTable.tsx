@@ -42,6 +42,7 @@ interface AgentRevenueBreakdownTableProps {
   booths: BoothOption[];
   agents: BusinessAgentRevenueConfig[];
   onResetFilters: () => void;
+  selectedDate?: string;
 }
 
 export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProps> = ({
@@ -53,6 +54,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
   booths,
   agents,
   onResetFilters,
+  selectedDate,
 }) => {
   const navigate = useNavigate();
   const [navigatingAgentId, setNavigatingAgentId] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
 
   const handleViewAgent = (agentId: string) => {
     setNavigatingAgentId(agentId);
-    navigate(`/business-owner/charges-revenue/agents/${encodeURIComponent(agentId)}`, {
+    navigate(`/business-owner/charges-revenue/agents/${encodeURIComponent(agentId)}${selectedDate ? `?date=${selectedDate}` : ''}`, {
       state: {
         returnTab: 'agent-breakdown',
         filters,
@@ -105,8 +107,6 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
 
   // Check if any filter is active
   const hasActiveFilters =
-    filters.fromDate !== '' ||
-    filters.toDate !== '' ||
     filters.storeId !== 'All' ||
     filters.boothId !== 'All' ||
     filters.agentId !== 'All';
@@ -156,7 +156,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
     link.setAttribute('href', encodedUri);
     link.setAttribute(
       'download',
-      `tellerbud_agent_revenue_report_${new Date().toISOString().split('T')[0]}.csv`
+      `TellerBud_Agent_Revenue_${selectedDate || new Date().toISOString().split('T')[0]}.csv`
     );
     document.body.appendChild(link);
     link.click();
@@ -199,42 +199,8 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
             </div>
           </div>
 
-          {/* Filter Controls Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
-            {/* From Date */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 mb-1">From Date</label>
-              <div className="relative">
-                <Calendar className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="date"
-                  value={filters.fromDate}
-                  onChange={(e) => {
-                    onFilterChange({ ...filters, fromDate: e.target.value });
-                    setCurrentPage(1);
-                  }}
-                  className="w-full pl-7 pr-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white"
-                />
-              </div>
-            </div>
-
-            {/* To Date */}
-            <div>
-              <label className="block text-[11px] font-medium text-slate-500 mb-1">To Date</label>
-              <div className="relative">
-                <Calendar className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="date"
-                  value={filters.toDate}
-                  onChange={(e) => {
-                    onFilterChange({ ...filters, toDate: e.target.value });
-                    setCurrentPage(1);
-                  }}
-                  className="w-full pl-7 pr-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-white"
-                />
-              </div>
-            </div>
-
+          {/* Filter Controls Grid (Store, Booth, Agent) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
             {/* Store Filter */}
             <div>
               <label className="block text-[11px] font-medium text-slate-500 mb-1">Store</label>
@@ -289,7 +255,7 @@ export const AgentRevenueBreakdownTable: React.FC<AgentRevenueBreakdownTableProp
                 <option value="All">All Agents</option>
                 {agents.map((a) => (
                   <option key={a.agentId} value={a.agentId}>
-                    {a.agentName}
+                    {a.agentName} ({a.agentId})
                   </option>
                 ))}
               </select>

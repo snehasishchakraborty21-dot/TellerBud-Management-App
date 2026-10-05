@@ -49,6 +49,9 @@ export interface ChargeRecord {
   provider: string;
   transactionAmount: number;
   reservationCharge: number;
+  tellerBudCharge?: number;
+  businessRevenue?: number;
+  reservationMinutes?: number;
   status: ChargeStatus;
   businessName?: string;
   businessId?: string;
@@ -60,6 +63,21 @@ export interface ChargeRecord {
   walletLedgerReference?: string;
   description?: string;
   lifecycleTimeline?: ChargeCommissionLifecycleStep[];
+}
+
+export interface BusinessChargesRevenueSummary {
+  businessId: string;
+  businessName: string;
+  transactionsCount: number;
+  reservationCharges: number;
+  tellerBudCharges: number;
+  businessRevenue: number;
+  postedCount: number;
+  pendingCount: number;
+  lastActivityDate: string;
+  lastActivityTime: string;
+  lastActivityIso?: string;
+  records: ChargeRecord[];
 }
 
 export interface CommissionRecord {

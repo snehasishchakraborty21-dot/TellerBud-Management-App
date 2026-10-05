@@ -50,11 +50,52 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       location.pathname.includes('/people/business-onboarding')) &&
     !location.pathname.includes('business-global-wallets');
 
+  const isChargesRevenuePath =
+    location.pathname.includes('/commissions') ||
+    location.pathname.includes('/charges') ||
+    location.pathname.includes('charges-revenue') ||
+    location.pathname.includes('charges-commissions');
+
+  const isWalletsPath =
+    location.pathname.includes('/wallets') ||
+    isChargesRevenuePath;
+
+  const isConfigurationPath =
+    location.pathname.includes('/configuration') ||
+    location.pathname.includes('/vendors') ||
+    location.pathname.includes('/vendor-eligibility') ||
+    location.pathname.includes('/service-modes') ||
+    location.pathname.includes('/revenue-split') ||
+    location.pathname.includes('/notifications') ||
+    location.pathname.includes('/settings');
+
+  const isTransactionOrOperationsPath =
+    (!isChargesRevenuePath && location.pathname.includes('/transactions')) ||
+    location.pathname.includes('/operations');
+
   useEffect(() => {
     if (isBusinessesPath) {
       setExpandedSubmenus((prev) => ({ ...prev, businesses: true }));
     }
   }, [isBusinessesPath]);
+
+  useEffect(() => {
+    if (isTransactionOrOperationsPath) {
+      setExpandedGroups((prev) => ({ ...prev, operations: true }));
+    }
+  }, [isTransactionOrOperationsPath]);
+
+  useEffect(() => {
+    if (isWalletsPath) {
+      setExpandedGroups((prev) => ({ ...prev, 'wallets-payments': true }));
+    }
+  }, [isWalletsPath]);
+
+  useEffect(() => {
+    if (isConfigurationPath) {
+      setExpandedGroups((prev) => ({ ...prev, configuration: true }));
+    }
+  }, [isConfigurationPath]);
 
   // Re-initialize expanded groups if role changes
   useEffect(() => {
@@ -289,6 +330,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 (item.id === 'service-modes' &&
                   (location.pathname.includes('/configuration/service-modes') ||
                    location.pathname.includes('/service-modes'))) ||
+                (item.id === 'revenue-split-settings' &&
+                  (location.pathname.includes('/configuration/revenue-split') ||
+                   location.pathname.includes('/revenue-split'))) ||
                 (item.id === 'vendors' &&
                   !location.pathname.includes('vendor-eligibility') &&
                   !location.pathname.includes('service-modes') &&

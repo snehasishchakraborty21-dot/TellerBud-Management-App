@@ -97,6 +97,12 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/super-admin/mobile-money-transactions',
         icon: ArrowLeftRight,
       },
+      {
+        id: 'all-transactions',
+        label: 'All Transactions',
+        path: '/super-admin/transactions/all',
+        icon: Receipt,
+      },
     ],
   },
   {
@@ -171,18 +177,6 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
         path: '/super-admin/wallets/reconciliation',
         icon: CheckCheck,
       },
-    ],
-  },
-  {
-    id: 'transactions',
-    title: 'Transactions',
-    items: [
-      {
-        id: 'all-transactions',
-        label: 'All Transactions',
-        path: '/super-admin/transactions/all',
-        icon: Receipt,
-      },
       {
         id: 'charges-commissions',
         label: 'Charges & Revenue',
@@ -212,6 +206,12 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
         label: 'Service Modes',
         path: '/super-admin/configuration/service-modes',
         icon: Compass,
+      },
+      {
+        id: 'revenue-split-settings',
+        label: 'Revenue Split Settings',
+        path: '/super-admin/configuration/revenue-split',
+        icon: Percent,
       },
       {
         id: 'notifications-config',

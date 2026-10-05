@@ -99,6 +99,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     location.pathname.includes('/mobile-money-transactions') ||
     location.pathname.includes('/walk-in-transactions');
 
+  const isChargesRevenuePage =
+    location.pathname.includes('/commissions') ||
+    location.pathname.includes('/charges-revenue') ||
+    location.pathname.includes('/charges-commissions');
+
   const currentDateParam = searchParams.get('date');
   const validDate = sanitizeDateParam(currentDateParam);
 
@@ -189,6 +194,26 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   <ArrowLeft size={19} className="text-slate-700 hover:text-[#0D93AA]" />
                 </button>
               )}
+            {(location.pathname.includes('/transactions/commissions/business/') ||
+              location.pathname.includes('/charges-commissions/business/') ||
+              location.pathname.includes('/charges-revenue/business/')) && (
+                <button
+                  type="button"
+                  id="header-back-btn-charges-business"
+                  onClick={() => {
+                    if (isBusinessOwner) {
+                      navigate('/business-owner/transactions/commissions');
+                    } else {
+                      navigate('/super-admin/transactions/commissions');
+                    }
+                  }}
+                  className="inline-flex items-center justify-center p-1 -ml-1 text-slate-600 hover:text-[#0D93AA] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer shrink-0"
+                  title="Back to Charges & Revenue"
+                  aria-label="Back to Charges & Revenue"
+                >
+                  <ArrowLeft size={19} className="text-slate-700 hover:text-[#0D93AA]" />
+                </button>
+              )}
             <h1 className="text-[22px] font-bold leading-[28px] text-slate-900 truncate">
               {pageTitle}
             </h1>
@@ -207,7 +232,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </div>
         </div>
 
-        {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, or MobileMoneyDatePicker on admin mobile-money pages) */}
+        {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, admin mobile-money pages, or charges & revenue pages) */}
         <div className="flex items-center justify-center flex-1 px-2 sm:px-4 text-center min-w-0">
           {isBusinessOwner ? (
             isBusinessOwnerDatePage(location.pathname) ? (
@@ -215,7 +240,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <BusinessOwnerDatePicker />
               </div>
             ) : null
-          ) : isMobileMoneyPage ? (
+          ) : (isMobileMoneyPage || isChargesRevenuePage) ? (
             <MobileMoneyDatePicker
               selectedDate={validDate}
               onDateChange={handleDateChange}
@@ -319,67 +344,69 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </div>
           </div>
         ) : (
-          /* TellerBud Admin Header (Retaining Global Search, Notifications, Admin Profile) */
-          <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${!isMobileMoneyPage ? 'ml-auto' : ''}`}>
-            {/* Global Search Pill Input */}
-            <div
-              className={`relative hidden md:block transition-all duration-150 ${
-                isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
-              }`}
-            >
-              <Search
-                size={15}
-                className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => setIsSearchDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-                placeholder="Search operations..."
-                className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setIsSearchDropdownOpen(false);
-                    if (onGlobalSearch) onGlobalSearch('');
-                  }}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={14} />
-                </button>
-              )}
+          /* TellerBud Admin Header (Retaining Global Search on other pages, Notifications, Admin Profile) */
+          <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${(!isMobileMoneyPage && !isChargesRevenuePage) ? 'ml-auto' : ''}`}>
+            {/* Global Search Pill Input (hidden on Charges & Revenue pages) */}
+            {!isChargesRevenuePage && (
+              <div
+                className={`relative hidden md:block transition-all duration-150 ${
+                  isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
+                }`}
+              >
+                <Search
+                  size={15}
+                  className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => setIsSearchDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
+                  placeholder="Search operations..."
+                  className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setIsSearchDropdownOpen(false);
+                      if (onGlobalSearch) onGlobalSearch('');
+                    }}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
 
-              {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((res) => (
-                      <button
-                        key={res.id}
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          navigate(res.path);
-                          setIsSearchDropdownOpen(false);
-                          setSearchQuery('');
-                        }}
-                        className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center justify-between text-xs transition-colors cursor-pointer"
-                      >
-                        <span className="font-semibold text-gray-900">{res.label}</span>
-                        <span className="text-[10px] text-gray-400 font-medium">{res.groupTitle}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3.5 py-2.5 text-xs text-gray-500 text-center">
-                      No matching sections found
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
+                  <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((res) => (
+                        <button
+                          key={res.id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            navigate(res.path);
+                            setIsSearchDropdownOpen(false);
+                            setSearchQuery('');
+                          }}
+                          className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                        >
+                          <span className="font-semibold text-gray-900">{res.label}</span>
+                          <span className="text-[10px] text-gray-400 font-medium">{res.groupTitle}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3.5 py-2.5 text-xs text-gray-500 text-center">
+                        No matching sections found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Notifications Trigger */}
             <div className="relative">

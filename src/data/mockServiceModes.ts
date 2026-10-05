@@ -1,4 +1,15 @@
 import { ServiceModeRecord, ServiceModeChangeLog } from '../types/serviceMode';
+import { RESERVATION_FEE_CONFIG } from '../utils/reservationFeeUtils';
+
+const DYNAMIC_RESERVATION_CONFIG = {
+  percentageRate: RESERVATION_FEE_CONFIG.PERCENTAGE_RATE,
+  timeRatePerMinute: RESERVATION_FEE_CONFIG.TIME_RATE_PER_MINUTE,
+  penaltyReserve: RESERVATION_FEE_CONFIG.PENALTY_RESERVE_FIXED,
+  customerVisibilityRate: RESERVATION_FEE_CONFIG.CUSTOMER_VISIBILITY_RATE,
+  agentVisibilityRate: RESERVATION_FEE_CONFIG.AGENT_VISIBILITY_RATE,
+  formulaDisplay: RESERVATION_FEE_CONFIG.FORMULA_DISPLAY,
+  isDynamic: true,
+};
 
 export const INITIAL_SERVICE_MODES: ServiceModeRecord[] = [
   {
@@ -13,7 +24,9 @@ export const INITIAL_SERVICE_MODES: ServiceModeRecord[] = [
       'Customer Confirmation Required',
       'Agent Confirmation Required',
     ],
-    reservationCharge: 'ZMW 50.00',
+    reservationCharge: 'Dynamic',
+    hasReservationFee: true,
+    reservationFeeConfig: DYNAMIC_RESERVATION_CONFIG,
     lastUpdated: 'Today, 10:45 AM',
     canActivateInPhase1: true,
   },
@@ -27,6 +40,7 @@ export const INITIAL_SERVICE_MODES: ServiceModeRecord[] = [
     eligibleProvidersCount: 0,
     scheduling: 'Unavailable',
     reservationCharge: 'Not Applicable',
+    hasReservationFee: false,
     lastUpdated: '10 Sep 2026, 3:30 PM',
     canActivateInPhase1: false,
   },
@@ -39,6 +53,7 @@ export const INITIAL_SERVICE_MODES: ServiceModeRecord[] = [
     eligibleProvidersCount: 5,
     scheduling: 'Immediate',
     reservationCharge: 'Not Applicable',
+    hasReservationFee: false,
     lastUpdated: 'Today, 9:55 AM',
     canActivateInPhase1: true,
   },
@@ -52,7 +67,9 @@ export const INITIAL_SERVICE_MODES: ServiceModeRecord[] = [
     isInternalLedger: true,
     providerDisplay: 'TellerBud Ledger',
     scheduling: 'Immediate',
-    reservationCharge: 'Not Applicable',
+    reservationCharge: 'Dynamic',
+    hasReservationFee: true,
+    reservationFeeConfig: DYNAMIC_RESERVATION_CONFIG,
     lastUpdated: 'Today, 9:30 AM',
     canActivateInPhase1: true,
   },
@@ -63,14 +80,24 @@ export const INITIAL_CHANGE_HISTORY: ServiceModeChangeLog[] = [
     id: 'LOG-SM-001',
     serviceId: 'TB-SVC-CP-001',
     serviceName: 'Cash Pickup',
-    fieldChanged: 'Reservation Charge',
-    previousValue: 'ZMW 40.00',
-    newValue: 'ZMW 50.00',
+    fieldChanged: 'Reservation Fee Model',
+    previousValue: 'Static ZMW 50.00',
+    newValue: 'Dynamic (1.2% + ZMW 0.10/min + ZMW 20 Penalty Reserve)',
     updatedBy: 'Sililo Lubinda (Super Admin)',
     timestamp: 'Today, 10:45 AM',
   },
   {
     id: 'LOG-SM-002',
+    serviceId: 'TB-SVC-A2A-004',
+    serviceName: 'Agent-to-Agent Liquidity',
+    fieldChanged: 'Reservation Fee Model',
+    previousValue: 'Not Applicable',
+    newValue: 'Dynamic (1.2% + ZMW 0.10/min + ZMW 20 Penalty Reserve)',
+    updatedBy: 'Sililo Lubinda (Super Admin)',
+    timestamp: 'Today, 10:40 AM',
+  },
+  {
+    id: 'LOG-SM-003',
     serviceId: 'TB-SVC-WI-003',
     serviceName: 'Walk-In Transaction',
     fieldChanged: 'Eligible Providers',
@@ -78,16 +105,6 @@ export const INITIAL_CHANGE_HISTORY: ServiceModeChangeLog[] = [
     newValue: '5 Providers',
     updatedBy: 'Sililo Lubinda (Super Admin)',
     timestamp: 'Today, 09:55 AM',
-  },
-  {
-    id: 'LOG-SM-003',
-    serviceId: 'TB-SVC-A2A-004',
-    serviceName: 'Agent-to-Agent Liquidity',
-    fieldChanged: 'Availability',
-    previousValue: 'Maintenance',
-    newValue: 'Active',
-    updatedBy: 'System Automation',
-    timestamp: 'Today, 09:30 AM',
   },
   {
     id: 'LOG-SM-004',
@@ -101,8 +118,8 @@ export const INITIAL_CHANGE_HISTORY: ServiceModeChangeLog[] = [
   },
 ];
 
-const STORAGE_KEY_SERVICE_MODES = 'tellerbud_service_modes_v2';
-const STORAGE_KEY_CHANGE_HISTORY = 'tellerbud_service_modes_history_v2';
+const STORAGE_KEY_SERVICE_MODES = 'tellerbud_service_modes_v3';
+const STORAGE_KEY_CHANGE_HISTORY = 'tellerbud_service_modes_history_v3';
 
 export function getStoredServiceModes(): ServiceModeRecord[] {
   if (typeof window === 'undefined') return INITIAL_SERVICE_MODES;
@@ -112,7 +129,27 @@ export function getStoredServiceModes(): ServiceModeRecord[] {
       localStorage.setItem(STORAGE_KEY_SERVICE_MODES, JSON.stringify(INITIAL_SERVICE_MODES));
       return INITIAL_SERVICE_MODES;
     }
-    return JSON.parse(data);
+    const parsed: ServiceModeRecord[] = JSON.parse(data);
+    // Ensure Cash Pickup and A2A liquidity have dynamic configuration
+    return parsed.map((m) => {
+      if (m.id === 'TB-SVC-CP-001' || m.id === 'TB-SVC-A2A-004') {
+        return {
+          ...m,
+          reservationCharge: 'Dynamic',
+          hasReservationFee: true,
+          reservationFeeConfig: DYNAMIC_RESERVATION_CONFIG,
+        };
+      }
+      if (m.id === 'TB-SVC-CD-002' || m.id === 'TB-SVC-WI-003') {
+        return {
+          ...m,
+          reservationCharge: 'Not Applicable',
+          hasReservationFee: false,
+          reservationFeeConfig: undefined,
+        };
+      }
+      return m;
+    });
   } catch {
     return INITIAL_SERVICE_MODES;
   }
@@ -187,4 +224,3 @@ export function saveServiceModeRecord(
 
   return { record: finalRecord, history: updatedHistory };
 }
-

@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { ServiceModeRecord } from '../../types/serviceMode';
+import { isServiceModeEligibleForReservationFee } from '../../utils/reservationFeeUtils';
 
 interface ServiceModesTableProps {
   serviceModes: ServiceModeRecord[];
@@ -241,9 +242,7 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
             ) : (
               serviceModes.map((service) => {
                 const isComingSoon = service.availability === 'Coming Soon';
-                const hasReservationCharge = Boolean(
-                  service.reservationCharge && service.reservationCharge !== 'Not Applicable'
-                );
+                const hasDynamicReservationFee = isServiceModeEligibleForReservationFee(service.id);
 
                 // Transaction type tags: Deposit, Withdrawal, +1 (Purchase)
                 const hasMoreThanTwo = service.transactionTypes.length > 2;
@@ -277,13 +276,13 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                               {service.id}
                             </span>
 
-                            {hasReservationCharge && (
+                            {hasDynamicReservationFee && (
                               <span
                                 className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 whitespace-nowrap"
-                                title="Reservation Charge: ZMW 50.00 (Applies only to Cash Pickup to secure teller float)"
+                                title="Dynamic Reservation Fee: (1.2% × Reservation Amount) + (ZMW 0.10 × Minutes) + ZMW 20.00 Fixed Penalty Reserve"
                               >
                                 <Receipt className="w-2.5 h-2.5 text-amber-600 shrink-0" />
-                                <span>Res. Charge: {service.reservationCharge}</span>
+                                <span>Reservation Fee: Dynamic</span>
                               </span>
                             )}
                           </div>
@@ -405,9 +404,7 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
           </div>
         ) : (
           serviceModes.map((service) => {
-            const hasReservationCharge = Boolean(
-              service.reservationCharge && service.reservationCharge !== 'Not Applicable'
-            );
+            const hasDynamicReservationFee = isServiceModeEligibleForReservationFee(service.id);
             const hasMoreThanTwo = service.transactionTypes.length > 2;
             const visibleTags = hasMoreThanTwo
               ? service.transactionTypes.slice(0, 2)
@@ -435,10 +432,10 @@ export const ServiceModesTable: React.FC<ServiceModesTableProps> = ({
                         <span className="text-[11px] font-mono text-slate-500 font-medium">
                           {service.id}
                         </span>
-                        {hasReservationCharge && (
+                        {hasDynamicReservationFee && (
                           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80">
                             <Receipt className="w-2.5 h-2.5 text-amber-600" />
-                            <span>Res. Charge: {service.reservationCharge}</span>
+                            <span>Reservation Fee: Dynamic</span>
                           </span>
                         )}
                       </div>

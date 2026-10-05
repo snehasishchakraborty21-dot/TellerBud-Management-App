@@ -10,6 +10,7 @@ import {
   Check,
   Calendar,
   Layers,
+  Percent,
 } from 'lucide-react';
 import {
   ServiceModeRecord,
@@ -18,6 +19,7 @@ import {
   ServiceAvailability,
 } from '../../types/serviceMode';
 import { PendingOperationalChange } from './ConfirmOperationalChangesModal';
+import { isServiceModeEligibleForReservationFee } from '../../utils/reservationFeeUtils';
 
 interface ServiceConfigurationSectionProps {
   service: ServiceModeRecord;
@@ -65,17 +67,10 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
   const [requireAgentConfirm, setRequireAgentConfirm] = useState(
     service.completionConfirmation?.some((c) => c.toLowerCase().includes('agent')) ?? false
   );
-  
-  // Numeric reservation charge parsing for Cash Pickup
-  const parseReservationAmount = (val: string) => {
-    const matched = val.match(/[\d.]+/);
-    return matched ? matched[0] : '50.00';
-  };
-  const [reservationAmount, setReservationAmount] = useState(
-    parseReservationAmount(service.reservationCharge)
-  );
 
   const [formErrors, setFormErrors] = useState<{ audience?: string; txTypes?: string }>({});
+
+  const hasDynamicFee = isServiceModeEligibleForReservationFee(service.id);
 
   // Reset form when service or edit mode changes
   useEffect(() => {
@@ -95,7 +90,6 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
     setRequireAgentConfirm(
       service.completionConfirmation?.some((c) => c.toLowerCase().includes('agent')) ?? false
     );
-    setReservationAmount(parseReservationAmount(service.reservationCharge));
     setFormErrors({});
   }, [service, isEditing]);
 
@@ -162,90 +156,92 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
       return;
     }
 
-    // Build completion confirmations
-    const newConfirmations: string[] = [];
-    if (requireCustomerConfirm) newConfirmations.push('Customer Confirmation Required');
-    if (requireAgentConfirm) newConfirmations.push('Agent Confirmation Required');
+    // Build operational changes list
+    const changes: PendingOperationalChange[] = [];
 
-    // Build reservation charge
-    const newReservationCharge =
-      service.id === 'TB-SVC-CP-001'
-        ? `ZMW ${parseFloat(reservationAmount || '0').toFixed(2)}`
-        : 'Not Applicable';
+    if (formName.trim() !== service.name) {
+      changes.push({
+        field: 'Service Name',
+        previousValue: service.name,
+        newValue: formName.trim(),
+      });
+    }
+
+    if (computedAudience !== service.audience) {
+      changes.push({
+        field: 'Audience',
+        previousValue: service.audience,
+        newValue: computedAudience,
+      });
+    }
+
+    if (formAvailability !== service.availability) {
+      changes.push({
+        field: 'Availability',
+        previousValue: service.availability,
+        newValue: formAvailability,
+      });
+    }
+
+    const prevTxSorted = [...service.transactionTypes].sort().join(', ');
+    const nextTxSorted = [...formTxTypes].sort().join(', ');
+    if (prevTxSorted !== nextTxSorted) {
+      changes.push({
+        field: 'Supported Transaction Types',
+        previousValue: prevTxSorted,
+        newValue: nextTxSorted,
+      });
+    }
+
+    if (formScheduling !== service.scheduling) {
+      changes.push({
+        field: 'Scheduling Method',
+        previousValue: service.scheduling,
+        newValue: formScheduling,
+      });
+    }
+
+    const currentCustomerConfirm =
+      service.completionConfirmation?.some((c) => c.toLowerCase().includes('customer')) ?? false;
+    const currentAgentConfirm =
+      service.completionConfirmation?.some((c) => c.toLowerCase().includes('agent')) ?? false;
+
+    if (requireCustomerConfirm !== currentCustomerConfirm) {
+      changes.push({
+        field: 'Customer Confirmation Requirement',
+        previousValue: currentCustomerConfirm ? 'Required' : 'Not Required',
+        newValue: requireCustomerConfirm ? 'Required' : 'Not Required',
+      });
+    }
+
+    if (requireAgentConfirm !== currentAgentConfirm) {
+      changes.push({
+        field: 'Agent Confirmation Requirement',
+        previousValue: currentAgentConfirm ? 'Required' : 'Not Required',
+        newValue: requireAgentConfirm ? 'Required' : 'Not Required',
+      });
+    }
+
+    if (changes.length === 0) {
+      onCancelEdit();
+      return;
+    }
+
+    const nextConfirmations: string[] = [];
+    if (requireCustomerConfirm) nextConfirmations.push('Customer Confirmation Required');
+    if (requireAgentConfirm) nextConfirmations.push('Agent Confirmation Required');
 
     const updatedRecord: ServiceModeRecord = {
       ...service,
       name: formName.trim(),
       audience: computedAudience,
-      availability: service.id === 'TB-SVC-CD-002' ? 'Coming Soon' : formAvailability,
+      availability: formAvailability,
       transactionTypes: formTxTypes,
-      scheduling: service.id === 'TB-SVC-CD-002' ? 'Unavailable' : formScheduling,
-      completionConfirmation: newConfirmations,
-      reservationCharge: newReservationCharge,
+      scheduling: formScheduling,
+      completionConfirmation: nextConfirmations.length > 0 ? nextConfirmations : undefined,
+      reservationCharge: hasDynamicFee ? 'Dynamic' : 'Not Applicable',
+      hasReservationFee: hasDynamicFee,
     };
-
-    // Calculate changes list
-    const changes: PendingOperationalChange[] = [];
-
-    if (service.name !== updatedRecord.name) {
-      changes.push({
-        field: 'Service Name Updated',
-        previousValue: service.name,
-        newValue: updatedRecord.name,
-      });
-    }
-
-    if (service.audience !== updatedRecord.audience) {
-      changes.push({
-        field: 'Audience Updated',
-        previousValue: service.audience === 'Customer and Agent' ? 'Customer and Agent' : service.audience,
-        newValue: updatedRecord.audience === 'Customer and Agent' ? 'Customer and Agent' : updatedRecord.audience,
-      });
-    }
-
-    if (service.availability !== updatedRecord.availability) {
-      changes.push({
-        field: updatedRecord.availability === 'Active' ? 'Service Mode Activated' : 'Service Mode Deactivated',
-        previousValue: service.availability,
-        newValue: updatedRecord.availability,
-      });
-    }
-
-    const prevTxSorted = [...service.transactionTypes].sort().join(', ');
-    const newTxSorted = [...updatedRecord.transactionTypes].sort().join(', ');
-    if (prevTxSorted !== newTxSorted) {
-      changes.push({
-        field: 'Transaction Type Enabled or Disabled',
-        previousValue: prevTxSorted,
-        newValue: newTxSorted,
-      });
-    }
-
-    if (service.scheduling !== updatedRecord.scheduling) {
-      changes.push({
-        field: 'Scheduling Method Updated',
-        previousValue: service.scheduling,
-        newValue: updatedRecord.scheduling,
-      });
-    }
-
-    const prevConf = (service.completionConfirmation || []).join(', ') || 'None';
-    const newConf = newConfirmations.join(', ') || 'None';
-    if (prevConf !== newConf) {
-      changes.push({
-        field: 'Confirmation Requirement Updated',
-        previousValue: prevConf,
-        newValue: newConf,
-      });
-    }
-
-    if (service.reservationCharge !== updatedRecord.reservationCharge) {
-      changes.push({
-        field: 'Reservation Charge Updated',
-        previousValue: service.reservationCharge,
-        newValue: updatedRecord.reservationCharge,
-      });
-    }
 
     onRequestSave(updatedRecord, changes);
   };
@@ -256,47 +252,57 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
     service.completionConfirmation?.some((c) => c.toLowerCase().includes('agent')) ?? false;
 
   return (
-    <section
-      id="section-service-configuration"
-      aria-labelledby="heading-service-configuration"
+    <div
+      id="service-configuration-section"
       className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden"
     >
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-[#0D93AA]">
-            <Layers className="w-4 h-4" aria-hidden="true" />
-          </div>
-          <div>
-            <h3
-              id="heading-service-configuration"
-              className="text-sm sm:text-base font-bold text-slate-900 tracking-tight"
-            >
-              Service Configuration
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Core operational routing parameters, verification rules, and financial constraints.
-            </p>
-          </div>
+      <div className="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+            Operational Parameters & Rules
+          </h3>
+          <p className="text-xs text-slate-500">
+            Platform dispatch configurations, audiences, and confirmation protocols
+          </p>
         </div>
-      </div>
 
-      {/* Cash Delivery Phase 1 Notice if applicable */}
-      {service.id === 'TB-SVC-CD-002' && (
-        <div className="mx-4 sm:mx-6 mt-4 p-3 bg-amber-50/80 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="space-y-0.5">
-            <span className="font-semibold">Release Phase Notice:</span> Cash Delivery is scheduled
-            for Phase 2 rollout and is locked against activation and operational scheduling in the
-            current release phase.
+        {!isEditing ? (
+          <button
+            type="button"
+            id="btn-edit-parameters"
+            onClick={onStartEdit}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0a7587] hover:bg-slate-100 bg-white border border-slate-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+          >
+            <span>Edit Parameters</span>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-cancel-edit-parameters"
+              onClick={onCancelEdit}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Cancel</span>
+            </button>
+            <button
+              type="button"
+              id="btn-save-parameters"
+              onClick={handleSaveClick}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e92] rounded-lg transition-colors cursor-pointer shadow-xs"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Save Changes</span>
+            </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* View Mode Layout */}
       {!isEditing ? (
-        <div className="p-4 sm:p-6 space-y-6">
-          {/* Top Attributes Grid */}
+        <div className="p-5 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-5 gap-x-6">
             {/* 1. Service Name */}
             <div>
@@ -383,19 +389,19 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
               </p>
             </div>
 
-            {/* 6. Reservation Charge */}
+            {/* 6. Reservation Fee */}
             <div>
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-                Reservation Charge Status & Amount
+                Reservation Fee Model
               </span>
               <div className="flex items-center gap-1.5">
                 <Receipt className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
                 <span className="text-sm font-semibold text-slate-900">
-                  {service.reservationCharge}
+                  {hasDynamicFee ? 'Dynamic Fee Active' : 'Not Applicable'}
                 </span>
-                {service.id === 'TB-SVC-CP-001' && (
-                  <span className="text-[11px] text-slate-500 font-normal">
-                    (Customer-facing reservation fee)
+                {hasDynamicFee && (
+                  <span className="text-[11px] text-amber-700 font-medium">
+                    (1.2% + ZMW 0.10/min + ZMW 20)
                   </span>
                 )}
               </div>
@@ -502,7 +508,7 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-hidden transition-all"
+                className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-none transition-all"
                 required
               />
             </div>
@@ -607,7 +613,7 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
                   id="select-availability"
                   value={formAvailability}
                   onChange={(e) => setFormAvailability(e.target.value as ServiceAvailability)}
-                  className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-none transition-all"
                 >
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
@@ -642,7 +648,7 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
                   id="select-scheduling"
                   value={formScheduling}
                   onChange={(e) => setFormScheduling(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-hidden transition-all"
+                  className="w-full px-3 py-2 text-xs font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-none transition-all"
                 >
                   <option value="Now or Later">Now or Later (Immediate pickup or advance reservation)</option>
                   <option value="Now">Now Only (Immediate pickup on dispatch)</option>
@@ -665,48 +671,27 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
               )}
             </div>
 
-            {/* Reservation Charge */}
+            {/* Reservation Fee Model (Formula Locked) */}
             <div className="md:col-span-2">
-              <label
-                htmlFor="input-reservation-charge"
-                className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
-              >
-                Reservation Charge
-              </label>
-              {service.id === 'TB-SVC-CP-001' ? (
-                <div className="max-w-xs">
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs font-mono font-semibold text-slate-500">
-                      ZMW
-                    </span>
-                    <input
-                      id="input-reservation-charge"
-                      type="number"
-                      step="5"
-                      min="0"
-                      max="1000"
-                      value={reservationAmount}
-                      onChange={(e) => setReservationAmount(e.target.value)}
-                      className="w-full pl-13 pr-3 py-2 text-xs font-mono font-medium text-slate-900 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0D93AA] focus:border-transparent outline-hidden transition-all"
-                    />
+              <span className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Reservation Fee Configuration
+              </span>
+              {hasDynamicFee ? (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-lg text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                    <Receipt className="w-4 h-4 text-amber-600" />
+                    <span>Dynamic Reservation Fee Engine Active</span>
                   </div>
-                  <span className="text-[11px] text-slate-500 mt-1 block">
-                    Customer-facing reservation fee. Applies only to Cash Pickup.
-                  </span>
+                  <p className="text-amber-800 font-mono text-[11px] mt-1 font-semibold">
+                    Formula: (1.2% × Reservation Amount) + (ZMW 0.10 × Minutes) + ZMW 20.00 Penalty Reserve
+                  </p>
+                  <p className="text-[11px] text-amber-700 mt-1">
+                    Customer / Requester sees 100%, Fulfilling Agent sees 80%. Fixed ZMW 20.00 is held separately as penalty reserve.
+                  </p>
                 </div>
               ) : (
-                <div>
-                  <input
-                    id="input-reservation-charge"
-                    type="text"
-                    value="Not Applicable"
-                    disabled
-                    readOnly
-                    className="max-w-xs w-full px-3 py-2 text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed"
-                  />
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    Reservation charge is only applicable to Cash Pickup service mode.
-                  </span>
+                <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-600">
+                  <span>Not Applicable for {service.name}. Zero reservation fee is applied.</span>
                 </div>
               )}
             </div>
@@ -714,23 +699,23 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
             {/* Supported Transaction Types */}
             <div className="md:col-span-2">
               <span className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Supported Transaction Types (Multi-select) <span className="text-rose-500">*</span>
+                Supported Transaction Types <span className="text-rose-500">*</span>
               </span>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {ALL_TRANSACTION_TYPES.map((type) => {
-                  const isSelected = formTxTypes.includes(type);
+                  const isChecked = formTxTypes.includes(type);
                   return (
                     <label
                       key={type}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-[#0D93AA]/10 text-[#096e80] border-[#0D93AA]/30'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                        isChecked
+                          ? 'bg-[#0D93AA]/10 border-[#0D93AA]/40 text-[#0D93AA]'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
                       <input
                         type="checkbox"
-                        checked={isSelected}
+                        checked={isChecked}
                         onChange={() => toggleTxType(type)}
                         className="w-4 h-4 text-[#0D93AA] border-slate-300 rounded focus:ring-[#0D93AA]"
                       />
@@ -747,74 +732,50 @@ export const ServiceConfigurationSection: React.FC<ServiceConfigurationSectionPr
               )}
             </div>
 
-            {/* Confirmation Protocols */}
-            <div className="md:col-span-2 space-y-3 pt-2 border-t border-slate-100">
-              <span className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            {/* Completion Confirmation Requirements */}
+            <div className="md:col-span-2 space-y-3 border-t border-slate-200 pt-4">
+              <span className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 Completion Confirmation Requirements
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg flex items-start gap-3 cursor-pointer transition-colors">
+                <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     checked={requireCustomerConfirm}
                     onChange={(e) => setRequireCustomerConfirm(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 text-[#0D93AA] border-slate-300 rounded focus:ring-[#0D93AA]"
+                    className="w-4 h-4 text-[#0D93AA] border-slate-300 rounded focus:ring-[#0D93AA] mt-0.5"
                   />
                   <div>
                     <span className="text-xs font-semibold text-slate-900 block">
-                      Customer Confirmation Requirement
+                      Require Customer Confirmation
                     </span>
-                    <span className="text-xs text-slate-600 mt-0.5 block">
-                      Customer must confirm the transaction is completed.
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Customer must tap confirm in their app upon receiving/handing over cash.
                     </span>
                   </div>
                 </label>
 
-                <label className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-lg flex items-start gap-3 cursor-pointer transition-colors">
+                <label className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     checked={requireAgentConfirm}
                     onChange={(e) => setRequireAgentConfirm(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 text-[#0D93AA] border-slate-300 rounded focus:ring-[#0D93AA]"
+                    className="w-4 h-4 text-[#0D93AA] border-slate-300 rounded focus:ring-[#0D93AA] mt-0.5"
                   />
                   <div>
                     <span className="text-xs font-semibold text-slate-900 block">
-                      Agent Confirmation Requirement
+                      Require Agent Confirmation
                     </span>
-                    <span className="text-xs text-slate-600 mt-0.5 block">
-                      Agent must confirm the transaction is completed.
+                    <span className="text-[11px] text-slate-500 block mt-0.5">
+                      Agent must confirm the transaction completion in their POS terminal or app.
                     </span>
                   </div>
                 </label>
               </div>
-              <p className="text-xs text-slate-500 italic">
-                The transaction should be marked completed only after both confirmations have been received.
-              </p>
             </div>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={onCancelEdit}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Cancel</span>
-            </button>
-            <button
-              type="button"
-              id="btn-save-service-mode"
-              onClick={handleSaveClick}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0a7587] rounded-lg shadow-xs transition-colors cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Save Changes</span>
-            </button>
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 };

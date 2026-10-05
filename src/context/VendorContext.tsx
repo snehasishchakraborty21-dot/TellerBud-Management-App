@@ -174,7 +174,7 @@ export const VendorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           minTransactionAmount: 20.0,
           maxTransactionAmount: 25000.0,
           reservationChargeEligibility:
-            'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+            'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
           settlementMethod: 'Real-Time Gross Settlement (RTGS)',
           reconciliationEnabled: true,
           reconciliationSchedule: 'Daily automated ledger matching at 23:59 CAT',
@@ -382,7 +382,7 @@ export const VendorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         minTransactionAmount: 20.0,
         maxTransactionAmount: 25000.0,
         reservationChargeEligibility:
-          'Eligible for Cash Pickup only (ZMW 50.00 standard reservation fee)',
+          'Eligible for Cash Pickup & Agent Liquidity (Dynamic Reservation Fee: 1.2% + ZMW 0.10/min + ZMW 20)',
         settlementMethod: 'Real-Time Gross Settlement (RTGS)',
         reconciliationEnabled: true,
         reconciliationSchedule: 'Daily automated ledger matching at 23:59 CAT',

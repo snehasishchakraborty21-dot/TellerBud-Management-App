@@ -385,6 +385,12 @@ export const AdminLayout: React.FC = () => {
       pathname.includes('/transactions/commissions/') ||
       pathname.includes('/transactions/charges-revenue/')
     ) {
+      if (pathname.includes('/business/')) {
+        return 'Business Charges & Revenue Details';
+      }
+      if (pathname.includes('/agents/')) {
+        return 'Agent Revenue Details';
+      }
       const seg = pathname.split('/').filter(Boolean).pop() || '';
       if (seg.toUpperCase().includes('COM')) {
         return 'Commission Details';
@@ -440,6 +446,18 @@ export const AdminLayout: React.FC = () => {
       (pathname.includes('/notifications/') && pathname.split('/notifications/')[1]?.length > 0)
     ) {
       return 'Notification Details';
+    }
+
+    if (
+      pathname === '/super-admin/configuration/revenue-split' ||
+      pathname === '/super-admin/configuration/revenue-split-settings' ||
+      pathname === '/configuration/revenue-split' ||
+      pathname === '/configuration/revenue-split-settings' ||
+      pathname === '/revenue-split' ||
+      pathname === '/revenue-split-settings' ||
+      pathname.endsWith('/configuration/revenue-split')
+    ) {
+      return 'Revenue Split Settings';
     }
 
     if (

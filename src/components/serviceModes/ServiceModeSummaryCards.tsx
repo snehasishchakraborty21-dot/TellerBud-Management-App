@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Building2, Clock, Receipt, BookOpen } from 'lucide-react';
 import { ServiceModeRecord } from '../../types/serviceMode';
+import { isServiceModeEligibleForReservationFee } from '../../utils/reservationFeeUtils';
 
 interface ServiceModeSummaryCardsProps {
   service: ServiceModeRecord;
@@ -28,6 +29,7 @@ export const ServiceModeSummaryCards: React.FC<ServiceModeSummaryCardsProps> = (
   };
 
   const providersInfo = getProvidersDisplay();
+  const hasDynamicFee = isServiceModeEligibleForReservationFee(service.id);
 
   return (
     <section
@@ -107,25 +109,25 @@ export const ServiceModeSummaryCards: React.FC<ServiceModeSummaryCardsProps> = (
         </p>
       </div>
 
-      {/* 4. Reservation Charge */}
+      {/* 4. Reservation Fee */}
       <div
         id="card-summary-reservation"
         className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors"
       >
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-            Reservation Charge
+            Reservation Fee
           </span>
           <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
             <Receipt className="w-3.5 h-3.5" aria-hidden="true" />
           </div>
         </div>
         <p className="text-base font-bold text-slate-900 mt-2 tracking-tight">
-          {service.reservationCharge}
+          {hasDynamicFee ? 'Dynamic' : 'Not Applicable'}
         </p>
         <p className="text-xs text-slate-500 mt-0.5">
-          {service.id === 'TB-SVC-CP-001'
-            ? 'Customer-facing reservation fee'
+          {hasDynamicFee
+            ? '1.2% + ZMW 0.10/min + ZMW 20'
             : 'Zero surcharge applied'}
         </p>
       </div>

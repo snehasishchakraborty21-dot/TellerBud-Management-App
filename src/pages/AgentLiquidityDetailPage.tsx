@@ -30,7 +30,11 @@ import {
   ShieldCheck,
   MapPin,
   Users,
+  Receipt,
+  Percent,
+  Calculator,
 } from 'lucide-react';
+import { calculateReservationFee } from '../utils/reservationFeeUtils';
 
 export const AgentLiquidityDetailPage: React.FC = () => {
   const { reference, requestId } = useParams<{ reference?: string; requestId?: string }>();
@@ -465,6 +469,120 @@ export const AgentLiquidityDetailPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Reservation Fee Breakdown Section */}
+      {(() => {
+        const idNum = parseInt(request.id.replace(/\D/g, ''), 10) || 1;
+        const feeBreakdown = calculateReservationFee(request.amount, 15, {
+          chargeIndex: idNum,
+        });
+
+        return (
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-amber-600" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-800">
+                  Reservation Fee Breakdown
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                  Charge ID: {feeBreakdown.chargeId}
+                </span>
+                <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  Dynamic Fee
+                </span>
+              </div>
+            </div>
+
+            {/* Formula Banner */}
+            <div className="bg-slate-900 text-white rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
+                  Applied Formula
+                </span>
+                <span className="font-mono font-semibold text-cyan-300 text-xs sm:text-sm">
+                  (Reservation Amount × 1.2%) + (15 mins × ZMW 0.10) + ZMW 20.00
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Duration: 15 mins
+              </span>
+            </div>
+
+            {/* Component Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200/80">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">
+                  Percentage Component (1.2%)
+                </span>
+                <span className="font-mono font-bold text-gray-900 text-sm mt-0.5 block">
+                  {formatZMW(feeBreakdown.percentageComponent)}
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono mt-0.5 block">
+                  {formatZMW(request.amount)} × 0.012
+                </span>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200/80">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">
+                  Time Component (ZMW 0.10/min)
+                </span>
+                <span className="font-mono font-bold text-gray-900 text-sm mt-0.5 block">
+                  {formatZMW(feeBreakdown.timeComponent)}
+                </span>
+                <span className="text-[10px] text-gray-400 font-mono mt-0.5 block">
+                  15 minutes × 0.10
+                </span>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200/80">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block">
+                  Penalty Reserve (Fixed)
+                </span>
+                <span className="font-mono font-bold text-amber-700 text-sm mt-0.5 block">
+                  {formatZMW(feeBreakdown.penaltyReserve)}
+                </span>
+                <span className="text-[10px] text-amber-600 font-semibold mt-0.5 block">
+                  Status: Held
+                </span>
+              </div>
+            </div>
+
+            {/* Visibility Comparison Strip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between">
+                <div>
+                  <span className="text-[10.5px] font-bold text-emerald-800 uppercase tracking-wider block">
+                    Requesting Agent Visibility (100%)
+                  </span>
+                  <span className="text-xs text-emerald-600 mt-0.5 block">
+                    Full Reservation Fee
+                  </span>
+                </div>
+                <span className="text-lg font-mono font-extrabold text-emerald-950">
+                  {formatZMW(feeBreakdown.fullReservationFee)}
+                </span>
+              </div>
+
+              <div className="bg-cyan-50/80 border border-cyan-200 rounded-xl p-3.5 flex items-center justify-between">
+                <div>
+                  <span className="text-[10.5px] font-bold text-[#0D93AA] uppercase tracking-wider block">
+                    Fulfilling Agent Visibility (80%)
+                  </span>
+                  <span className="text-xs text-cyan-700 mt-0.5 block">
+                    80% × Full Reservation Fee
+                  </span>
+                </div>
+                <span className="text-lg font-mono font-extrabold text-cyan-950">
+                  {formatZMW(feeBreakdown.agentVisibleFee)}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 4. Requesting Agent Details & Offered / Matched Agent Details Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">

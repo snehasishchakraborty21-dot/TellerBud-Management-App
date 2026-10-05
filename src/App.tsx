@@ -34,6 +34,7 @@ import { TransactionDetailPage } from './pages/TransactionDetailPage';
 import { ChargesCommissionsPage } from './pages/ChargesCommissionsPage';
 import { ChargeCommissionDetailPage } from './pages/ChargeCommissionDetailPage';
 import { AgentRevenueDetailPage } from './pages/AgentRevenueDetailPage';
+import { BusinessChargesRevenueDetailPage } from './pages/BusinessChargesRevenueDetailPage';
 import { BusinessOwnerNotificationsPage } from './pages/BusinessOwnerNotificationsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { NotificationDetailsPage } from './pages/NotificationDetailsPage';
@@ -63,6 +64,7 @@ import { VendorDetailsPage } from './pages/VendorDetailsPage';
 import { VendorEligibilityPage } from './pages/VendorEligibilityPage';
 import { ServiceModesPage } from './pages/ServiceModesPage';
 import { ServiceModeDetailPage } from './pages/ServiceModeDetailPage';
+import { RevenueSplitSettingsPage } from './pages/RevenueSplitSettingsPage';
 import { SystemSettingsPage } from './pages/SystemSettingsPage';
 import { StoresBoothsPage } from './pages/organization/StoresBoothsPage';
 import { UsersRolesPage } from './pages/organization/UsersRolesPage';
@@ -399,15 +401,19 @@ function AppRoutes() {
 
         {/* Charges & Revenue */}
         <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="transactions/commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
         <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="charges-commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/charges-revenue/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="transactions/charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="charges-revenue/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-revenue/:recordId" element={<ChargeCommissionDetailPage />} />
 
@@ -426,6 +432,12 @@ function AppRoutes() {
         <Route path="configuration/service-modes/:serviceId" element={<ServiceModeDetailPage />} />
         <Route path="service-modes/:serviceId" element={<ServiceModeDetailPage />} />
         <Route path="service-modes" element={<Navigate to="/super-admin/configuration/service-modes" replace />} />
+
+        {/* Configuration: Revenue Split Settings */}
+        <Route path="configuration/revenue-split" element={<RevenueSplitSettingsPage />} />
+        <Route path="configuration/revenue-split-settings" element={<RevenueSplitSettingsPage />} />
+        <Route path="revenue-split" element={<Navigate to="/super-admin/configuration/revenue-split" replace />} />
+        <Route path="revenue-split-settings" element={<Navigate to="/super-admin/configuration/revenue-split" replace />} />
 
         {/* Configuration: Notifications */}
         <Route path="configuration/notifications" element={<NotificationsPage />} />
@@ -545,15 +557,19 @@ function AppRoutes() {
 
         {/* Charges & Revenue (Scoped to Business) */}
         <Route path="transactions/commissions" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/commissions/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="transactions/commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="transactions/commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-commissions" element={<ChargesCommissionsPage />} />
         <Route path="charges-commissions" element={<ChargesCommissionsPage />} />
+        <Route path="charges-commissions/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="charges-commissions/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-commissions/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="transactions/charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="transactions/charges-revenue/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="transactions/charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-revenue" element={<ChargesCommissionsPage />} />
+        <Route path="charges-revenue/business/:businessId" element={<BusinessChargesRevenueDetailPage />} />
         <Route path="charges-revenue/agents/:agentId" element={<AgentRevenueDetailPage />} />
         <Route path="charges-revenue/:recordId" element={<ChargeCommissionDetailPage />} />
         <Route path="commissions" element={<Navigate to="/business-owner/transactions/commissions" replace />} />

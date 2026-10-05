@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PickupRequest } from '../../types/admin';
 import { formatCustomerId } from '../../utils/formatters';
+import { calculateReservationFee } from '../../utils/reservationFeeUtils';
 
 interface CompletedRequestDetailsDrawerProps {
   request: PickupRequest;
@@ -107,8 +108,14 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
   const vendor = request.vendor || 'Zanaco';
   const serviceMode = 'Cash Pickup';
   const transactionAmount = request.amount || 8000.0;
-  const reservationCharge = 25.0;
-  const customerTotal = transactionAmount + reservationCharge;
+  const idNum = parseInt((request.id || '1028').replace(/\D/g, ''), 10) || 1028;
+  const feeBreakdown = calculateReservationFee(transactionAmount, 30, {
+    chargeIndex: idNum,
+    customChargeId: `TB-CHG-${String(idNum).padStart(6, '0')}`,
+  });
+  const reservationFee = feeBreakdown.fullReservationFee;
+  const reservationCharge = reservationFee;
+  const customerTotal = transactionAmount + reservationFee;
   const requestedServiceTime = request.serviceTime === 'Now' ? 'Now' : '31 Aug 2026, 11:30 AM';
   const createdTime = '31 Aug 2026, 09:05 AM';
   const completedTime = '31 Aug 2026, 11:50 AM';
@@ -403,9 +410,9 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 font-medium">Reservation Charge:</span>
+                    <span className="text-gray-600 font-medium">Reservation Fee:</span>
                     <span className="font-mono font-medium text-gray-700">
-                      {formatZMW(reservationCharge)}
+                      {formatZMW(reservationFee)}
                     </span>
                   </div>
 
@@ -1295,9 +1302,9 @@ export const CompletedRequestDetailsDrawer: React.FC<CompletedRequestDetailsDraw
                 </span>
               </div>
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <span className="text-gray-500 font-medium">Reservation Charge:</span>
+                <span className="text-gray-500 font-medium">Reservation Fee:</span>
                 <span className="font-mono font-medium text-gray-700">
-                  {formatZMW(reservationCharge)}
+                  {formatZMW(reservationFee)}
                 </span>
               </div>
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
