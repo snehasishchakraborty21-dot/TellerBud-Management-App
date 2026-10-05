@@ -538,19 +538,14 @@ export function filterAndSortBusinesses(
     result = result.filter((b) => b.registeredDateIso <= filters.toDate);
   }
 
-  // 6. Search Query (business name, ID, owner name, owner phone masked/raw, city)
-  if (filters.search.trim()) {
-    const q = filters.search.toLowerCase().trim();
+  // 6. Search Query (business name, business ID, business owner name)
+  if (filters.search && filters.search.trim()) {
+    const q = filters.search.trim().toLowerCase();
     result = result.filter((b) => {
       return (
         b.name.toLowerCase().includes(q) ||
         b.id.toLowerCase().includes(q) ||
-        b.ownerName.toLowerCase().includes(q) ||
-        b.ownerId.toLowerCase().includes(q) ||
-        b.ownerPhoneMasked.toLowerCase().includes(q) ||
-        b.ownerPhone.replace(/\s+/g, '').includes(q.replace(/\s+/g, '')) ||
-        b.city.toLowerCase().includes(q) ||
-        b.province.toLowerCase().includes(q)
+        b.ownerName.toLowerCase().includes(q)
       );
     });
   }

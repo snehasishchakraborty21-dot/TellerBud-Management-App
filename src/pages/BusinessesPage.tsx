@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   getBusinessSummary,
   filterAndSortBusinesses,
@@ -30,6 +30,9 @@ const DEFAULT_FILTERS: BusinessFilters = {
 export const BusinessesPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
+
   const navState = location.state as
     | {
         filters?: BusinessFilters;
@@ -119,13 +122,18 @@ export const BusinessesPage: React.FC = () => {
     []
   );
 
-  // Reset all filters
+  // Reset all filters and search
   const handleClearFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
     setSortField('registeredDateIso');
     setSortDirection('desc');
     setCurrentPage(1);
-  }, []);
+    if (searchParams.has('search')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('search');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Refresh handler (reloads businesses while preserving current filter selections)
   const handleRefresh = useCallback(() => {
@@ -177,14 +185,14 @@ export const BusinessesPage: React.FC = () => {
       navigate(`/super-admin/people/businesses/${business.id}`, {
         state: {
           from: location.pathname + location.search,
-          filters,
+          filters: { ...filters, search: urlSearch },
           sortField,
           sortDirection,
           currentPage,
         },
       });
     },
-    [navigate, location.pathname, location.search, filters, sortField, sortDirection, currentPage]
+    [navigate, location.pathname, location.search, filters, urlSearch, sortField, sortDirection, currentPage]
   );
 
   // Determine if any non-default filter is currently active
@@ -192,17 +200,22 @@ export const BusinessesPage: React.FC = () => {
     return (
       filters.quickFilter !== 'ALL' ||
       filters.status !== 'ALL' ||
-      filters.walletState !== 'ALL'
+      filters.walletState !== 'ALL' ||
+      Boolean(urlSearch.trim())
     );
-  }, [filters]);
+  }, [filters, urlSearch]);
 
   // Apply filtering and sorting
   const filteredBusinesses = useMemo(() => {
-    return filterAndSortBusinesses(businesses, filters, {
-      field: sortField,
-      direction: sortDirection,
-    });
-  }, [businesses, filters, sortField, sortDirection]);
+    return filterAndSortBusinesses(
+      businesses,
+      { ...filters, search: urlSearch },
+      {
+        field: sortField,
+        direction: sortDirection,
+      }
+    );
+  }, [businesses, filters, urlSearch, sortField, sortDirection]);
 
   // Paginated businesses
   const paginatedBusinesses = useMemo(() => {

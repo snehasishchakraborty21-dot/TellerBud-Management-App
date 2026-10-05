@@ -128,7 +128,7 @@ export const BusinessOnboardingTable: React.FC<BusinessOnboardingTableProps> = (
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+      <div className="flex-1 min-h-[280px] bg-white rounded-xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center">
         <div className="inline-block animate-spin w-6 h-6 border-2 border-[#0D93AA] border-t-transparent rounded-full mb-2" />
         <p className="text-xs text-slate-500">Loading onboarding applications...</p>
       </div>
@@ -137,7 +137,7 @@ export const BusinessOnboardingTable: React.FC<BusinessOnboardingTableProps> = (
 
   if (applications.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+      <div className="flex-1 min-h-[280px] bg-white rounded-xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
           <Building2 size={22} />
         </div>
@@ -161,11 +161,11 @@ export const BusinessOnboardingTable: React.FC<BusinessOnboardingTableProps> = (
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden w-full">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold text-[11.5px] uppercase tracking-wider select-none">
+          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs border-b border-slate-200 shadow-[0_1px_0_0_#E2E8F0]">
+            <tr className="text-slate-600 font-semibold text-[11px] sm:text-[11.5px] uppercase tracking-wider select-none">
               <th scope="col" className="py-3 px-3.5 whitespace-nowrap">
                 Business
               </th>
@@ -195,13 +195,15 @@ export const BusinessOnboardingTable: React.FC<BusinessOnboardingTableProps> = (
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {applications.map((app) => {
               const dt = formatDateTime(app.websiteData.submittedAt);
-              const locationsCount = Object.keys(app.websiteData.cityLocations || {}).length || app.websiteData.operatingCities.length;
+              const locationsCount =
+                Object.keys(app.websiteData.cityLocations || {}).length ||
+                app.websiteData.operatingCities.length;
               const hasAssignedId = Boolean(app.businessId);
 
               return (
                 <tr
                   key={app.id}
-                  className="hover:bg-slate-50/60 transition-colors group cursor-pointer"
+                  className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
                   onClick={() => onViewDetails(app)}
                 >
                   {/* 1. Business Column */}
@@ -245,7 +247,10 @@ export const BusinessOnboardingTable: React.FC<BusinessOnboardingTableProps> = (
                   <td className="py-3 px-3.5 align-middle">
                     <div className="flex items-center gap-1.5 text-slate-800 font-medium">
                       <MapPin size={12} className="text-[#0D93AA] shrink-0" />
-                      <span className="truncate max-w-[200px]" title={app.websiteData.operatingCities.join(', ')}>
+                      <span
+                        className="truncate max-w-[200px]"
+                        title={app.websiteData.operatingCities.join(', ')}
+                      >
                         {app.websiteData.operatingCities.join(', ')}
                       </span>
                     </div>

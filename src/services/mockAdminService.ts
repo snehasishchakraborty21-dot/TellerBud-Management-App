@@ -130,6 +130,7 @@ import {
 } from '../data/mockAttendanceData';
 import { MOCK_BUSINESS_PROFILES } from '../data/mockBusinessProfileData';
 import { SUPER_ADMIN_PROFILE } from '../config/appConfig';
+import { tellerBudNotificationService } from './tellerBudNotificationService';
 
 /**
  * TellerBud Admin Frontend Mock Service Layer.
@@ -153,7 +154,6 @@ function getInitialBusinessProfiles(): Record<string, BusinessProfile> {
 }
 
 import { boNotificationService } from './notificationService';
-import { tellerBudNotificationService } from './tellerBudNotificationService';
 
 function persistBusinessProfiles(profiles: Record<string, BusinessProfile>): void {
   try {
@@ -648,6 +648,9 @@ class MockAdminService implements IAdminService {
     };
 
     this.withdrawals[index] = updated;
+
+    // Synchronize notification status automatically
+    tellerBudNotificationService.handleWithdrawalStatusChanged(reference, newStatus, actor);
 
     // Trigger subscribers across app
     this.notifyListeners();
@@ -1839,6 +1842,18 @@ class MockAdminService implements IAdminService {
     };
 
     this.globalWalletActivities.unshift(newActivity);
+
+    // Create Business Withdrawal notification for TellerBud Admin
+    tellerBudNotificationService.createBusinessWithdrawalNotification({
+      reference: ref,
+      businessName: 'Lusaka Central Express Agency',
+      businessId: params.businessId || 'TB-BIZ-000001',
+      businessOwnerName: params.actorName || 'Chileshe Mwamba',
+      amount: params.amount,
+      vendor: params.provider,
+      mobileMoneyNumber: `+260 ${params.destinationNumber.replace(/\D/g, '').slice(-9)}`,
+    });
+
     this.notifyListeners();
 
     return { success: true, activity: newActivity };
@@ -1963,6 +1978,10 @@ class MockAdminService implements IAdminService {
     };
 
     this.globalWalletLedger.unshift(newLedgerEntry);
+
+    // Sync notification status to Completed / Resolved
+    tellerBudNotificationService.handleWithdrawalStatusChanged(reference, 'Paid', 'TellerBud Admin');
+
     this.notifyListeners();
 
     return { success: true, wallet: { ...this.businessWallet }, activity: { ...activity } };

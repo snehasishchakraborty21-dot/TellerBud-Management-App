@@ -162,9 +162,13 @@ export const NotificationsPage: React.FC = () => {
   const handleViewDetails = (item: TellerBudNotification) => {
     // Automatically mark as read if unread when View Details is clicked
     if (item.status === 'Unread') {
-      tellerBudNotificationService.markAsRead(item.id, 'Sililo Lubinda (Super Admin)');
+      tellerBudNotificationService.markAsRead(item.id, 'Sililo Lubinda');
     }
-    navigate(`/notifications/${item.id}`, {
+    const detailsPath = location.pathname.startsWith('/super-admin')
+      ? `/super-admin/configuration/notifications/${item.id}`
+      : `/notifications/${item.id}`;
+
+    navigate(detailsPath, {
       state: {
         filters,
         currentPage,

@@ -20,6 +20,7 @@ import {
 } from '../../config/navigation';
 import { MobileMoneyDatePicker } from '../mobile-money/MobileMoneyDatePicker';
 import { BusinessOwnerDatePicker } from './BusinessOwnerDatePicker';
+import { AdminOperationsDatePicker } from './AdminOperationsDatePicker';
 import {
   sanitizeDateParam,
   getZambiaTodayString,
@@ -104,25 +105,85 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     location.pathname.includes('/charges-revenue') ||
     location.pathname.includes('/charges-commissions');
 
+  const isCustomerRequestsPage =
+    location.pathname === '/super-admin/operations/requests' ||
+    location.pathname === '/super-admin/operations/requests/' ||
+    location.pathname === '/super-admin/operations/customer-requests' ||
+    location.pathname === '/super-admin/customer-requests' ||
+    location.pathname === '/operations/requests' ||
+    location.pathname === '/customer-requests' ||
+    location.pathname.endsWith('/operations/requests') ||
+    location.pathname.endsWith('/customer-requests');
+
+  const isAgentLiquidityPage =
+    (location.pathname === '/super-admin/operations/agent-to-agent-liquidity' ||
+      location.pathname === '/super-admin/operations/agent-to-agent-liquidity/' ||
+      location.pathname === '/super-admin/operations/agent-liquidity' ||
+      location.pathname === '/super-admin/agent-to-agent-liquidity' ||
+      location.pathname === '/operations/agent-to-agent-liquidity' ||
+      location.pathname === '/agent-to-agent-liquidity' ||
+      location.pathname.endsWith('/operations/agent-to-agent-liquidity') ||
+      location.pathname.endsWith('/agent-to-agent-liquidity')) &&
+    !location.pathname.match(/\/operations\/agent-to-agent-liquidity\/[^/]+$/) &&
+    !location.pathname.match(/\/agent-to-agent-liquidity\/[^/]+$/);
+
+  const isOperationsDatePage = isCustomerRequestsPage || isAgentLiquidityPage || isChargesRevenuePage;
+
+  const isAllBusinessesPage =
+    (location.pathname === '/super-admin/people/businesses' ||
+      location.pathname === '/super-admin/businesses' ||
+      location.pathname === '/tellerbud-admin/businesses' ||
+      location.pathname === '/businesses') &&
+    !location.pathname.includes('/businesses/');
+
   const currentDateParam = searchParams.get('date');
   const validDate = sanitizeDateParam(currentDateParam);
+
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
 
   const handleDateChange = (newDate: string) => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('date', newDate);
     setSearchParams(nextParams, { replace: true });
   };
+
+  const handleOperationsDateChange = (newDate: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('from', newDate);
+    nextParams.set('to', newDate);
+    setSearchParams(nextParams, { replace: true });
+  };
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (
+      (location.pathname === '/super-admin/people/businesses' ||
+        location.pathname === '/super-admin/businesses' ||
+        location.pathname === '/tellerbud-admin/businesses' ||
+        location.pathname === '/businesses') &&
+      !location.pathname.includes('/businesses/')
+    ) {
+      return searchParams.get('search') || '';
+    }
+    return '';
+  });
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState<string | null>(null);
   const accountTriggerRef = React.useRef<HTMLButtonElement>(null);
+  const searchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Sync search query state with URL when navigating to/from All Businesses page
+  useEffect(() => {
+    if (isAllBusinessesPage) {
+      setSearchQuery(searchParams.get('search') || '');
+    }
+  }, [isAllBusinessesPage, searchParams]);
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
+    if (isAllBusinessesPage || !searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase().trim();
     const config =
       currentUser?.role === 'business_owner'
@@ -146,14 +207,42 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       });
     });
     return results;
-  }, [searchQuery, currentUser?.role]);
+  }, [searchQuery, currentUser?.role, isAllBusinessesPage]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchQuery(val);
-    setIsSearchDropdownOpen(true);
-    if (onGlobalSearch) {
-      onGlobalSearch(val);
+
+    if (isAllBusinessesPage) {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = setTimeout(() => {
+        const nextParams = new URLSearchParams(searchParams);
+        const trimmed = val.trim();
+        if (trimmed) {
+          nextParams.set('search', trimmed);
+        } else {
+          nextParams.delete('search');
+        }
+        setSearchParams(nextParams, { replace: true });
+      }, 150);
+    } else {
+      setIsSearchDropdownOpen(true);
+      if (onGlobalSearch) {
+        onGlobalSearch(val);
+      }
+    }
+  };
+
+  const handleClearSearch = () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    setSearchQuery('');
+    setIsSearchDropdownOpen(false);
+    if (isAllBusinessesPage) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('search');
+      setSearchParams(nextParams, { replace: true });
+    } else if (onGlobalSearch) {
+      onGlobalSearch('');
     }
   };
 
@@ -232,7 +321,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </div>
         </div>
 
-        {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, admin mobile-money pages, or charges & revenue pages) */}
+        {/* Top-Centre: Date Display (interactive date selector on date-dependent Business Owner pages, admin operations pages, admin mobile-money pages, or charges & revenue pages) */}
         <div className="flex items-center justify-center flex-1 px-2 sm:px-4 text-center min-w-0">
           {isBusinessOwner ? (
             isBusinessOwnerDatePage(location.pathname) ? (
@@ -240,6 +329,12 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                 <BusinessOwnerDatePicker />
               </div>
             ) : null
+          ) : isOperationsDatePage ? (
+            <AdminOperationsDatePicker
+              fromDate={fromParam}
+              toDate={toParam}
+              onSingleDateChange={handleOperationsDateChange}
+            />
           ) : (isMobileMoneyPage || isChargesRevenuePage) ? (
             <MobileMoneyDatePicker
               selectedDate={validDate}
@@ -345,9 +440,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           </div>
         ) : (
           /* TellerBud Admin Header (Retaining Global Search on other pages, Notifications, Admin Profile) */
-          <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${(!isMobileMoneyPage && !isChargesRevenuePage) ? 'ml-auto' : ''}`}>
-            {/* Global Search Pill Input (hidden on Charges & Revenue pages) */}
-            {!isChargesRevenuePage && (
+          <div className={`flex items-center gap-3 sm:gap-5 flex-shrink-0 ${(!isMobileMoneyPage && !isChargesRevenuePage && !isOperationsDatePage) ? 'ml-auto' : ''}`}>
+            {/* Global Search Pill Input (hidden on Charges & Revenue, Customer Requests, and Agent-to-Agent Liquidity pages) */}
+            {!isChargesRevenuePage && !isOperationsDatePage && (
               <div
                 className={`relative hidden md:block transition-all duration-150 ${
                   isMobileMoneyPage ? 'w-48 lg:w-60' : 'w-60 sm:w-72 lg:w-80 max-w-sm'
@@ -361,25 +456,26 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={handleSearchChange}
-                  onFocus={() => setIsSearchDropdownOpen(true)}
+                  onFocus={() => {
+                    if (!isAllBusinessesPage) setIsSearchDropdownOpen(true);
+                  }}
                   onBlur={() => setTimeout(() => setIsSearchDropdownOpen(false), 200)}
-                  placeholder="Search operations..."
+                  placeholder={isAllBusinessesPage ? 'Search Business...' : 'Search operations...'}
                   className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-full text-xs sm:text-sm placeholder-gray-400 text-[#102025] focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:bg-white transition-all"
+                  aria-label={isAllBusinessesPage ? 'Search Business' : 'Search operations'}
                 />
                 {searchQuery && (
                   <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setIsSearchDropdownOpen(false);
-                      if (onGlobalSearch) onGlobalSearch('');
-                    }}
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    aria-label="Clear search"
                   >
                     <X size={14} />
                   </button>
                 )}
 
-                {isSearchDropdownOpen && searchQuery.trim().length > 0 && (
+                {!isAllBusinessesPage && isSearchDropdownOpen && searchQuery.trim().length > 0 && (
                   <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden py-1 max-h-64 overflow-y-auto">
                     {searchResults.length > 0 ? (
                       searchResults.map((res) => (

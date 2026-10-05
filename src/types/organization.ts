@@ -19,6 +19,16 @@ export type OrgEntityType =
   | 'Device'
   | 'DeviceAssignment';
 
+export type MaintenanceReason =
+  | 'Hardware Fault'
+  | 'Software Issue'
+  | 'Network or Connectivity Issue'
+  | 'Battery or Power Issue'
+  | 'Physical Damage'
+  | 'Scheduled Maintenance'
+  | 'Security Inspection'
+  | 'Other';
+
 export interface Store {
   id: string;
   businessId: string;
@@ -85,6 +95,39 @@ export interface StaffBoothAssignment {
   updatedBy?: string;
 }
 
+export interface DevicePreviousAllocation {
+  businessId?: string | null;
+  businessName?: string;
+  storeId?: string | null;
+  storeName?: string;
+  boothId?: string | null;
+  boothName?: string;
+  staffUserId?: string | null;
+  staffName?: string;
+}
+
+export interface DeviceMaintenanceRecord {
+  id: string;
+  deviceId: string;
+  deviceName?: string;
+  serialNumber?: string;
+  previousStatus: DeviceStatus;
+  maintenanceStatus: 'In Progress' | 'Completed' | 'Cancelled';
+  reason: MaintenanceReason | string;
+  notes?: string;
+  startDate: string;
+  expectedReturnDate?: string | null;
+  completionDate?: string | null;
+  resolutionNotes?: string;
+  previousAllocation?: DevicePreviousAllocation;
+  resultingAllocation?: DevicePreviousAllocation;
+  resultingStatus?: DeviceStatus;
+  performedBy: string;
+  performedByUserId: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface Device {
   id: string;
   deviceId: string;
@@ -98,6 +141,13 @@ export interface Device {
   decommissionReason?: string;
   decommissionedAt?: string;
   decommissionedBy?: string;
+  // Maintenance context
+  currentMaintenanceRecordId?: string;
+  maintenanceReason?: string;
+  maintenanceNotes?: string;
+  maintenanceStartDate?: string;
+  expectedReturnDate?: string | null;
+  previousAllocationBeforeMaintenance?: DevicePreviousAllocation;
   updatedAt?: string;
   updatedBy?: string;
 }

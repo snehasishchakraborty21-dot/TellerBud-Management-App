@@ -709,9 +709,46 @@ export const AdminLayout: React.FC = () => {
     !location.pathname.includes('/vendors/TB-') &&
     !location.pathname.includes('/configuration/vendors/TB-');
 
+  const isCustomerRequestsListing =
+    location.pathname === '/super-admin/operations/requests' ||
+    location.pathname === '/super-admin/operations/requests/' ||
+    location.pathname === '/super-admin/operations/customer-requests' ||
+    location.pathname === '/super-admin/customer-requests' ||
+    location.pathname === '/operations/requests' ||
+    location.pathname === '/customer-requests' ||
+    location.pathname.endsWith('/operations/requests') ||
+    location.pathname.endsWith('/customer-requests');
+
+  const isAgentLiquidityListing =
+    (location.pathname === '/super-admin/operations/agent-to-agent-liquidity' ||
+      location.pathname === '/super-admin/operations/agent-to-agent-liquidity/' ||
+      location.pathname === '/super-admin/operations/agent-liquidity' ||
+      location.pathname === '/super-admin/agent-to-agent-liquidity' ||
+      location.pathname === '/business-owner/operations/agent-to-agent-liquidity' ||
+      location.pathname === '/business-owner/agent-to-agent-liquidity' ||
+      location.pathname === '/operations/agent-to-agent-liquidity' ||
+      location.pathname === '/agent-to-agent-liquidity' ||
+      location.pathname.endsWith('/operations/agent-to-agent-liquidity') ||
+      location.pathname.endsWith('/agent-to-agent-liquidity')) &&
+    !location.pathname.match(/\/operations\/agent-to-agent-liquidity\/[^/]+$/) &&
+    !location.pathname.match(/\/agent-to-agent-liquidity\/[^/]+$/);
+
+  const isBusinessOnboardingListing =
+    (location.pathname === '/super-admin/people/business-onboarding' ||
+      location.pathname === '/super-admin/people/business-onboarding/' ||
+      location.pathname === '/business-onboarding' ||
+      location.pathname === '/business-onboarding/' ||
+      location.pathname.endsWith('/people/business-onboarding') ||
+      location.pathname.endsWith('/business-onboarding')) &&
+    !location.pathname.includes('/people/business-onboarding/') &&
+    !location.pathname.includes('/business-onboarding/');
+
   const isFrozenLayout =
     isServiceModesListing ||
     isVendorsListing ||
+    isCustomerRequestsListing ||
+    isAgentLiquidityListing ||
+    isBusinessOnboardingListing ||
     isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||

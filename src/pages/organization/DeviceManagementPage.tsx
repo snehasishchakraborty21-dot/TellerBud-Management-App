@@ -329,6 +329,7 @@ export const DeviceManagementPage: React.FC = () => {
               <option value="All">All Statuses</option>
               <option value="Assigned">Assigned</option>
               <option value="Available">Available / Unmapped</option>
+              <option value="Under Maintenance">Under Maintenance</option>
             </select>
 
             {/* 2. All Stores */}
@@ -465,21 +466,32 @@ export const DeviceManagementPage: React.FC = () => {
 
                     {/* 5. Status (14%, min-w 150px) */}
                     <td className="py-3 px-3.5 pr-4 align-middle text-left whitespace-nowrap min-w-[150px]">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full font-semibold text-[11px] whitespace-nowrap border ${
-                          d.status === 'Assigned'
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                            : 'bg-cyan-100 text-cyan-800 border-cyan-200'
-                        }`}
-                      >
-                        {d.status === 'Assigned' ? 'Assigned' : 'Available / Unmapped'}
-                      </span>
+                      {d.status === 'Under Maintenance' ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full font-semibold text-[11px] whitespace-nowrap border bg-amber-50 text-amber-800 border-amber-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse" />
+                          Under Maintenance
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full font-semibold text-[11px] whitespace-nowrap border ${
+                            d.status === 'Assigned'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              : 'bg-cyan-100 text-cyan-800 border-cyan-200'
+                          }`}
+                        >
+                          {d.status === 'Assigned' ? 'Assigned' : 'Available / Unmapped'}
+                        </span>
+                      )}
                     </td>
 
                     {/* 6. Actions (17%, min-w 170px) */}
                     <td className="py-3 pl-4 pr-3.5 align-middle text-left whitespace-nowrap min-w-[170px]">
                       <div className="flex items-center justify-start gap-2 flex-nowrap">
-                        {d.status === 'Assigned' && d.boothId ? (
+                        {d.status === 'Under Maintenance' ? (
+                          <span className="text-[11px] text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200/80 italic">
+                            Maintenance in progress
+                          </span>
+                        ) : d.status === 'Assigned' && d.boothId ? (
                           <>
                             <button
                               type="button"

@@ -49,9 +49,7 @@ export const BusinessFilterBar: React.FC<BusinessFilterBarProps> = ({
       'Business ID': b.id,
       'Business Owner': b.ownerName,
       'Phone Number': b.ownerPhone,
-      'Location': b.city,
-      'Province': b.province,
-      'Country': b.country || 'Zambia',
+      'City': b.city && b.city.trim() ? b.city.trim() : 'Not Provided',
       'Agents': b.associatedAgents,
       'Wallet Balance (ZMW)': b.sharedWalletBalance,
       'Registered Date': b.registeredDate,
@@ -98,9 +96,7 @@ export const BusinessFilterBar: React.FC<BusinessFilterBarProps> = ({
       { wch: 18 }, // Business ID
       { wch: 24 }, // Business Owner
       { wch: 20 }, // Phone Number
-      { wch: 16 }, // Location
-      { wch: 22 }, // Province
-      { wch: 12 }, // Country
+      { wch: 18 }, // City
       { wch: 10 }, // Agents
       { wch: 20 }, // Wallet Balance (ZMW)
       { wch: 16 }, // Registered Date

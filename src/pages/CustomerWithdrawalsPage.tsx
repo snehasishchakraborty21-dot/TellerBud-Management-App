@@ -23,13 +23,12 @@ import { WithdrawalPagination } from '../components/withdrawals/WithdrawalPagina
 const PAGE_SIZE = 10;
 
 export const CustomerWithdrawalsPage: React.FC = () => {
-  // All system withdrawals for accurate KPI calculation
+  // All system withdrawals for accurate calculation
   const [allWithdrawals, setAllWithdrawals] = useState<CustomerWithdrawal[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Filter States
+  // Filter States (Search box removed from filter section)
   const [filters, setFilters] = useState<CustomerWithdrawalFiltersState>({
-    search: '',
     provider: 'ALL',
     status: 'ALL',
     submittedFrom: '',
@@ -61,15 +60,25 @@ export const CustomerWithdrawalsPage: React.FC = () => {
     return () => unsubscribe();
   }, [loadData]);
 
-  // KPI Calculations across the authoritative dataset
+  // Filter withdrawals by date range for KPI calculations
+  const dateFilteredWithdrawals = useMemo(() => {
+    return allWithdrawals.filter((w) => {
+      const reqDate = w.requestedAt ? w.requestedAt.split('T')[0] : '';
+      if (filters.submittedFrom && reqDate && reqDate < filters.submittedFrom) return false;
+      if (filters.submittedTo && reqDate && reqDate > filters.submittedTo) return false;
+      return true;
+    });
+  }, [allWithdrawals, filters.submittedFrom, filters.submittedTo]);
+
+  // KPI Calculations across the date-filtered dataset
   const kpiMetrics = useMemo(() => {
-    const totalCount = allWithdrawals.length;
-    const pendingReviewCount = allWithdrawals.filter(
+    const totalCount = dateFilteredWithdrawals.length;
+    const pendingReviewCount = dateFilteredWithdrawals.filter(
       (w) => w.status === 'Pending Review'
     ).length;
 
     // Reserved Amount: Total funds currently reserved for Pending Review, Approved and Processing withdrawals
-    const reservedAmount = allWithdrawals.reduce((sum, w) => {
+    const reservedAmount = dateFilteredWithdrawals.reduce((sum, w) => {
       if (
         w.status === 'Pending Review' ||
         w.status === 'Approved' ||
@@ -80,11 +89,11 @@ export const CustomerWithdrawalsPage: React.FC = () => {
       return sum;
     }, 0);
 
-    const processingCount = allWithdrawals.filter(
+    const processingCount = dateFilteredWithdrawals.filter(
       (w) => w.status === 'Processing'
     ).length;
 
-    const paidAmount = allWithdrawals.reduce((sum, w) => {
+    const paidAmount = dateFilteredWithdrawals.reduce((sum, w) => {
       if (w.status === 'Paid') {
         return sum + w.amount;
       }
@@ -98,7 +107,7 @@ export const CustomerWithdrawalsPage: React.FC = () => {
       processingCount,
       paidAmount,
     };
-  }, [allWithdrawals]);
+  }, [dateFilteredWithdrawals]);
 
   // Handle KPI Card Selection
   const handleSelectKpiFilter = (filter: WithdrawalKpiFilter) => {
@@ -145,7 +154,6 @@ export const CustomerWithdrawalsPage: React.FC = () => {
   // Clear Filters Handler
   const handleClearFilters = () => {
     setFilters({
-      search: '',
       provider: 'ALL',
       status: 'ALL',
       submittedFrom: '',
@@ -164,10 +172,9 @@ export const CustomerWithdrawalsPage: React.FC = () => {
     }, 450);
   };
 
-  // Check if any filter is active
+  // Check if any filter differs from default
   const hasActiveFilters = useMemo(() => {
     return (
-      Boolean(filters.search.trim()) ||
       filters.provider !== 'ALL' ||
       filters.status !== 'ALL' ||
       activeKpiFilter !== 'ALL' ||
@@ -189,42 +196,19 @@ export const CustomerWithdrawalsPage: React.FC = () => {
 
   // Filter and Sort Rows
   const filteredAndSortedWithdrawals = useMemo(() => {
-    let result = [...allWithdrawals];
+    let result = [...dateFilteredWithdrawals];
 
-    // 1. Search filter (Reference, Customer Name, Customer ID, Wallet ID, Mobile)
-    if (filters.search.trim()) {
-      const q = filters.search.toLowerCase().trim();
-      const cleanQ = q.replace(/\s+/g, '');
-      result = result.filter((w) => {
-        const ref = w.reference.toLowerCase();
-        const name = w.customerName.toLowerCase();
-        const custId = (w.customerId || '').toLowerCase();
-        const walId = (w.walletId || '').toLowerCase();
-        const phone = (w.customerPhone || '').replace(/\s+/g, '').toLowerCase();
-        const payout = (w.payoutNumber || '').replace(/\s+/g, '').toLowerCase();
-
-        return (
-          ref.includes(q) ||
-          name.includes(q) ||
-          custId.includes(q) ||
-          walId.includes(q) ||
-          phone.includes(cleanQ) ||
-          payout.includes(cleanQ)
-        );
-      });
-    }
-
-    // 2. Provider filter
+    // 1. Provider filter
     if (filters.provider !== 'ALL') {
       result = result.filter((w) => w.network === filters.provider);
     }
 
-    // 3. Status filter
+    // 2. Status filter
     if (filters.status !== 'ALL') {
       result = result.filter((w) => w.status === filters.status);
     }
 
-    // 4. KPI Reserved Amount filter
+    // 3. KPI Reserved Amount filter
     if (activeKpiFilter === 'RESERVED' && filters.status === 'ALL') {
       result = result.filter(
         (w) =>
@@ -234,27 +218,7 @@ export const CustomerWithdrawalsPage: React.FC = () => {
       );
     }
 
-    // 5. Submitted From Date
-    if (filters.submittedFrom) {
-      const fromTime = new Date(`${filters.submittedFrom}T00:00:00Z`).getTime();
-      if (!isNaN(fromTime)) {
-        result = result.filter(
-          (w) => new Date(w.requestedAt).getTime() >= fromTime
-        );
-      }
-    }
-
-    // 6. Submitted To Date
-    if (filters.submittedTo) {
-      const toTime = new Date(`${filters.submittedTo}T23:59:59.999Z`).getTime();
-      if (!isNaN(toTime)) {
-        result = result.filter(
-          (w) => new Date(w.requestedAt).getTime() <= toTime
-        );
-      }
-    }
-
-    // 7. Sort
+    // 4. Sort
     result.sort((a, b) => {
       let comparison = 0;
       if (sortField === 'requestedAt') {
@@ -273,7 +237,7 @@ export const CustomerWithdrawalsPage: React.FC = () => {
     });
 
     return result;
-  }, [allWithdrawals, filters, activeKpiFilter, sortField, sortDirection]);
+  }, [dateFilteredWithdrawals, filters.provider, filters.status, activeKpiFilter, sortField, sortDirection]);
 
   // Paginated Rows
   const totalFilteredItems = filteredAndSortedWithdrawals.length;

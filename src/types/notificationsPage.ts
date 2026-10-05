@@ -1,5 +1,7 @@
 export type NotificationCategory =
-  | 'Withdrawal'
+  | 'Customer Withdrawal'
+  | 'Business Withdrawal'
+  | 'Withdrawal' // Legacy fallback
   | 'Transaction'
   | 'Provider/API'
   | 'Reconciliation'
@@ -8,15 +10,39 @@ export type NotificationCategory =
 
 export type NotificationPriority = 'Critical' | 'High' | 'Medium' | 'Low';
 
-export type NotificationStatus = 'Unread' | 'Read' | 'Resolved';
+export type NotificationStatus =
+  | 'Unread'
+  | 'Read'
+  | 'Resolved'
+  | 'Pending Review'
+  | 'Approved'
+  | 'Rejected'
+  | 'Completed'
+  | 'Failed'
+  | 'Cancelled';
 
 export interface NotificationActivityEvent {
   id: string;
   event: string;
-  actingUserOrSystem: string;
-  previousStatus: string;
-  newStatus: string;
+  actingUserOrSystem?: string;
+  previousStatus?: string;
+  newStatus?: string;
   dateTime: string;
+}
+
+export interface WithdrawalNotificationDetails {
+  withdrawalId: string; // e.g. 'TB-WDL-008812' or 'TB-WDL-000001'
+  requestType: 'Customer Withdrawal' | 'Business Withdrawal';
+  customerName?: string;
+  customerId?: string;
+  businessName?: string;
+  businessId?: string;
+  businessOwnerName?: string;
+  amount: number; // e.g. 7200.00
+  vendor: string; // e.g. 'MTN Mobile Money' | 'Airtel Money'
+  mobileMoneyNumber: string; // e.g. '+260 96 612 9901'
+  submittedDateTime: string; // e.g. 'Today, 11:52 AM'
+  status: 'Pending Review' | 'Approved' | 'Rejected' | 'Completed' | 'Failed' | 'Cancelled';
 }
 
 export interface TellerBudNotification {
@@ -24,21 +50,23 @@ export interface TellerBudNotification {
   title: string;
   message: string;
   category: NotificationCategory;
-  relatedRecord: string; // e.g. 'TB-WDR-8812'
+  relatedRecord: string; // e.g. 'TB-WDL-008812'
   priority: NotificationPriority;
   status: NotificationStatus;
   dateTime: string; // e.g. 'Today, 11:52 AM'
   createdAt: string; // ISO date string e.g. '2026-09-13T11:52:00'
-  source?: string; // e.g. 'Customer Withdrawal System'
-  deliveredAt?: string; // e.g. 'Today, 11:52 AM'
-  deliveredTo?: string; // e.g. 'Super Admin Dispatcher'
-  readAt?: string; // e.g. 'Today, 11:55 AM'
-  readBy?: string; // e.g. 'Super Admin'
-  resolvedAt?: string; // e.g. 'Today, 12:10 PM'
-  resolvedBy?: string; // e.g. 'Super Admin'
+  withdrawalType?: 'Customer Withdrawal' | 'Business Withdrawal';
+  withdrawalDetails?: WithdrawalNotificationDetails;
+  source?: string;
+  deliveredAt?: string;
+  deliveredTo?: string;
+  readAt?: string;
+  readBy?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
   actionRequired?: boolean;
   actionLabel?: string; // e.g. 'Review Withdrawal'
-  actionRoute?: string; // e.g. '/super-admin/wallets/customer-withdrawals'
+  actionRoute?: string; // e.g. '/super-admin/wallets/customer-withdrawals/TB-WDL-008812'
   activities?: NotificationActivityEvent[];
 }
 

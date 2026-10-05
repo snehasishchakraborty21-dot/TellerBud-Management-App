@@ -124,6 +124,118 @@ export function formatHeaderDate(dateStr: string): string {
 }
 
 /**
+ * Formats a YYYY-MM-DD date string to DD-MM-YYYY.
+ * e.g. "2026-10-04" -> "04-10-2026"
+ */
+export function formatIsoToDdMmYyyy(isoDate: string): string {
+  if (!isValidDateString(isoDate)) return '';
+  const [y, m, d] = isoDate.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+/**
+ * Parses a DD-MM-YYYY date string to YYYY-MM-DD.
+ * e.g. "04-10-2026" -> "2026-10-04"
+ */
+export function parseDdMmYyyyToIso(ddMmYyyy: string): string {
+  if (!ddMmYyyy || typeof ddMmYyyy !== 'string') return '';
+  const parts = ddMmYyyy.trim().split('-');
+  if (parts.length !== 3) return '';
+  const [d, m, y] = parts;
+  const numD = Number(d);
+  const numM = Number(m);
+  const numY = Number(y);
+  if (isNaN(numD) || isNaN(numM) || isNaN(numY)) return '';
+  if (numY < 1900 || numY > 2100 || numM < 1 || numM > 12 || numD < 1 || numD > 31) return '';
+  const iso = `${numY}-${String(numM).padStart(2, '0')}-${String(numD).padStart(2, '0')}`;
+  return isValidDateString(iso) ? iso : '';
+}
+
+/**
+ * Formats date display for Operations pages and Charges & Revenue
+ * Supporting single dates ("Today, 05 October 2026" / "04 October 2026")
+ * and date ranges ("01–04 October 2026").
+ */
+export function formatOperationsHeaderDate(
+  fromDate?: string | null,
+  toDate?: string | null
+): string {
+  const todayStr = getZambiaTodayString();
+  const cleanFrom = isValidDateString(fromDate) ? (fromDate as string) : '';
+  const cleanTo = isValidDateString(toDate) ? (toDate as string) : '';
+
+  // If no date filters are set or both are today or cleanFrom is today and cleanTo is empty/today
+  if (
+    (!cleanFrom && !cleanTo) ||
+    (cleanFrom === todayStr && cleanTo === todayStr) ||
+    (cleanFrom === todayStr && !cleanTo) ||
+    (!cleanFrom && cleanTo === todayStr)
+  ) {
+    const [y, m, d] = todayStr.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    const month = dateObj.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const dayPadded = String(d).padStart(2, '0');
+    return `Today, ${dayPadded} ${month} ${y}`;
+  }
+
+  // If both from and to are equal
+  if (cleanFrom && cleanTo && cleanFrom === cleanTo) {
+    const [y, m, d] = cleanFrom.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    const month = dateObj.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const dayPadded = String(d).padStart(2, '0');
+    if (cleanFrom === todayStr) {
+      return `Today, ${dayPadded} ${month} ${y}`;
+    }
+    return `${dayPadded} ${month} ${y}`;
+  }
+
+  // If date range: cleanFrom and cleanTo are provided and different
+  if (cleanFrom && cleanTo && cleanFrom !== cleanTo) {
+    const [y1, m1, d1] = cleanFrom.split('-').map(Number);
+    const [y2, m2, d2] = cleanTo.split('-').map(Number);
+    const dateObj1 = new Date(Date.UTC(y1, m1 - 1, d1));
+    const dateObj2 = new Date(Date.UTC(y2, m2 - 1, d2));
+    const month1 = dateObj1.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const month2 = dateObj2.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const d1Padded = String(d1).padStart(2, '0');
+    const d2Padded = String(d2).padStart(2, '0');
+
+    if (y1 === y2 && m1 === m2) {
+      return `${d1Padded}–${d2Padded} ${month1} ${y1}`;
+    }
+    if (y1 === y2) {
+      return `${d1Padded} ${month1} – ${d2Padded} ${month2} ${y1}`;
+    }
+    return `${d1Padded} ${month1} ${y1} – ${d2Padded} ${month2} ${y2}`;
+  }
+
+  // If only from
+  if (cleanFrom) {
+    const [y, m, d] = cleanFrom.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    const month = dateObj.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const dayPadded = String(d).padStart(2, '0');
+    return cleanFrom === todayStr ? `Today, ${dayPadded} ${month} ${y}` : `${dayPadded} ${month} ${y}`;
+  }
+
+  // If only to
+  if (cleanTo) {
+    const [y, m, d] = cleanTo.split('-').map(Number);
+    const dateObj = new Date(Date.UTC(y, m - 1, d));
+    const month = dateObj.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+    const dayPadded = String(d).padStart(2, '0');
+    return cleanTo === todayStr ? `Today, ${dayPadded} ${month} ${y}` : `${dayPadded} ${month} ${y}`;
+  }
+
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(y, m - 1, d));
+  const month = dateObj.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+  const dayPadded = String(d).padStart(2, '0');
+  return `Today, ${dayPadded} ${month} ${y}`;
+}
+
+/**
  * Checks if a given date string is today.
  */
 export function isToday(dateStr: string): boolean {

@@ -177,7 +177,7 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
   // 4. Data Table: 8 columns ordered per requirement:
   // 1. Business
   // 2. Business Owner
-  // 3. Location
+  // 3. City (renamed from Location)
   // 4. Agents
   // 5. Wallet Balance
   // 6. Registered
@@ -187,51 +187,51 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
     <>
       <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full">
         <div className="overflow-x-auto max-h-[calc(100vh-270px)] overflow-y-auto">
-          <table className="w-full text-center border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs">
             <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs">
-              <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-600 uppercase tracking-wider select-none">
+              <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-600 uppercase tracking-wider select-none text-left">
                 {/* 1. Business */}
                 <th
                   onClick={() => onSort('name')}
-                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[200px] sm:min-w-[220px]"
+                  className="py-3 px-3.5 text-left align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[210px] sm:min-w-[230px]"
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Business</span>
                     {renderSortIcon('name')}
                   </div>
                 </th>
 
                 {/* 2. Business Owner */}
-                <th className="py-3 px-3 text-center align-middle min-w-[170px] sm:min-w-[190px]">
-                  <div className="flex items-center justify-center gap-1">
+                <th className="py-3 px-3.5 text-left align-middle min-w-[170px] sm:min-w-[185px]">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Business Owner</span>
                   </div>
                 </th>
 
-                {/* 3. Location */}
-                <th className="py-3 px-3 text-center align-middle min-w-[160px] sm:min-w-[180px]">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>Location</span>
+                {/* 3. City (Renamed from Location) */}
+                <th className="py-3 px-3.5 text-left align-middle min-w-[110px] sm:min-w-[125px]">
+                  <div className="flex items-center justify-start gap-1">
+                    <span>City</span>
                   </div>
                 </th>
 
                 {/* 4. Agents */}
                 <th
                   onClick={() => onSort('associatedAgents')}
-                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[80px]"
+                  className="py-3 px-3.5 text-left align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[80px] sm:min-w-[85px]"
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Agents</span>
                     {renderSortIcon('associatedAgents')}
                   </div>
                 </th>
 
-                {/* 5. Wallet Balance (Renamed from SHARED WALLET BALANCE) */}
+                {/* 5. Wallet Balance */}
                 <th
                   onClick={() => onSort('sharedWalletBalance')}
-                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[140px]"
+                  className="py-3 px-3.5 text-left align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[130px] sm:min-w-[145px]"
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Wallet Balance</span>
                     {renderSortIcon('sharedWalletBalance')}
                   </div>
@@ -240,24 +240,24 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
                 {/* 6. Registered */}
                 <th
                   onClick={() => onSort('registeredDateIso')}
-                  className="py-3 px-3 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[110px]"
+                  className="py-3 px-3.5 text-left align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group min-w-[110px] sm:min-w-[120px]"
                 >
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Registered</span>
                     {renderSortIcon('registeredDateIso')}
                   </div>
                 </th>
 
                 {/* 7. Status */}
-                <th className="py-3 px-3 text-center align-middle min-w-[95px]">
-                  <div className="flex items-center justify-center gap-1">
+                <th className="py-3 px-3.5 text-left align-middle min-w-[95px] sm:min-w-[100px]">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Status</span>
                   </div>
                 </th>
 
                 {/* 8. Actions */}
-                <th className="py-3 px-3 text-center align-middle min-w-[95px]">
-                  <div className="flex items-center justify-center gap-1">
+                <th className="py-3 px-3.5 text-left align-middle min-w-[95px] sm:min-w-[105px]">
+                  <div className="flex items-center justify-start gap-1">
                     <span>Actions</span>
                   </div>
                 </th>
@@ -269,71 +269,67 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
                   <tr
                     key={`business-row-${business.id}`}
                     id={`business-row-${business.id}`}
-                    className="hover:bg-gray-50/70 transition-colors text-center align-middle"
+                    className="hover:bg-gray-50/70 transition-colors text-left align-middle"
                   >
-                    {/* 1. Business: Avatar, Name, and TB-BIZ-000001 ID */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center text-center mx-auto">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-[#0D93AA]/10 text-[#0D93AA] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#0D93AA]/20">
-                            {business.logoInitials}
-                          </div>
+                    {/* 1. Business: Logo initials, Name (Line 1), and Business ID (Line 2) */}
+                    <td className="py-3 px-3.5 text-left align-middle">
+                      <div className="flex items-center gap-2.5 text-left">
+                        <div className="w-7 h-7 rounded-md bg-[#0D93AA]/10 text-[#0D93AA] font-bold text-[10px] flex items-center justify-center shrink-0 border border-[#0D93AA]/20">
+                          {business.logoInitials}
+                        </div>
+                        <div className="min-w-0 text-left">
                           <button
                             type="button"
                             onClick={(e) => onViewDetails(business, e)}
-                            className="font-bold text-[#102025] hover:text-[#0D93AA] transition-colors text-xs sm:text-[13px] text-center cursor-pointer whitespace-nowrap"
+                            className="font-bold text-[#102025] hover:text-[#0D93AA] transition-colors text-xs sm:text-[13px] text-left cursor-pointer line-clamp-2 block"
+                            title={business.name}
                           >
                             {business.name}
                           </button>
-                        </div>
-                        <div className="text-[10.5px] font-mono text-gray-400 mt-0.5 whitespace-nowrap">
-                          {business.id}
+                          <div className="text-[10.5px] font-mono text-gray-400 mt-0.5 whitespace-nowrap text-left">
+                            {business.id}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* 2. Business Owner: Full name + Complete phone number (unmasked, no code) */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center text-center mx-auto">
-                        <div className="font-semibold text-gray-900 text-xs sm:text-[12.5px] whitespace-nowrap">
+                    {/* 2. Business Owner: Full name (Line 1) + Complete phone number (Line 2) */}
+                    <td className="py-3 px-3.5 text-left align-middle">
+                      <div className="min-w-0 text-left">
+                        <div className="font-semibold text-gray-900 text-xs sm:text-[12.5px] truncate text-left" title={business.ownerName}>
                           {business.ownerName}
                         </div>
-                        <div className="text-[11px] font-mono text-gray-500 mt-0.5 whitespace-nowrap">
+                        <div className="text-[11px] font-mono text-gray-500 mt-0.5 whitespace-nowrap text-left">
                           {business.ownerPhone}
                         </div>
                       </div>
                     </td>
 
-                    {/* 3. Location: City on line 1, Province and Country on line 2 */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center text-center mx-auto">
-                        <div className="font-semibold text-gray-800 text-xs whitespace-nowrap">
-                          {business.city}
-                        </div>
-                        <div className="text-[10.5px] sm:text-[11px] text-gray-400 mt-0.5 whitespace-nowrap">
-                          {business.province}, {business.country || 'Zambia'}
-                        </div>
-                      </div>
+                    {/* 3. City: One clean line only with database city field */}
+                    <td className="py-3 px-3.5 text-left align-middle whitespace-nowrap">
+                      <span className="font-medium text-gray-800 text-xs text-left block">
+                        {business.city && business.city.trim() ? business.city.trim() : 'Not Provided'}
+                      </span>
                     </td>
 
                     {/* 4. Agents */}
-                    <td className="py-3 px-3 text-center align-middle font-mono font-bold text-gray-800 text-xs sm:text-[13px]">
-                      {business.associatedAgents}
+                    <td className="py-3 px-3.5 text-left align-middle font-mono font-bold text-gray-800 text-xs sm:text-[13px] whitespace-nowrap">
+                      <span className="text-left block">{business.associatedAgents}</span>
                     </td>
 
                     {/* 5. Wallet Balance */}
-                    <td className="py-3 px-3 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center text-center mx-auto">
-                        <span className="font-mono font-bold text-gray-900 text-xs sm:text-[13px] whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-left align-middle whitespace-nowrap">
+                      <div className="text-left">
+                        <span className="font-mono font-bold text-gray-900 text-xs sm:text-[13px] text-left block">
                           {formatZMW(business.sharedWalletBalance)}
                         </span>
                         {business.walletState === 'Low Balance' && (
-                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 whitespace-nowrap">
+                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 whitespace-nowrap text-left">
                             Low Balance
                           </span>
                         )}
                         {business.walletState === 'Suspended' && (
-                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-red-700 bg-red-50 px-1.5 py-0.2 rounded border border-red-200 whitespace-nowrap">
+                          <span className="inline-block mt-0.5 text-[9.5px] font-semibold text-red-700 bg-red-50 px-1.5 py-0.2 rounded border border-red-200 whitespace-nowrap text-left">
                             Suspended
                           </span>
                         )}
@@ -341,18 +337,20 @@ export const BusinessTable: React.FC<BusinessTableProps> = ({
                     </td>
 
                     {/* 6. Registered */}
-                    <td className="py-3 px-3 text-center align-middle text-gray-600 text-xs whitespace-nowrap">
-                      {business.registeredDate}
+                    <td className="py-3 px-3.5 text-left align-middle text-gray-600 text-xs whitespace-nowrap">
+                      <span className="text-left block">{business.registeredDate}</span>
                     </td>
 
                     {/* 7. Status */}
-                    <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
-                      {getStatusBadge(business.status)}
+                    <td className="py-3 px-3.5 text-left align-middle whitespace-nowrap">
+                      <div className="flex items-center justify-start text-left">
+                        {getStatusBadge(business.status)}
+                      </div>
                     </td>
 
-                    {/* 8. Actions: Small icon-only buttons */}
-                    <td className="py-3 px-3 text-center align-middle whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1.5 mx-auto">
+                    {/* 8. Actions: Left-aligned small icon-only buttons with consistent gap */}
+                    <td className="py-3 px-3.5 text-left align-middle whitespace-nowrap">
+                      <div className="flex items-center justify-start gap-1.5 text-left">
                         {/* View Details Action */}
                         <button
                           type="button"

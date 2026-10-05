@@ -87,11 +87,50 @@ export const NotificationsTable: React.FC<NotificationsTableProps> = ({
   };
 
   const getCategoryBadge = (category: string) => {
-    return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-50 text-slate-700 border border-slate-200/80">
-        {category}
-      </span>
-    );
+    switch (category) {
+      case 'Customer Withdrawal':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#0D93AA]/10 text-[#0D93AA] border border-[#0D93AA]/20">
+            Customer Withdrawal
+          </span>
+        );
+      case 'Business Withdrawal':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Business Withdrawal
+          </span>
+        );
+      case 'Transaction':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            Transaction
+          </span>
+        );
+      case 'Provider/API':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+            Provider/API
+          </span>
+        );
+      case 'Reconciliation':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+            Reconciliation
+          </span>
+        );
+      case 'Vendor Eligibility':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Vendor Eligibility
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-50 text-slate-700 border border-slate-200/80">
+            {category}
+          </span>
+        );
+    }
   };
 
   if (notifications.length === 0) {
@@ -172,7 +211,10 @@ export const NotificationsTable: React.FC<NotificationsTableProps> = ({
                         >
                           {item.title}
                         </button>
-                        <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-1 leading-relaxed">
+                        <p
+                          className="text-[12px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed"
+                          title={item.message}
+                        >
                           {item.message}
                         </p>
                       </div>

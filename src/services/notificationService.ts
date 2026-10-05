@@ -3,6 +3,7 @@ import { MOCK_BO_NOTIFICATIONS } from '../data/mockNotificationsData';
 import { AdminNotification } from '../types/admin';
 
 const STORAGE_KEY = 'tellerbud_bo_notifications_read_v2';
+const DYNAMIC_NOTIFS_KEY = 'tellerbud_dynamic_notifications_v1';
 
 type ReadStateMap = Record<string, boolean>;
 
@@ -26,8 +27,29 @@ function saveReadState(state: ReadStateMap): void {
   }
 }
 
+function loadDynamicNotifications(): BONotification[] {
+  try {
+    const raw = localStorage.getItem(DYNAMIC_NOTIFS_KEY);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Failed to load dynamic notifications from localStorage', e);
+  }
+  return [];
+}
+
+function saveDynamicNotifications(notifs: BONotification[]): void {
+  try {
+    localStorage.setItem(DYNAMIC_NOTIFS_KEY, JSON.stringify(notifs));
+  } catch (e) {
+    console.error('Failed to save dynamic notifications to localStorage', e);
+  }
+}
+
 class NotificationService {
   private readState: ReadStateMap = loadReadState();
+  private dynamicNotifs: BONotification[] = loadDynamicNotifications();
   private listeners: Set<() => void> = new Set();
 
   private notify() {
@@ -47,8 +69,15 @@ class NotificationService {
     };
   }
 
+  addNotification(notification: BONotification): void {
+    this.dynamicNotifs.unshift(notification);
+    saveDynamicNotifications(this.dynamicNotifs);
+    this.notify();
+  }
+
   getBONotifications(): BONotification[] {
-    return MOCK_BO_NOTIFICATIONS.map((item) => {
+    const combined = [...this.dynamicNotifs, ...MOCK_BO_NOTIFICATIONS];
+    return combined.map((item) => {
       const isRead = this.readState[item.id] !== undefined ? this.readState[item.id] : item.read;
       return {
         ...item,

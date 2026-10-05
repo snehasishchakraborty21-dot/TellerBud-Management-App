@@ -92,9 +92,10 @@ function generateChargeRecords(): ChargeRecord[] {
   const records: ChargeRecord[] = [];
   let txnCounter = 9850;
 
-  // Dates to generate: 2026-10-04 (Today), 2026-10-03, 2026-10-02, 2026-10-01, and 2026-09-30 down to 2026-09-11
+  // Dates to generate: 2026-10-05 (Today), 2026-10-04, 2026-10-03, 2026-10-02, 2026-10-01, and 2026-09-30 down to 2026-09-11
   const dates = [
-    { iso: '2026-10-04', label: '04 Oct 2026', count: 32 }, // Today in Zambia: 4 records per registered business
+    { iso: '2026-10-05', label: '05 Oct 2026', count: 32 },
+    { iso: '2026-10-04', label: '04 Oct 2026', count: 32 },
     { iso: '2026-10-03', label: '03 Oct 2026', count: 28 },
     { iso: '2026-10-02', label: '02 Oct 2026', count: 24 },
     { iso: '2026-10-01', label: '01 Oct 2026', count: 20 },
@@ -496,6 +497,7 @@ function generateAgentTransactionRevenueRecords(): AgentTransactionRevenueRecord
   const lusakaAgents = MOCK_BUSINESS_AGENTS.filter((a) => a.businessId === 'BIZ-LUS-001');
 
   const dates = [
+    { iso: '2026-10-05', label: '05 Oct 2026', count: 35 },
     { iso: '2026-10-04', label: '04 Oct 2026', count: 35 },
     { iso: '2026-10-03', label: '03 Oct 2026', count: 30 },
     { iso: '2026-10-02', label: '02 Oct 2026', count: 25 },

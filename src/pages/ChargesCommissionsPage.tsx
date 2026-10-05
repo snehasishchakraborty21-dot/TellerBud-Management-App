@@ -7,9 +7,6 @@ import {
   Landmark,
   RotateCcw,
   Download,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
   RotateCw,
   ChevronDown,
   FileSpreadsheet,
@@ -27,14 +24,19 @@ import {
 } from '../data/mockChargesCommissionsData';
 import {
   ChargeRecord,
-  ChargeStatus,
   AgentRevenueFilters,
   BusinessChargesRevenueSummary,
 } from '../types/chargesCommissions';
 import { formatZmwListingAmount, formatZMW } from '../utils/formatters';
-import { sanitizeDateParam, getZambiaTodayString } from '../utils/dateUtils';
+import {
+  sanitizeDateParam,
+  getZambiaTodayString,
+  isValidDateString,
+  formatIsoToDdMmYyyy,
+} from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { AgentRevenueBreakdownTable } from '../components/charges/AgentRevenueBreakdownTable';
+import { ChargesRevenueFilterDateInput } from '../components/charges/ChargesRevenueFilterDateInput';
 
 const SERVICES_OPTIONS = [
   'All Services',
@@ -68,6 +70,7 @@ const STATUSES_OPTIONS = [
 ];
 
 function formatDisplayDate(dateStr: string): string {
+  if (!isValidDateString(dateStr)) return dateStr;
   const [y, m, d] = dateStr.split('-').map(Number);
   const dateObj = new Date(Date.UTC(y, m - 1, d));
   const day = String(d).padStart(2, '0');
@@ -79,17 +82,65 @@ function formatDisplayDate(dateStr: string): string {
 export const ChargesCommissionsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser } = useAuth();
   const isBusinessOwner =
     currentUser?.role === 'business_owner' ||
     (typeof window !== 'undefined' && window.location.pathname.includes('/business-owner'));
 
   const currentBusinessId = currentUser?.businessId || 'BIZ-LUS-001';
+  const todayStr = useMemo(() => getZambiaTodayString() || '2026-10-05', []);
 
-  // Read authoritative single date from URL parameter, defaulting to Zambia today (Africa/Lusaka)
+  // Read date parameters from URL
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
   const dateParam = searchParams.get('date');
-  const selectedDate = useMemo(() => sanitizeDateParam(dateParam), [dateParam]);
+
+  const initialFrom = isValidDateString(fromParam)
+    ? fromParam!
+    : isValidDateString(dateParam)
+    ? dateParam!
+    : todayStr;
+
+  const initialTo = isValidDateString(toParam)
+    ? toParam!
+    : isValidDateString(dateParam)
+    ? dateParam!
+    : todayStr;
+
+  const [fromDate, setFromDate] = useState<string>(initialFrom);
+  const [toDate, setToDate] = useState<string>(initialTo);
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  // Synchronise date state when URL searchParams change externally (e.g. from top header date selector)
+  useEffect(() => {
+    const f = searchParams.get('from');
+    const t = searchParams.get('to');
+    const d = searchParams.get('date');
+
+    const nextFrom = isValidDateString(f) ? f! : isValidDateString(d) ? d! : todayStr;
+    const nextTo = isValidDateString(t) ? t! : isValidDateString(d) ? d! : todayStr;
+
+    if (nextFrom !== fromDate) setFromDate(nextFrom);
+    if (nextTo !== toDate) setToDate(nextTo);
+    setDateError(null);
+  }, [searchParams, todayStr]);
+
+  // Update URL parameters when dates change in filter bar
+  const updateUrlDates = useCallback(
+    (from: string, to: string) => {
+      const nextParams = new URLSearchParams(searchParams);
+      if (from) nextParams.set('from', from);
+      if (to) nextParams.set('to', to);
+      if (from === to) {
+        nextParams.set('date', from);
+      } else {
+        nextParams.delete('date');
+      }
+      setSearchParams(nextParams, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
 
   // Active Tab: 'business-summary' (default) | 'agent-breakdown'
   const [activeTab, setActiveTab] = useState<'business-summary' | 'agent-breakdown'>(() => {
@@ -121,8 +172,8 @@ export const ChargesCommissionsPage: React.FC = () => {
       return (location.state as any).filters;
     }
     return {
-      fromDate: '',
-      toDate: '',
+      fromDate: initialFrom,
+      toDate: initialTo,
       storeId: 'All',
       boothId: 'All',
       agentId: 'All',
@@ -167,15 +218,15 @@ export const ChargesCommissionsPage: React.FC = () => {
     return MOCK_BUSINESS_AGENTS.filter((a) => a.businessId === currentBusinessId);
   }, [currentBusinessId]);
 
-  // Agent revenue breakdown scoped strictly to selectedDate
+  // Agent revenue breakdown scoped strictly to date range
   const effectiveAgentFilters = useMemo(() => {
     return {
       ...agentFilters,
-      date: selectedDate,
-      fromDate: selectedDate,
-      toDate: selectedDate,
+      date: fromDate === toDate ? fromDate : undefined,
+      fromDate,
+      toDate,
     };
-  }, [agentFilters, selectedDate]);
+  }, [agentFilters, fromDate, toDate]);
 
   const { breakdown: agentBreakdown, kpis: agentKpis } = useMemo(() => {
     return calculateAgentRevenueBreakdown(
@@ -185,31 +236,62 @@ export const ChargesCommissionsPage: React.FC = () => {
     );
   }, [currentBusinessId, effectiveAgentFilters]);
 
-  // Filter States for Business Summary (Service, Provider, Status only; Date is controlled by top header)
+  // Filter States for Business Summary (Service, Provider, Status)
   const [selectedService, setSelectedService] = useState('All Services');
   const [selectedProvider, setSelectedProvider] = useState('All Providers');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
 
-  // Check if any dropdown filter is active
+  // Check if any filter differs from its default value
   const isFilterActive = useMemo(() => {
     return (
       selectedService !== 'All Services' ||
       selectedProvider !== 'All Providers' ||
-      selectedStatus !== 'All Statuses'
+      selectedStatus !== 'All Statuses' ||
+      fromDate !== todayStr ||
+      toDate !== todayStr
     );
-  }, [selectedService, selectedProvider, selectedStatus]);
+  }, [selectedService, selectedProvider, selectedStatus, fromDate, toDate, todayStr]);
 
   // Pagination State for Business Summary
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage] = useState(10);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Clear dropdown filters (Preserves selected date!)
+  // Date change handlers with validation
+  const handleFromDateChange = (newFrom: string) => {
+    if (toDate && newFrom > toDate) {
+      setDateError('From Date cannot be later than To Date.');
+      setFromDate(newFrom);
+      return;
+    }
+    setDateError(null);
+    setFromDate(newFrom);
+    setCurrentPage(1);
+    updateUrlDates(newFrom, toDate);
+  };
+
+  const handleToDateChange = (newTo: string) => {
+    if (fromDate && newTo < fromDate) {
+      setDateError('To Date cannot be earlier than From Date.');
+      setToDate(newTo);
+      return;
+    }
+    setDateError(null);
+    setToDate(newTo);
+    setCurrentPage(1);
+    updateUrlDates(fromDate, newTo);
+  };
+
+  // Clear all filters: reset services, providers, statuses, and dates to today
   const handleClearFilters = () => {
     setSelectedService('All Services');
     setSelectedProvider('All Providers');
     setSelectedStatus('All Statuses');
+    setFromDate(todayStr);
+    setToDate(todayStr);
+    setDateError(null);
     setCurrentPage(1);
+    updateUrlDates(todayStr, todayStr);
   };
 
   // Refresh handler
@@ -224,30 +306,38 @@ export const ChargesCommissionsPage: React.FC = () => {
     document.title = 'Charges & Revenue | TellerBud Admin';
   }, []);
 
-  // Filter Charge Records strictly by selected date and active dropdown filters
+  // Filter Charge Records strictly by date range and active dropdown filters
   const filteredChargeRecords = useMemo(() => {
     return MOCK_CHARGE_RECORDS.filter((rec) => {
-      // 1. Authoritative single date filtering
-      if (rec.rawDate !== selectedDate) {
+      // 1. Date range filtering
+      if (fromDate && rec.rawDate < fromDate) {
+        return false;
+      }
+      if (toDate && rec.rawDate > toDate) {
         return false;
       }
 
-      // Business-level data isolation for business owners
-      if (isBusinessOwner && rec.businessId && rec.businessId !== currentBusinessId && rec.businessId !== 'TB-BIZ-000001') {
+      // 2. Business-level data isolation for business owners
+      if (
+        isBusinessOwner &&
+        rec.businessId &&
+        rec.businessId !== currentBusinessId &&
+        rec.businessId !== 'TB-BIZ-000001'
+      ) {
         return false;
       }
 
-      // Service filter
+      // 3. Service filter
       if (selectedService !== 'All Services' && rec.service !== selectedService) {
         return false;
       }
 
-      // Provider filter
+      // 4. Provider filter
       if (selectedProvider !== 'All Providers' && rec.provider !== selectedProvider) {
         return false;
       }
 
-      // Status filter
+      // 5. Status filter
       if (selectedStatus !== 'All Statuses' && rec.status.toLowerCase() !== selectedStatus.toLowerCase()) {
         return false;
       }
@@ -255,7 +345,8 @@ export const ChargesCommissionsPage: React.FC = () => {
       return true;
     });
   }, [
-    selectedDate,
+    fromDate,
+    toDate,
     isBusinessOwner,
     currentBusinessId,
     selectedService,
@@ -263,7 +354,7 @@ export const ChargesCommissionsPage: React.FC = () => {
     selectedStatus,
   ]);
 
-  // Generate Business Summaries strictly for the selected date
+  // Generate Business Summaries dynamically for the selected date range
   const businessSummaries = useMemo<BusinessChargesRevenueSummary[]>(() => {
     const targetBusinesses = isBusinessOwner
       ? REGISTERED_BUSINESSES.filter(
@@ -274,7 +365,7 @@ export const ChargesCommissionsPage: React.FC = () => {
     return calculateBusinessSummaries(filteredChargeRecords, targetBusinesses);
   }, [filteredChargeRecords, isBusinessOwner, currentBusinessId]);
 
-  // Overall KPIs computed strictly for the selected date and filters
+  // Overall KPIs computed strictly for the selected date range and filters
   const revenueKpis = useMemo(() => {
     return calculateRevenueKpis(filteredChargeRecords);
   }, [filteredChargeRecords]);
@@ -292,19 +383,67 @@ export const ChargesCommissionsPage: React.FC = () => {
     return businessSummaries.slice(start, start + rowsPerPage);
   }, [businessSummaries, validCurrentPage, rowsPerPage]);
 
-  // Navigate to business charges detail page preserving the selected date
+  // Navigate to business charges detail page preserving the date parameters
   const handleViewBusinessDetails = (businessId: string) => {
+    const query = fromDate === toDate ? `date=${fromDate}` : `from=${fromDate}&to=${toDate}`;
     const url = isBusinessOwner
-      ? `/business-owner/transactions/commissions/business/${encodeURIComponent(businessId)}?date=${selectedDate}`
-      : `/super-admin/transactions/commissions/business/${encodeURIComponent(businessId)}?date=${selectedDate}`;
+      ? `/business-owner/transactions/commissions/business/${encodeURIComponent(businessId)}?${query}`
+      : `/super-admin/transactions/commissions/business/${encodeURIComponent(businessId)}?${query}`;
     navigate(url);
   };
 
-  // Export handlers with date in filename
+  // Export handlers with date range in filename and metadata
   const handleExport = useCallback(
     (format: 'csv' | 'xlsx' = 'csv') => {
       setIsExportMenuOpen(false);
 
+      const fromDdMm = formatIsoToDdMmYyyy(fromDate);
+      const toDdMm = formatIsoToDdMmYyyy(toDate);
+      const dateRangeSlug = fromDate === toDate ? fromDdMm : `${fromDdMm}-to-${toDdMm}`;
+
+      if (activeTab === 'agent-breakdown') {
+        const headers = [
+          'Agent',
+          'Agent ID',
+          'Store',
+          'Completed Transactions',
+          'Reservation Charges (ZMW)',
+          'TellerBud Charges (ZMW)',
+          'Revenue Generated (ZMW)',
+          'Status',
+        ];
+
+        const rows = agentBreakdown.map((item) => [
+          `"${item.agentName}"`,
+          item.agentId,
+          `"${item.storeName}"`,
+          item.completedTransactions,
+          item.reservationCharges.toFixed(2),
+          item.tellerBudCharges.toFixed(2),
+          item.revenueGenerated.toFixed(2),
+          item.status,
+        ]);
+
+        const csvContent =
+          'data:text/csv;charset=utf-8,' +
+          [
+            `# TellerBud Agent Revenue Breakdown Report (${fromDate === toDate ? fromDdMm : `${fromDdMm} to ${toDdMm}`})`,
+            headers.join(','),
+            ...rows.map((e) => e.join(',')),
+          ].join('\n');
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        const filename = `charges-revenue-agent-breakdown-${dateRangeSlug}.${format === 'xlsx' ? 'xlsx' : 'csv'}`;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      // Default: Business Summary Export
       const headers = [
         'Business Name',
         'Business ID',
@@ -333,18 +472,22 @@ export const ChargesCommissionsPage: React.FC = () => {
 
       const csvContent =
         'data:text/csv;charset=utf-8,' +
-        [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+        [
+          `# TellerBud Business Charges & Revenue Report (${fromDate === toDate ? fromDdMm : `${fromDdMm} to ${toDdMm}`})`,
+          headers.join(','),
+          ...rows.map((e) => e.join(',')),
+        ].join('\n');
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
-      const filename = `TellerBud_Business_Charges_Revenue_${selectedDate}.${format === 'xlsx' ? 'xlsx' : 'csv'}`;
+      const filename = `charges-revenue-${dateRangeSlug}.${format === 'xlsx' ? 'xlsx' : 'csv'}`;
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     },
-    [businessSummaries, selectedDate]
+    [businessSummaries, agentBreakdown, activeTab, fromDate, toDate]
   );
 
   return (
@@ -477,27 +620,28 @@ export const ChargesCommissionsPage: React.FC = () => {
           agents={businessAgents}
           onResetFilters={() =>
             setAgentFilters({
-              fromDate: '',
-              toDate: '',
+              fromDate: todayStr,
+              toDate: todayStr,
               storeId: 'All',
               boothId: 'All',
               agentId: 'All',
             })
           }
-          selectedDate={selectedDate}
+          selectedDate={fromDate === toDate ? fromDate : undefined}
         />
       ) : (
         <div className="flex-1 min-h-0 flex flex-col gap-3">
-          {/* COMPACT SINGLE-ROW FILTER & ACTION BAR (All Services, All Providers, All Statuses, Clear, Refresh, Export) */}
+          {/* COMPACT SINGLE-ROW FILTER & ACTION BAR
+              Order: 1. All Services, 2. All Providers, 3. All Statuses, 4. From Date, 5. To Date, 6. Clear Filters, 7. Refresh, 8. Export
+          */}
           <div
             id="filter-controls-section"
             className="bg-white border border-slate-200 rounded-xl px-3 py-2 sm:px-3.5 shadow-2xs shrink-0"
           >
-            <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 w-full">
-              {/* Left Side: Filter Controls */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 flex-1 min-w-0">
-                {/* 1. All Services */}
-                <div className="w-full sm:w-auto min-w-[140px] flex-1">
+            <div className="w-full overflow-x-auto transaction-table-scroll focus:outline-none">
+              <div className="flex items-center justify-between gap-2 sm:gap-2.5 min-w-max flex-nowrap h-[34px]">
+                {/* 1. All Services (160–180 px) */}
+                <div className="w-[160px] sm:w-[170px] shrink-0">
                   <select
                     id="filter-service-select"
                     value={selectedService}
@@ -505,7 +649,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                       setSelectedService(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-[32px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer truncate"
+                    aria-label="Filter by Service"
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white cursor-pointer truncate"
                   >
                     {SERVICES_OPTIONS.map((srv) => (
                       <option key={srv} value={srv}>
@@ -515,8 +660,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* 2. All Providers */}
-                <div className="w-full sm:w-auto min-w-[140px] flex-1">
+                {/* 2. All Providers (160–180 px) */}
+                <div className="w-[160px] sm:w-[170px] shrink-0">
                   <select
                     id="filter-provider-select"
                     value={selectedProvider}
@@ -524,7 +669,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                       setSelectedProvider(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-[32px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer truncate"
+                    aria-label="Filter by Provider"
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white cursor-pointer truncate"
                   >
                     {PROVIDERS_OPTIONS.map((prv) => (
                       <option key={prv} value={prv}>
@@ -534,8 +680,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* 3. All Statuses */}
-                <div className="w-full sm:w-auto min-w-[130px] flex-1">
+                {/* 3. All Statuses (150–170 px) */}
+                <div className="w-[150px] sm:w-[160px] shrink-0">
                   <select
                     id="filter-status-select"
                     value={selectedStatus}
@@ -543,7 +689,8 @@ export const ChargesCommissionsPage: React.FC = () => {
                       setSelectedStatus(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full h-[32px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] cursor-pointer truncate"
+                    aria-label="Filter by Status"
+                    className="w-full h-[34px] px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white cursor-pointer truncate"
                   >
                     {STATUSES_OPTIONS.map((st) => (
                       <option key={st} value={st}>
@@ -552,29 +699,52 @@ export const ChargesCommissionsPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              {/* Right Side: Action Buttons */}
-              <div className="flex items-center gap-2 shrink-0 ml-auto">
-                {/* 4. Clear Filters */}
+                {/* 4. From Date (140–155 px) */}
+                <div className="w-[145px] sm:w-[150px] shrink-0">
+                  <ChargesRevenueFilterDateInput
+                    label="FROM"
+                    value={fromDate}
+                    onChange={handleFromDateChange}
+                    maxDate={toDate || todayStr}
+                    errorMessage={dateError && fromDate > toDate ? dateError : null}
+                    id="filter-from-date-input"
+                  />
+                </div>
+
+                {/* 5. To Date (140–155 px) */}
+                <div className="w-[145px] sm:w-[150px] shrink-0">
+                  <ChargesRevenueFilterDateInput
+                    label="TO"
+                    value={toDate}
+                    onChange={handleToDateChange}
+                    minDate={fromDate || undefined}
+                    maxDate={todayStr}
+                    errorMessage={dateError && toDate < fromDate ? dateError : null}
+                    id="filter-to-date-input"
+                  />
+                </div>
+
+                {/* 6. Clear Filters (compact button) */}
                 <button
                   id="btn-clear-filters"
                   type="button"
                   onClick={handleClearFilters}
                   disabled={!isFilterActive}
-                  className="inline-flex items-center justify-center gap-1.5 h-[32px] px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 disabled:opacity-45 disabled:cursor-not-allowed border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 disabled:opacity-45 disabled:cursor-not-allowed border border-slate-200/80 rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  title="Reset all filters and dates to today"
                 >
                   <RotateCcw size={13} />
                   <span>Clear Filters</span>
                 </button>
 
-                {/* 5. Refresh */}
+                {/* 7. Refresh (compact button) */}
                 <button
                   id="btn-refresh"
                   type="button"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex items-center justify-center gap-1.5 h-[32px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                  className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer whitespace-nowrap shadow-2xs shrink-0 disabled:opacity-60"
                   title="Refresh records"
                 >
                   <RotateCw
@@ -584,13 +754,13 @@ export const ChargesCommissionsPage: React.FC = () => {
                   <span>Refresh</span>
                 </button>
 
-                {/* 6. Export Button with Dropdown (CSV & Excel) */}
-                <div className="relative" ref={exportDropdownRef}>
+                {/* 8. Export Button with Dropdown (CSV & Excel) */}
+                <div className="relative shrink-0" ref={exportDropdownRef}>
                   <button
                     id="btn-export-records"
                     type="button"
                     onClick={() => setIsExportMenuOpen((prev) => !prev)}
-                    className="inline-flex items-center justify-center gap-1.5 h-[32px] px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                    className="inline-flex items-center justify-center gap-1.5 h-[34px] px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b8094] rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                   >
                     <Download size={13} />
                     <span>Export</span>
@@ -668,7 +838,9 @@ export const ChargesCommissionsPage: React.FC = () => {
                       <td colSpan={9} className="py-12 text-center text-slate-500">
                         <Building2 size={32} className="mx-auto text-slate-300 mb-2" />
                         <p className="font-semibold text-sm text-slate-700">
-                          No charges or revenue records found for {formatDisplayDate(selectedDate)}.
+                          {fromDate === toDate
+                            ? `No charges or revenue records found for ${formatDisplayDate(fromDate)}.`
+                            : `No charges or revenue records found for ${formatIsoToDdMmYyyy(fromDate)} to ${formatIsoToDdMmYyyy(toDate)}.`}
                         </p>
                         <p className="text-xs text-slate-400 mt-1">
                           Try selecting another date from the header calendar or adjusting your filters.
@@ -747,17 +919,19 @@ export const ChargesCommissionsPage: React.FC = () => {
                           </div>
                         </td>
 
-                        {/* 9. Action (Compact eye icon-only button, centered) */}
-                        <td className="py-3 px-2 align-middle text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        {/* 9. Action (Compact View button) */}
+                        <td className="py-3 px-2 align-middle text-center whitespace-nowrap">
                           <button
                             type="button"
-                            id={`btn-view-details-${biz.businessId.toLowerCase()}`}
-                            onClick={() => handleViewBusinessDetails(biz.businessId)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-500 hover:text-[#0D93AA] hover:bg-[#0D93AA]/10 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 transition-all cursor-pointer shadow-2xs"
-                            title="View Details"
-                            aria-label={`View charges and revenue details for ${biz.businessName}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewBusinessDetails(biz.businessId);
+                            }}
+                            className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-[#0D93AA] hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                            title={`View details for ${biz.businessName}`}
+                            aria-label={`View details for ${biz.businessName}`}
                           >
-                            <Eye size={15} className="shrink-0 stroke-[2.2]" />
+                            <span className="text-xs font-medium text-[#0D93AA] hover:underline">View</span>
                           </button>
                         </td>
                       </tr>
@@ -767,57 +941,47 @@ export const ChargesCommissionsPage: React.FC = () => {
               </table>
             </div>
 
-            {/* 5. FOOTER PAGINATION */}
-            <div className="border-t border-slate-200 bg-slate-50/80 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 shrink-0">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-slate-700">
-                  Showing <span className="font-bold text-slate-900">{totalCount === 0 ? 0 : (validCurrentPage - 1) * rowsPerPage + 1}</span> to{' '}
-                  <span className="font-bold text-slate-900">{Math.min(validCurrentPage * rowsPerPage, totalCount)}</span> of{' '}
-                  <span className="font-bold text-slate-900">{totalCount}</span> businesses
-                </span>
-
-                <div className="flex items-center gap-1.5">
-                  <span>Rows per page:</span>
-                  <select
-                    value={rowsPerPage}
-                    onChange={(e) => {
-                      setRowsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="px-2 py-1 bg-white border border-slate-200 rounded text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
+            {/* Table Footer: Pagination & Record Counts */}
+            <div className="border-t border-slate-200 bg-slate-50/60 px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs text-slate-600 shrink-0">
+              <div>
+                Showing{' '}
+                <span className="font-semibold text-slate-900">
+                  {totalCount === 0 ? 0 : (validCurrentPage - 1) * rowsPerPage + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-semibold text-slate-900">
+                  {Math.min(validCurrentPage * rowsPerPage, totalCount)}
+                </span>{' '}
+                of <span className="font-semibold text-slate-900">{totalCount}</span> businesses
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-slate-500 font-medium">
-                  Page <strong className="text-slate-800">{validCurrentPage}</strong> of{' '}
-                  <strong className="text-slate-800">{totalPages}</strong>
-                </span>
-
-                <div className="inline-flex items-center gap-1">
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
                   <button
+                    type="button"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={validCurrentPage <= 1}
-                    className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    title="Previous Page"
+                    className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    aria-label="Previous page"
                   >
-                    <ChevronLeft size={16} />
+                    <span className="sr-only">Previous</span>
+                    &larr;
                   </button>
+                  <span className="px-2 py-0.5 text-xs font-medium text-slate-700">
+                    Page {validCurrentPage} of {totalPages}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={validCurrentPage >= totalPages}
-                    className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    title="Next Page"
+                    className="p-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    aria-label="Next page"
                   >
-                    <ChevronRight size={16} />
+                    <span className="sr-only">Next</span>
+                    &rarr;
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -825,5 +989,3 @@ export const ChargesCommissionsPage: React.FC = () => {
     </div>
   );
 };
-
-export default ChargesCommissionsPage;

@@ -17,84 +17,78 @@ export const NotificationsSummaryCards: React.FC<NotificationsSummaryCardsProps>
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      {/* Total Notifications */}
+      {/* 1. Total Notifications */}
       <div
         id="card-metric-total"
-        className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs hover:border-gray-300 transition-colors"
+        className="bg-white rounded-xl border border-gray-200/80 px-4 py-3 shadow-2xs hover:border-gray-300 transition-colors h-[64px] flex items-center justify-between"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold text-gray-600">Total Notifications</span>
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
-            <Bell size={16} />
-          </div>
+        <div className="flex items-center gap-3 min-w-0 pr-2">
+          <span className="text-[11.5px] sm:text-[12px] font-bold text-gray-600 uppercase tracking-wider truncate">
+            Total Notifications
+          </span>
+          <span className="text-[19px] sm:text-[20px] font-bold text-gray-900 tracking-tight leading-none">
+            {metrics.total}
+          </span>
         </div>
-        <div className="mt-2.5 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-gray-900 tracking-tight">{metrics.total}</span>
-          <span className="text-xs text-gray-500 font-medium">recorded in system</span>
+        <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
+          <Bell size={14} />
         </div>
       </div>
 
-      {/* Unread Notifications */}
+      {/* 2. Unread Notifications */}
       <div
         id="card-metric-unread"
         onClick={onFilterUnread}
-        className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs hover:border-[#0D93AA]/40 transition-colors cursor-pointer group"
+        className="bg-white rounded-xl border border-gray-200/80 px-4 py-3 shadow-2xs hover:border-[#0D93AA]/40 transition-colors cursor-pointer group h-[64px] flex items-center justify-between"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold text-gray-600 group-hover:text-[#0D93AA] transition-colors">
+        <div className="flex items-center gap-3 min-w-0 pr-2">
+          <span className="text-[11.5px] sm:text-[12px] font-bold text-gray-600 group-hover:text-[#0D93AA] uppercase tracking-wider transition-colors truncate">
             Unread
           </span>
-          <div className="w-8 h-8 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA]">
-            <MailOpen size={16} />
-          </div>
+          <span className="text-[19px] sm:text-[20px] font-bold text-[#0D93AA] tracking-tight leading-none">
+            {metrics.unread}
+          </span>
         </div>
-        <div className="mt-2.5 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-[#0D93AA] tracking-tight">{metrics.unread}</span>
-          <span className="text-xs text-gray-500 font-medium">requiring attention</span>
+        <div className="w-7 h-7 rounded-lg bg-[#0D93AA]/10 flex items-center justify-center text-[#0D93AA] shrink-0">
+          <MailOpen size={14} />
         </div>
       </div>
 
-      {/* Action Required */}
+      {/* 3. Action Required */}
       <div
         id="card-metric-action-required"
         onClick={onFilterActionRequired}
-        className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs hover:border-amber-300 transition-colors cursor-pointer group"
+        className="bg-white rounded-xl border border-gray-200/80 px-4 py-3 shadow-2xs hover:border-amber-300 transition-colors cursor-pointer group h-[64px] flex items-center justify-between"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold text-gray-600 group-hover:text-amber-700 transition-colors">
+        <div className="flex items-center gap-3 min-w-0 pr-2">
+          <span className="text-[11.5px] sm:text-[12px] font-bold text-gray-600 group-hover:text-amber-700 uppercase tracking-wider transition-colors truncate">
             Action Required
           </span>
-          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200/50">
-            <AlertTriangle size={16} />
-          </div>
-        </div>
-        <div className="mt-2.5 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-amber-700 tracking-tight">
+          <span className="text-[19px] sm:text-[20px] font-bold text-amber-700 tracking-tight leading-none">
             {metrics.actionRequired}
           </span>
-          <span className="text-xs text-gray-500 font-medium">pending resolution</span>
+        </div>
+        <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-200/50 shrink-0">
+          <AlertTriangle size={14} />
         </div>
       </div>
 
-      {/* Critical Alerts */}
+      {/* 4. Critical Alerts */}
       <div
         id="card-metric-critical"
         onClick={onFilterCritical}
-        className="bg-white rounded-xl border border-gray-200/80 p-4 shadow-2xs hover:border-rose-300 transition-colors cursor-pointer group"
+        className="bg-white rounded-xl border border-gray-200/80 px-4 py-3 shadow-2xs hover:border-rose-300 transition-colors cursor-pointer group h-[64px] flex items-center justify-between"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-[13px] font-semibold text-gray-600 group-hover:text-rose-700 transition-colors">
+        <div className="flex items-center gap-3 min-w-0 pr-2">
+          <span className="text-[11.5px] sm:text-[12px] font-bold text-gray-600 group-hover:text-rose-700 uppercase tracking-wider transition-colors truncate">
             Critical Alerts
           </span>
-          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-200/50">
-            <AlertCircle size={16} />
-          </div>
-        </div>
-        <div className="mt-2.5 flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-rose-700 tracking-tight">
+          <span className="text-[19px] sm:text-[20px] font-bold text-rose-700 tracking-tight leading-none">
             {metrics.criticalAlerts}
           </span>
-          <span className="text-xs text-gray-500 font-medium">high-severity items</span>
+        </div>
+        <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-200/50 shrink-0">
+          <AlertCircle size={14} />
         </div>
       </div>
     </div>

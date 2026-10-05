@@ -17,7 +17,8 @@ interface NotificationsFilterBarProps {
 
 const CATEGORIES: ('All' | NotificationCategory)[] = [
   'All',
-  'Withdrawal',
+  'Customer Withdrawal',
+  'Business Withdrawal',
   'Transaction',
   'Provider/API',
   'Reconciliation',

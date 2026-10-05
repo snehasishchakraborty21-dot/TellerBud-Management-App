@@ -1,22 +1,20 @@
 import React from 'react';
 import {
+  ExternalLink,
+  CheckCircle2,
+  Mail,
+  Clock,
   Wallet,
   ArrowLeftRight,
   Radio,
   Scale,
   Building2,
   ShieldAlert,
-  Clock,
-  ExternalLink,
-  CheckCircle2,
-  Mail,
-  Check,
   Bell,
 } from 'lucide-react';
 import {
   TellerBudNotification,
   NotificationCategory,
-  NotificationPriority,
   NotificationStatus,
 } from '../../types/notificationsPage';
 
@@ -24,66 +22,30 @@ interface NotificationDetailsHeaderCardProps {
   notification: TellerBudNotification;
   onExecutePrimaryAction: () => void;
   onToggleReadStatus: () => void;
-  onMarkAsResolved: () => void;
-  primaryActionLabel: string;
+  primaryActionLabel?: string;
 }
 
 export const NotificationDetailsHeaderCard: React.FC<NotificationDetailsHeaderCardProps> = ({
   notification,
   onExecutePrimaryAction,
   onToggleReadStatus,
-  onMarkAsResolved,
-  primaryActionLabel,
+  primaryActionLabel = 'Review Withdrawal',
 }) => {
   const isUnread = notification.status === 'Unread';
-  const isResolved = notification.status === 'Resolved';
-
-  // Category Icon
-  const getCategoryIcon = (category: NotificationCategory) => {
-    switch (category) {
-      case 'Withdrawal':
-        return <Wallet className="w-5 h-5 text-[#0D93AA]" aria-hidden="true" />;
-      case 'Transaction':
-        return <ArrowLeftRight className="w-5 h-5 text-blue-600" aria-hidden="true" />;
-      case 'Provider/API':
-        return <Radio className="w-5 h-5 text-purple-600" aria-hidden="true" />;
-      case 'Reconciliation':
-        return <Scale className="w-5 h-5 text-amber-600" aria-hidden="true" />;
-      case 'Vendor Eligibility':
-        return <Building2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />;
-      case 'System':
-        return <ShieldAlert className="w-5 h-5 text-slate-700" aria-hidden="true" />;
-      default:
-        return <Bell className="w-5 h-5 text-gray-600" aria-hidden="true" />;
-    }
-  };
-
-  const getCategoryIconBg = (category: NotificationCategory) => {
-    switch (category) {
-      case 'Withdrawal':
-        return 'bg-[#0D93AA]/10 border-[#0D93AA]/20';
-      case 'Transaction':
-        return 'bg-blue-50 border-blue-200';
-      case 'Provider/API':
-        return 'bg-purple-50 border-purple-200';
-      case 'Reconciliation':
-        return 'bg-amber-50 border-amber-200';
-      case 'Vendor Eligibility':
-        return 'bg-emerald-50 border-emerald-200';
-      case 'System':
-        return 'bg-slate-100 border-slate-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
-    }
-  };
 
   // Category Badge
   const getCategoryBadge = (category: NotificationCategory) => {
     switch (category) {
-      case 'Withdrawal':
+      case 'Customer Withdrawal':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0D93AA]/10 text-[#0D93AA] border border-[#0D93AA]/25">
-            Withdrawal
+            Customer Withdrawal
+          </span>
+        );
+      case 'Business Withdrawal':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Business Withdrawal
           </span>
         );
       case 'Transaction':
@@ -110,7 +72,6 @@ export const NotificationDetailsHeaderCard: React.FC<NotificationDetailsHeaderCa
             Vendor Eligibility
           </span>
         );
-      case 'System':
       default:
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
@@ -120,172 +81,135 @@ export const NotificationDetailsHeaderCard: React.FC<NotificationDetailsHeaderCa
     }
   };
 
-  // Priority Badge (with visible text and indicator)
-  const getPriorityBadge = (priority: NotificationPriority) => {
-    switch (priority) {
-      case 'Critical':
+  // Status Badge
+  const getStatusBadge = (status: NotificationStatus) => {
+    switch (status) {
+      case 'Pending Review':
+      case 'Unread':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0D93AA]/10 text-[#0D93AA] border border-[#0D93AA]/25">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] animate-pulse" />
+            {notification.withdrawalDetails ? notification.withdrawalDetails.status : 'Pending Review'}
+          </span>
+        );
+      case 'Approved':
+      case 'Completed':
+      case 'Resolved':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 size={12} className="text-emerald-600" />
+            {notification.withdrawalDetails?.status || status}
+          </span>
+        );
+      case 'Rejected':
+      case 'Failed':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-            Critical Priority
+            {notification.withdrawalDetails?.status || status}
           </span>
         );
-      case 'High':
+      case 'Cancelled':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-            High Priority
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+            Cancelled
           </span>
         );
-      case 'Medium':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-600" />
-            Medium Priority
-          </span>
-        );
-      case 'Low':
+      case 'Read':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
-            Low Priority
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+            {notification.withdrawalDetails?.status || 'Read'}
           </span>
         );
     }
   };
 
-  // Status Badge (with visible text)
-  const getStatusBadge = (status: NotificationStatus) => {
-    switch (status) {
-      case 'Unread':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0D93AA]/10 text-[#0D93AA] border border-[#0D93AA]/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] animate-pulse" />
-            Unread
-          </span>
-        );
-      case 'Read':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-            Read
-          </span>
-        );
-      case 'Resolved':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-            Resolved
-          </span>
-        );
+  // Plain language summary
+  const getPlainSummary = (): string => {
+    if (notification.category === 'Customer Withdrawal' || notification.withdrawalType === 'Customer Withdrawal') {
+      const details = notification.withdrawalDetails;
+      const name = details?.customerName || 'Lombe Kasonde';
+      const amount = details?.amount ? `ZMW ${details.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'ZMW 7,200.00';
+      const vendor = details?.vendor || 'MTN Mobile Money';
+      const phoneDigits = details?.mobileMoneyNumber?.slice(-4) || '9901';
+      return `${name} requested to withdraw ${amount} to the ${vendor} number ending in ${phoneDigits}. The request is waiting for your review.`;
     }
+
+    if (notification.category === 'Business Withdrawal' || notification.withdrawalType === 'Business Withdrawal') {
+      const details = notification.withdrawalDetails;
+      const bizName = details?.businessName || 'Lusaka Central Express Agency';
+      const amount = details?.amount ? `ZMW ${details.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'ZMW 25,000.00';
+      return `${bizName} requested to withdraw ${amount} from its business wallet. The request is waiting for your review.`;
+    }
+
+    return notification.message;
   };
 
   return (
     <div
-      id="notification-header-card"
-      className="bg-white rounded-xl border border-gray-200 shadow-xs p-5 md:p-6 w-full"
+      id="notification-details-header-card"
+      className="bg-white rounded-xl border border-gray-200/90 shadow-2xs overflow-hidden"
     >
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        {/* Left Info: Icon, Title, ID, Badges, Created */}
-        <div className="flex items-start gap-4 min-w-0">
-          <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${getCategoryIconBg(
-              notification.category
-            )}`}
-          >
-            {getCategoryIcon(notification.category)}
+      <div className="p-5 sm:p-6 space-y-4">
+        {/* Top line: Title & Action buttons */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+              {notification.title}
+            </h1>
+
+            {/* Badges & Date line */}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium">
+              {getCategoryBadge(notification.category)}
+              <span className="text-gray-300">·</span>
+              {getStatusBadge(notification.status)}
+              <span className="text-gray-300">·</span>
+              <div className="flex items-center gap-1 text-gray-600">
+                <Clock size={13} className="text-gray-400" />
+                <span>{notification.dateTime}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1
-                id="notification-details-title"
-                className="text-lg md:text-xl font-bold text-gray-900 tracking-tight"
-              >
-                {notification.title}
-              </h1>
-              <span
-                id="notification-details-id-badge"
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-gray-100 text-gray-700 border border-gray-200"
-              >
-                {notification.id}
-              </span>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Primary Action Button */}
+            <button
+              type="button"
+              id="btn-primary-action"
+              onClick={onExecutePrimaryAction}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D93AA] hover:bg-[#0B7F94] text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <span>{primaryActionLabel}</span>
+              <ExternalLink size={13} />
+            </button>
 
-            {/* Badges & Created Date/Time */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              {getCategoryBadge(notification.category)}
-              {getPriorityBadge(notification.priority)}
-              {getStatusBadge(notification.status)}
-
-              <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 font-medium pl-1">
-                <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <span>Created: {notification.dateTime}</span>
-              </span>
-            </div>
+            {/* Toggle Read/Unread */}
+            <button
+              type="button"
+              id="btn-toggle-read"
+              onClick={onToggleReadStatus}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer border border-gray-200/80"
+            >
+              {isUnread ? (
+                <>
+                  <CheckCircle2 size={14} className="text-[#0D93AA]" />
+                  <span>Mark as Read</span>
+                </>
+              ) : (
+                <>
+                  <Mail size={14} className="text-gray-500" />
+                  <span>Mark as Unread</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
-        {/* Right Actions: Review Action, Mark Read/Unread, Mark as Resolved */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 pt-2 lg:pt-0">
-          {/* Contextual Primary Action */}
-          <button
-            type="button"
-            id="btn-notification-primary-action"
-            onClick={onExecutePrimaryAction}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7F94] rounded-lg shadow-xs transition-colors cursor-pointer"
-          >
-            <span>{primaryActionLabel}</span>
-            <ExternalLink className="w-4 h-4" />
-          </button>
-
-          {/* Mark as Read or Mark as Unread */}
-          {isUnread ? (
-            <button
-              type="button"
-              id="btn-toggle-read-status"
-              onClick={onToggleReadStatus}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4 text-[#0D93AA]" />
-              <span>Mark as Read</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              id="btn-toggle-read-status"
-              onClick={onToggleReadStatus}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors cursor-pointer"
-            >
-              <Mail className="w-4 h-4 text-gray-500" />
-              <span>Mark as Unread</span>
-            </button>
-          )}
-
-          {/* Mark as Resolved */}
-          {!isResolved ? (
-            <button
-              type="button"
-              id="btn-mark-as-resolved"
-              onClick={onMarkAsResolved}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer"
-            >
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span>Mark as Resolved</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              id="btn-mark-as-resolved-disabled"
-              disabled
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-medium text-emerald-700 bg-emerald-50/70 border border-emerald-200/70 rounded-lg opacity-80 cursor-not-allowed"
-            >
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span>Resolved</span>
-            </button>
-          )}
+        {/* 9. Simple Request Summary Box */}
+        <div className="p-3.5 bg-gray-50/90 rounded-lg border border-gray-200/70 text-sm text-gray-700 leading-relaxed font-normal">
+          {getPlainSummary()}
         </div>
       </div>
     </div>

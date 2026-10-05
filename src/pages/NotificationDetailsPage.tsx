@@ -4,11 +4,8 @@ import { ArrowLeft, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { tellerBudNotificationService } from '../services/tellerBudNotificationService';
 import { TellerBudNotification } from '../types/notificationsPage';
 import { NotificationDetailsHeaderCard } from '../components/notifications/NotificationDetailsHeaderCard';
-import { NotificationDetailsInfoCard } from '../components/notifications/NotificationDetailsInfoCard';
-import { NotificationDetailsRelatedRecordCard } from '../components/notifications/NotificationDetailsRelatedRecordCard';
-import { NotificationDetailsLifecycleCard } from '../components/notifications/NotificationDetailsLifecycleCard';
+import { NotificationDetailsWithdrawalCard } from '../components/notifications/NotificationDetailsWithdrawalCard';
 import { NotificationDetailsActivityCard } from '../components/notifications/NotificationDetailsActivityCard';
-import { NotificationResolveModal } from '../components/notifications/NotificationResolveModal';
 
 export const NotificationDetailsPage: React.FC = () => {
   const { notificationId } = useParams<{ notificationId: string }>();
@@ -19,7 +16,6 @@ export const NotificationDetailsPage: React.FC = () => {
     () => (notificationId ? tellerBudNotificationService.getById(notificationId) || null : null)
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
 
   // Sync with service, record viewed, and auto-mark as read if unread
   useEffect(() => {
@@ -30,12 +26,12 @@ export const NotificationDetailsPage: React.FC = () => {
     setNotification(record || null);
 
     if (record) {
-      // Record Notification Details Opened event
+      // Record Notification viewed
       tellerBudNotificationService.recordViewed(notificationId);
 
       // Business rule: Opening full Notification Details page automatically marks unread notification as Read
       if (record.status === 'Unread') {
-        tellerBudNotificationService.markAsRead(notificationId, 'Sililo Lubinda (Super Admin)');
+        tellerBudNotificationService.markAsRead(notificationId, 'Sililo Lubinda');
       }
     }
 
@@ -64,7 +60,6 @@ export const NotificationDetailsPage: React.FC = () => {
 
   // Back Navigation preserving filters and pagination
   const handleBackToNotifications = useCallback(() => {
-    // If state was passed via location.state, navigate back to notifications list with state
     const returnPath = location.pathname.startsWith('/super-admin')
       ? '/super-admin/configuration/notifications'
       : '/notifications';
@@ -86,26 +81,21 @@ export const NotificationDetailsPage: React.FC = () => {
     }
   }, [notification]);
 
-  const handleOpenResolveModal = useCallback(() => {
-    setIsResolveModalOpen(true);
-  }, []);
-
-  const handleConfirmResolve = useCallback(() => {
-    if (!notification) return;
-    tellerBudNotificationService.markAsResolved(notification.id);
-    setIsResolveModalOpen(false);
-    showToast('Notification marked as resolved');
-  }, [notification]);
-
-  // Contextual primary action config based on Category
+  // Review Withdrawal & Primary Navigation
   const getPrimaryActionConfig = () => {
     if (!notification) return { label: 'View Details', route: '/notifications' };
 
     switch (notification.category) {
+      case 'Customer Withdrawal':
       case 'Withdrawal':
         return {
           label: 'Review Withdrawal',
           route: `/super-admin/wallets/customer-withdrawals/${notification.relatedRecord}`,
+        };
+      case 'Business Withdrawal':
+        return {
+          label: 'Review Withdrawal',
+          route: '/super-admin/wallets/business-agent',
         };
       case 'Transaction':
         return {
@@ -142,41 +132,41 @@ export const NotificationDetailsPage: React.FC = () => {
     navigate(primaryConfig.route);
   };
 
-  const handleNavigateToRelatedRecord = (route: string) => {
-    navigate(route);
-  };
-
-  // 10. Clean Not Found State
+  // Not Found State
   if (!notification) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-        {/* Back navigation */}
-        <button
-          type="button"
-          id="btn-back-to-notifications-notfound"
-          onClick={handleBackToNotifications}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Notifications</span>
-        </button>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-2">
+            Notification Details
+          </h1>
+          <button
+            type="button"
+            id="btn-back-to-notifications-notfound"
+            onClick={handleBackToNotifications}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D93AA] hover:text-[#0B7F94] transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Notifications</span>
+          </button>
+        </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center shadow-xs">
           <div className="w-14 h-14 mx-auto rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 mb-4 border border-amber-200">
             <AlertCircle size={28} />
           </div>
-          <h2 className="text-lg font-bold text-gray-900">Notification Not Found</h2>
-          <p className="text-sm text-gray-500 mt-1.5 max-w-md mx-auto">
-            The notification with ID <span className="font-mono font-semibold text-gray-700">{notificationId}</span> could not be located. It may have been removed or does not exist.
+          <h2 className="text-base font-bold text-gray-900">Notification Not Found</h2>
+          <p className="text-xs text-gray-500 mt-1.5 max-w-md mx-auto">
+            The notification with ID <span className="font-mono font-semibold text-gray-700">{notificationId}</span> could not be located.
           </p>
           <div className="mt-6">
             <button
               type="button"
               id="btn-not-found-back"
               onClick={handleBackToNotifications}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0D93AA] hover:bg-[#0B7F94] text-white rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0D93AA] hover:bg-[#0B7F94] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Notifications</span>
             </button>
           </div>
@@ -188,62 +178,43 @@ export const NotificationDetailsPage: React.FC = () => {
   return (
     <div
       id="notification-details-page-root"
-      className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 pb-8"
+      className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 pb-12 w-full animate-fadeIn"
     >
-      {/* 2. Back to Notifications button below page header */}
-      <div className="flex items-center justify-between">
+      {/* 7. Simplified Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+          Notification Details
+        </h1>
         <button
           type="button"
           id="btn-back-to-notifications"
           onClick={handleBackToNotifications}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors group cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-[#0D93AA] transition-colors group cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5 text-gray-500 group-hover:text-gray-900" />
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 text-gray-500 group-hover:text-[#0D93AA]" />
           <span>Back to Notifications</span>
         </button>
       </div>
 
-      {/* 3. Notification Header Card */}
+      {/* 8 & 9. Compact Notification Header Card with Plain-Language Summary */}
       <NotificationDetailsHeaderCard
         notification={notification}
         onExecutePrimaryAction={handleExecutePrimaryAction}
         onToggleReadStatus={handleToggleReadStatus}
-        onMarkAsResolved={handleOpenResolveModal}
         primaryActionLabel={primaryConfig.label}
       />
 
-      {/* 4. Notification Information Card */}
-      <NotificationDetailsInfoCard
-        notification={notification}
-        onNavigateToRelatedRecord={() => handleNavigateToRelatedRecord(primaryConfig.route)}
-      />
+      {/* 10 & 11. Single Compact "Withdrawal Details" Section */}
+      <NotificationDetailsWithdrawalCard notification={notification} />
 
-      {/* 5. Related Record Summary Card */}
-      <NotificationDetailsRelatedRecordCard
-        notification={notification}
-        onNavigateToRelatedRecord={handleNavigateToRelatedRecord}
-        primaryActionLabel={primaryConfig.label}
-      />
-
-      {/* 6. Notification Lifecycle Timeline */}
-      <NotificationDetailsLifecycleCard notification={notification} />
-
-      {/* 7. Notification Activity & Audit History */}
+      {/* 13. Simplified Collapsed Activity History */}
       <NotificationDetailsActivityCard notification={notification} />
-
-      {/* Confirmation Dialog for Mark as Resolved */}
-      <NotificationResolveModal
-        isOpen={isResolveModalOpen}
-        onClose={() => setIsResolveModalOpen(false)}
-        onConfirm={handleConfirmResolve}
-        notification={notification}
-      />
 
       {/* Toast Feedback */}
       {toastMessage && (
         <div
           id="notification-details-toast"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-gray-900 text-white rounded-xl shadow-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-gray-900 text-white rounded-xl shadow-lg text-xs sm:text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>

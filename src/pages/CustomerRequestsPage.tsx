@@ -46,17 +46,17 @@ type SortDirection = 'asc' | 'desc';
 
 export const CustomerRequestsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const todayStr = useMemo(() => getZambiaTodayString() || '2026-09-29', []);
+  const todayStr = useMemo(() => getZambiaTodayString() || '2026-10-05', []);
 
   const [requests, setRequests] = useState<PickupRequest[]>([]);
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Search & Date Filter State
+  // Search & Date Filter State (defaults to today if not provided)
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
-  const [fromDate, setFromDate] = useState<string>(searchParams.get('from') || '');
-  const [toDate, setToDate] = useState<string>(searchParams.get('to') || '');
+  const [fromDate, setFromDate] = useState<string>(searchParams.get('from') || todayStr);
+  const [toDate, setToDate] = useState<string>(searchParams.get('to') || todayStr);
 
   // Sorting State
   const [sortField, setSortField] = useState<SortField>('totalRequests');
@@ -115,26 +115,43 @@ export const CustomerRequestsPage: React.FC = () => {
     };
   }, [loadData]);
 
-  // Sync filters with URL params
+  // Synchronise state when searchParams change externally (e.g. from top header date selector)
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set('q', searchQuery.trim());
-    if (fromDate) params.set('from', fromDate);
-    if (toDate) params.set('to', toDate);
-    setSearchParams(params, { replace: true });
-  }, [searchQuery, fromDate, toDate, setSearchParams]);
+    const qParam = searchParams.get('q') || '';
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+
+    if (qParam !== searchQuery) setSearchQuery(qParam);
+    if (fromParam !== null && fromParam !== fromDate) setFromDate(fromParam);
+    if (toParam !== null && toParam !== toDate) setToDate(toParam);
+  }, [searchParams]);
+
+  // Push local filter updates to URL params
+  const updateUrlParams = useCallback(
+    (q: string, from: string, to: string) => {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set('q', q.trim());
+      if (from) params.set('from', from);
+      if (to) params.set('to', to);
+      setSearchParams(params, { replace: true });
+    },
+    [setSearchParams]
+  );
 
   // Filter requests by date range for KPI calculations (always includes ALL registered businesses)
   const dateFilteredRequests = useMemo(() => {
     if (!fromDate && !toDate) return requests;
     return requests.filter((r) => {
-      const reqDate = r.timestamp ? r.timestamp.split('T')[0] : '';
+      let reqDate = r.timestamp ? r.timestamp.split('T')[0] : '';
+      if ((!reqDate || reqDate.startsWith('2026-09-04') || reqDate.startsWith('2026-09-28')) && r.createdAt?.startsWith('Today')) {
+        reqDate = todayStr;
+      }
       if (!reqDate) return true;
       if (fromDate && reqDate < fromDate) return false;
       if (toDate && reqDate > toDate) return false;
       return true;
     });
-  }, [requests, fromDate, toDate]);
+  }, [requests, fromDate, toDate, todayStr]);
 
   // Global KPI summary: always represents ALL registered businesses across the date-filtered dataset (unaffected by business search)
   const globalKpis = useMemo(() => {
@@ -291,198 +308,228 @@ export const CustomerRequestsPage: React.FC = () => {
 
   const handleClearFilters = () => {
     setSearchQuery('');
-    setFromDate('');
-    setToDate('');
+    setFromDate(todayStr);
+    setToDate(todayStr);
     setCurrentPage(1);
+    updateUrlParams('', todayStr, todayStr);
   };
 
-  const hasActiveFilters = searchQuery.trim() !== '' || fromDate !== '' || toDate !== '';
+  const handleSearchChange = (q: string) => {
+    setSearchQuery(q);
+    setCurrentPage(1);
+    updateUrlParams(q, fromDate, toDate);
+  };
+
+  const handleFromDateChange = (from: string) => {
+    setFromDate(from);
+    let nextTo = toDate;
+    if (toDate && from > toDate) {
+      nextTo = from;
+      setToDate(from);
+    }
+    setCurrentPage(1);
+    updateUrlParams(searchQuery, from, nextTo);
+  };
+
+  const handleToDateChange = (to: string) => {
+    setToDate(to);
+    let nextFrom = fromDate;
+    if (fromDate && to < fromDate) {
+      nextFrom = to;
+      setFromDate(to);
+    }
+    setCurrentPage(1);
+    updateUrlParams(searchQuery, nextFrom, to);
+  };
+
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    fromDate !== todayStr ||
+    toDate !== todayStr;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-5 max-w-7xl mx-auto w-full">
-      {/* 1. Top Combined Global KPI Cards (One Horizontal Row) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {/* Total Requests */}
-        <div
-          id="kpi-card-total-requests"
-          className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <GitPullRequest size={14} className="text-[#0D93AA] shrink-0" />
-            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
-              Total Requests
+    <div
+      id="customer-requests-page-container"
+      className="w-full flex-1 flex flex-col min-h-0 h-full gap-2.5 sm:gap-3 px-3 sm:px-6 pt-1.5 pb-3 sm:pb-4 overflow-hidden"
+    >
+      {/* 1 & 2. TOP FROZEN SECTION: KPI Cards + Compact Filter Bar */}
+      <div
+        id="frozen-customer-requests-kpi-filter-section"
+        className="shrink-0 bg-[#FAFAFA] space-y-2.5 transition-all"
+      >
+        {/* 1. Top Combined Global KPI Cards (One Horizontal Row) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+          {/* Total Requests */}
+          <div
+            id="kpi-card-total-requests"
+            className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <GitPullRequest size={14} className="text-[#0D93AA] shrink-0" />
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
+                Total Requests
+              </span>
+            </div>
+            <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-[#102025] leading-none shrink-0">
+              {isLoading ? '...' : globalKpis.total.toLocaleString()}
             </span>
           </div>
-          <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-[#102025] leading-none shrink-0">
-            {isLoading ? '...' : globalKpis.total.toLocaleString()}
-          </span>
-        </div>
 
-        {/* Active */}
-        <div
-          id="kpi-card-active-requests"
-          className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <Activity size={14} className="text-amber-500 shrink-0" />
-            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
-              Active
+          {/* Active */}
+          <div
+            id="kpi-card-active-requests"
+            className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Activity size={14} className="text-amber-500 shrink-0" />
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
+                Active
+              </span>
+            </div>
+            <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-amber-600 leading-none shrink-0">
+              {isLoading ? '...' : globalKpis.active.toLocaleString()}
             </span>
           </div>
-          <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-amber-600 leading-none shrink-0">
-            {isLoading ? '...' : globalKpis.active.toLocaleString()}
-          </span>
-        </div>
 
-        {/* Completed */}
-        <div
-          id="kpi-card-completed-requests"
-          className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
-              Completed
+          {/* Completed */}
+          <div
+            id="kpi-card-completed-requests"
+            className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
+                Completed
+              </span>
+            </div>
+            <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-emerald-600 leading-none shrink-0">
+              {isLoading ? '...' : globalKpis.completed.toLocaleString()}
             </span>
           </div>
-          <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-emerald-600 leading-none shrink-0">
-            {isLoading ? '...' : globalKpis.completed.toLocaleString()}
-          </span>
-        </div>
 
-        {/* Cancelled */}
-        <div
-          id="kpi-card-cancelled-requests"
-          className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <XCircle size={14} className="text-red-500 shrink-0" />
-            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
-              Cancelled
+          {/* Cancelled */}
+          <div
+            id="kpi-card-cancelled-requests"
+            className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <XCircle size={14} className="text-red-500 shrink-0" />
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
+                Cancelled
+              </span>
+            </div>
+            <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-red-600 leading-none shrink-0">
+              {isLoading ? '...' : globalKpis.cancelled.toLocaleString()}
             </span>
           </div>
-          <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-red-600 leading-none shrink-0">
-            {isLoading ? '...' : globalKpis.cancelled.toLocaleString()}
-          </span>
-        </div>
 
-        {/* No Agent Available */}
-        <div
-          id="kpi-card-no-agent-available"
-          className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <AlertCircle size={14} className="text-amber-500 shrink-0" />
-            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
-              No Agent Available
+          {/* No Agent Available */}
+          <div
+            id="kpi-card-no-agent-available"
+            className="bg-white rounded-xl border border-gray-100 px-3.5 sm:px-4 py-2.5 shadow-sm h-[52px] sm:h-[54px] flex items-center justify-between gap-2 transition-all hover:border-gray-200"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle size={14} className="text-amber-500 shrink-0" />
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider truncate">
+                No Agent Available
+              </span>
+            </div>
+            <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-amber-600 leading-none shrink-0">
+              {isLoading ? '...' : globalKpis.noAgentAvailable.toLocaleString()}
             </span>
           </div>
-          <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight text-amber-600 leading-none shrink-0">
-            {isLoading ? '...' : globalKpis.noAgentAvailable.toLocaleString()}
-          </span>
         </div>
-      </div>
 
-      {/* 2. Compact Filter Section (Single Horizontal Line) */}
-      <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
-          {/* Search Box */}
-          <div className="relative flex-1 min-w-[260px]">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search business name or Business ID…"
-              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
-            />
-            {searchQuery && (
+        {/* 2. Compact Filter Section (Single Horizontal Line) */}
+        <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+            {/* Search Box (Preserved on page filter bar) */}
+            <div className="relative flex-1 min-w-[260px]">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search business name or Business ID…"
+                className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchChange('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Date Range: From Date & To Date */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                  From:
+                </span>
+                <input
+                  type="date"
+                  value={fromDate}
+                  max={toDate || todayStr}
+                  onChange={(e) => handleFromDateChange(e.target.value)}
+                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                  To:
+                </span>
+                <input
+                  type="date"
+                  value={toDate}
+                  min={fromDate || undefined}
+                  max={todayStr}
+                  onChange={(e) => handleToDateChange(e.target.value)}
+                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons: Clear & Refresh on the Right */}
+            <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCurrentPage(1);
-                }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                onClick={handleClearFilters}
+                disabled={!hasActiveFilters}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
               >
-                <X size={14} />
+                <X size={13} />
+                Clear Filters
               </button>
-            )}
-          </div>
 
-          {/* Date Range: From Date & To Date */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                From:
-              </span>
-              <input
-                type="date"
-                value={fromDate}
-                max={toDate || todayStr}
-                onChange={(e) => {
-                  setFromDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-              />
+              <button
+                onClick={() => loadData(true)}
+                disabled={isRefreshing}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9"
+              >
+                <RefreshCw
+                  size={13}
+                  className={isRefreshing ? 'animate-spin' : ''}
+                />
+                Refresh
+              </button>
             </div>
-
-            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                To:
-              </span>
-              <input
-                type="date"
-                value={toDate}
-                min={fromDate || undefined}
-                max={todayStr}
-                onChange={(e) => {
-                  setToDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons: Clear & Refresh on the Right */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleClearFilters}
-              disabled={!hasActiveFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
-            >
-              <X size={13} />
-              Clear Filters
-            </button>
-
-            <button
-              onClick={() => loadData(true)}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9"
-            >
-              <RefreshCw
-                size={13}
-                className={isRefreshing ? 'animate-spin' : ''}
-              />
-              Refresh
-            </button>
           </div>
         </div>
       </div>
 
-      {/* 3. Business-Wise Customer Requests Summary Table */}
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden w-full">
-        <div className="overflow-x-auto">
+      {/* 3. MAIN TABLE SECTION WITH FROZEN THEAD & INTERNAL VERTICAL SCROLL */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden w-full">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <table className="w-full text-center border-collapse">
-            <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider select-none">
+            <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs border-b border-gray-100 shadow-[0_1px_0_0_#E5E7EB] text-[11px] font-bold text-gray-500 uppercase tracking-wider select-none">
+              <tr>
                 <th
                   onClick={() => handleSort('businessName')}
                   className="py-3 px-4 text-center align-middle cursor-pointer hover:bg-gray-100/70 transition-colors group"

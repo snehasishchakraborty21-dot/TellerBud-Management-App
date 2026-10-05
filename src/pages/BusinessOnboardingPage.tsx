@@ -17,7 +17,7 @@ import { ActivateBusinessModal } from '../components/business-onboarding/Activat
 import { ReturnForCorrectionModal } from '../components/business-onboarding/ReturnForCorrectionModal';
 import { ActivationEmailPreviewModal } from '../components/business-onboarding/ActivationEmailPreviewModal';
 import { WebsiteBusinessOwnerSignUpModal } from '../components/website/WebsiteBusinessOwnerSignUpModal';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 const DEFAULT_FILTERS: BusinessOnboardingFilters = {
   status: 'ALL',
@@ -69,7 +69,8 @@ export const BusinessOnboardingPage: React.FC = () => {
     return (
       filters.status !== 'ALL' ||
       Boolean(filters.submittedFrom) ||
-      Boolean(filters.submittedTo)
+      Boolean(filters.submittedTo) ||
+      Boolean(filters.search)
     );
   }, [filters]);
 
@@ -182,7 +183,10 @@ export const BusinessOnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 max-w-7xl mx-auto pb-16 w-full">
+    <div
+      id="business-onboarding-page-container"
+      className="w-full flex-1 flex flex-col min-h-0 h-full gap-2.5 sm:gap-3 px-3 sm:px-6 pt-1.5 pb-3 sm:pb-4 overflow-hidden"
+    >
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-xl border border-slate-700 animate-in slide-in-from-bottom-2 duration-150">
@@ -191,31 +195,40 @@ export const BusinessOnboardingPage: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Top KPI Summary Section (Compact, equal width/height, 1 horizontal row) */}
-      <section aria-label="Business Onboarding Metrics Summary">
-        <BusinessOnboardingKPICards
-          summary={summary}
-          selectedStatus={filters.status}
-          onSelectStatus={handleSelectStatus}
-        />
-      </section>
+      {/* 1 & 2. TOP FROZEN SECTION: KPI Cards + Compact Filter Bar */}
+      <div
+        id="frozen-business-onboarding-kpi-filter-section"
+        className="shrink-0 bg-[#FAFAFA] space-y-2 sm:space-y-2.5 transition-all z-20"
+      >
+        {/* 1. Top KPI Summary Section (6 compact cards, icon + label + number in 1 horizontal line) */}
+        <section aria-label="Business Onboarding Metrics Summary">
+          <BusinessOnboardingKPICards
+            summary={summary}
+            selectedStatus={filters.status}
+            onSelectStatus={handleSelectStatus}
+          />
+        </section>
 
-      {/* 2. Filter Bar Section (Single compact horizontal line) */}
-      <section aria-label="Business Onboarding Filters">
-        <BusinessOnboardingFilterBar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-          onRefresh={handleRefresh}
-          isFiltered={hasActiveFilters}
-          isRefreshing={isRefreshing}
-          applicationsToExport={filteredApplications}
-          onOpenWebsiteSignUp={() => setShowWebsiteSignUpModal(true)}
-        />
-      </section>
+        {/* 2. Filter Bar Section (Single compact horizontal line) */}
+        <section aria-label="Business Onboarding Filters">
+          <BusinessOnboardingFilterBar
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+            onRefresh={handleRefresh}
+            isFiltered={hasActiveFilters}
+            isRefreshing={isRefreshing}
+            applicationsToExport={filteredApplications}
+            onOpenWebsiteSignUp={() => setShowWebsiteSignUpModal(true)}
+          />
+        </section>
+      </div>
 
-      {/* 3. Onboarding Table Section (8 standard columns with state-based actions) */}
-      <section aria-label="Business Onboarding Table">
+      {/* 3. MAIN TABLE SECTION WITH FROZEN THEAD & INTERNAL VERTICAL SCROLL */}
+      <section
+        aria-label="Business Onboarding Table"
+        className="flex-1 min-h-0 flex flex-col"
+      >
         <BusinessOnboardingTable
           applications={filteredApplications}
           onViewDetails={handleViewDetails}
@@ -267,3 +280,5 @@ export const BusinessOnboardingPage: React.FC = () => {
     </div>
   );
 };
+
+export default BusinessOnboardingPage;

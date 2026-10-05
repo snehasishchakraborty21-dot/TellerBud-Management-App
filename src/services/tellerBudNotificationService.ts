@@ -2,16 +2,20 @@ import {
   TellerBudNotification,
   NotificationSummaryMetrics,
   NotificationActivityEvent,
+  WithdrawalNotificationDetails,
 } from '../types/notificationsPage';
 import { INITIAL_TELLERBUD_NOTIFICATIONS } from '../data/mockTellerBudNotifications';
 import { AdminNotification } from '../types/admin';
 
-const STORAGE_KEY = 'tellerbud_admin_notifications_v7';
+const STORAGE_KEY = 'tellerbud_admin_notifications_v8';
 
 export function getDefaultSource(notification: Pick<TellerBudNotification, 'category'>): string {
   switch (notification.category) {
+    case 'Customer Withdrawal':
     case 'Withdrawal':
       return 'Customer Withdrawal System';
+    case 'Business Withdrawal':
+      return 'Business Wallet System';
     case 'Transaction':
       return 'Core Transaction Settlement Engine';
     case 'Provider/API':
@@ -32,90 +36,29 @@ function initializeActivities(n: TellerBudNotification): NotificationActivityEve
     return n.activities;
   }
 
-  // Explicit initial activities for TB-NTF-001 matching specification
-  if (n.id === 'TB-NTF-001') {
-    const events: NotificationActivityEvent[] = [
-      {
-        id: `act-tb001-1`,
-        event: 'Notification Created',
-        actingUserOrSystem: 'Customer Withdrawal System',
-        previousStatus: '—',
-        newStatus: 'Unread',
-        dateTime: 'Today, 11:52 AM',
-      },
-      {
-        id: `act-tb001-2`,
-        event: 'Notification Details Opened',
-        actingUserOrSystem: 'Sililo Lubinda (Super Admin)',
-        previousStatus: 'Unread',
-        newStatus: 'Unread',
-        dateTime: 'Today, 11:55 AM',
-      },
-    ];
-
-    if (n.status === 'Read' || n.readAt) {
-      events.push({
-        id: `act-tb001-3`,
-        event: 'Marked as Read',
-        actingUserOrSystem: n.readBy || 'Sililo Lubinda (Super Admin)',
-        previousStatus: 'Unread',
-        newStatus: 'Read',
-        dateTime: n.readAt || 'Today, 11:56 AM',
-      });
-    }
-
-    if (n.status === 'Resolved' || n.resolvedAt) {
-      events.push({
-        id: `act-tb001-4`,
-        event: 'Marked as Resolved',
-        actingUserOrSystem: n.resolvedBy || 'Sililo Lubinda (Super Admin)',
-        previousStatus: n.readAt ? 'Read' : 'Unread',
-        newStatus: 'Resolved',
-        dateTime: n.resolvedAt || 'Today, 12:00 PM',
-      });
-    }
-
-    return events;
-  }
-
-  const source = n.source || getDefaultSource(n);
   const events: NotificationActivityEvent[] = [
     {
       id: `act-init-${n.id}-1`,
-      event: 'Notification Created',
-      actingUserOrSystem: source,
-      previousStatus: '—',
-      newStatus: 'Unread',
-      dateTime: n.dateTime,
-    },
-    {
-      id: `act-init-${n.id}-2`,
-      event: 'Notification Details Opened',
-      actingUserOrSystem: 'Sililo Lubinda (Super Admin)',
-      previousStatus: 'Unread',
-      newStatus: 'Unread',
+      event: 'Notification received',
+      actingUserOrSystem: n.source || getDefaultSource(n),
       dateTime: n.dateTime,
     },
   ];
 
   if (n.status === 'Read' || n.readAt) {
     events.push({
-      id: `act-init-${n.id}-3`,
-      event: 'Marked as Read',
-      actingUserOrSystem: n.readBy || 'Sililo Lubinda (Super Admin)',
-      previousStatus: 'Unread',
-      newStatus: 'Read',
+      id: `act-init-${n.id}-2`,
+      event: `Marked as read`,
+      actingUserOrSystem: n.readBy || 'Sililo Lubinda',
       dateTime: n.readAt || n.dateTime,
     });
   }
 
-  if (n.status === 'Resolved' || n.resolvedAt) {
+  if (n.status === 'Resolved' || n.resolvedAt || n.status === 'Approved' || n.status === 'Completed') {
     events.push({
-      id: `act-init-${n.id}-4`,
-      event: 'Marked as Resolved',
-      actingUserOrSystem: n.resolvedBy || 'Sililo Lubinda (Super Admin)',
-      previousStatus: n.readAt ? 'Read' : 'Unread',
-      newStatus: 'Resolved',
+      id: `act-init-${n.id}-3`,
+      event: n.category.includes('Withdrawal') ? 'Withdrawal approved' : 'Marked as resolved',
+      actingUserOrSystem: n.resolvedBy || 'Sililo Lubinda',
       dateTime: n.resolvedAt || n.dateTime,
     });
   }
@@ -129,13 +72,18 @@ function loadNotifications(): TellerBudNotification[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item: TellerBudNotification) => ({
-          ...item,
-          source: item.source || getDefaultSource(item),
-          deliveredAt: item.deliveredAt || item.dateTime,
-          deliveredTo: item.deliveredTo || 'Super Admin Dispatcher',
-          activities: item.activities && item.activities.length > 0 ? item.activities : initializeActivities(item),
-        }));
+        return parsed.map((item: TellerBudNotification) => {
+          let cat = item.category;
+          if ((cat as string) === 'Withdrawal') {
+            cat = 'Customer Withdrawal';
+          }
+          return {
+            ...item,
+            category: cat,
+            source: item.source || getDefaultSource(item),
+            activities: item.activities && item.activities.length > 0 ? item.activities : initializeActivities(item),
+          };
+        });
       }
     }
   } catch (e) {
@@ -144,8 +92,6 @@ function loadNotifications(): TellerBudNotification[] {
   return INITIAL_TELLERBUD_NOTIFICATIONS.map((item) => ({
     ...item,
     source: item.source || getDefaultSource(item),
-    deliveredAt: item.deliveredAt || item.dateTime,
-    deliveredTo: item.deliveredTo || 'Super Admin Dispatcher',
     activities: initializeActivities(item),
   }));
 }
@@ -194,6 +140,22 @@ class TellerBudNotificationService {
     return [...this.notifications];
   }
 
+  getAdminNotifications(): AdminNotification[] {
+    return this.notifications.map((n) => ({
+      id: n.id,
+      title: n.title,
+      category: n.category,
+      timestamp: n.dateTime,
+      read: n.status === 'Read' || n.status === 'Resolved',
+      message: n.message,
+      actionUrl: n.actionRoute,
+      priority: n.priority === 'Critical' ? 'Urgent' : n.priority === 'High' ? 'Important' : 'Normal',
+      actionRequired: n.actionRequired,
+      relatedReference: n.relatedRecord,
+      createdAt: n.createdAt,
+    }));
+  }
+
   getById(id: string): TellerBudNotification | undefined {
     return this.notifications.find((n) => n.id === id);
   }
@@ -202,10 +164,10 @@ class TellerBudNotificationService {
     const total = this.notifications.length;
     const unread = this.notifications.filter((n) => n.status === 'Unread').length;
     const actionRequired = this.notifications.filter(
-      (n) => n.actionRequired && n.status !== 'Resolved'
+      (n) => n.actionRequired && n.status !== 'Resolved' && n.status !== 'Approved' && n.status !== 'Completed' && n.status !== 'Rejected' && n.status !== 'Cancelled'
     ).length;
     const criticalAlerts = this.notifications.filter(
-      (n) => n.priority === 'Critical' && n.status !== 'Resolved'
+      (n) => n.priority === 'Critical' && n.status !== 'Resolved' && n.status !== 'Completed'
     ).length;
 
     return {
@@ -216,19 +178,44 @@ class TellerBudNotificationService {
     };
   }
 
-  markAsRead(id: string, actor = 'Sililo Lubinda (Super Admin)'): void {
+  recordViewed(id: string, viewer = 'Sililo Lubinda'): void {
+    const timeStr = formatCurrentTimeString();
+    let hasChanged = false;
+    this.notifications = this.notifications.map((n) => {
+      if (n.id === id) {
+        const activities = n.activities ? [...n.activities] : initializeActivities(n);
+        const alreadyViewed = activities.some((a) => a.event.startsWith('Viewed by'));
+        if (!alreadyViewed) {
+          activities.push({
+            id: `act-${Date.now()}-view`,
+            event: `Viewed by ${viewer}`,
+            actingUserOrSystem: viewer,
+            dateTime: timeStr,
+          });
+          hasChanged = true;
+          return { ...n, activities };
+        }
+      }
+      return n;
+    });
+
+    if (hasChanged) {
+      this.notify();
+    }
+  }
+
+  markAsRead(id: string, actor = 'Sililo Lubinda'): void {
     const timeStr = formatCurrentTimeString();
     this.notifications = this.notifications.map((n) => {
       if (n.id === id) {
-        const oldStatus = n.status;
         const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
         const newActivities = [...currentActivities];
-        if (oldStatus !== 'Read') {
+        if (n.status === 'Unread') {
           newActivities.push({
-            id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-            event: 'Marked as Read',
+            id: `act-${Date.now()}-read`,
+            event: `Marked as read`,
             actingUserOrSystem: actor,
-            previousStatus: oldStatus,
+            previousStatus: 'Unread',
             newStatus: 'Read',
             dateTime: timeStr,
           });
@@ -246,19 +233,18 @@ class TellerBudNotificationService {
     this.notify();
   }
 
-  markAsUnread(id: string, actor = 'Sililo Lubinda (Super Admin)'): void {
+  markAsUnread(id: string, actor = 'Sililo Lubinda'): void {
     const timeStr = formatCurrentTimeString();
     this.notifications = this.notifications.map((n) => {
       if (n.id === id) {
-        const oldStatus = n.status;
         const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
         const newActivities = [...currentActivities];
-        if (oldStatus !== 'Unread') {
+        if (n.status !== 'Unread') {
           newActivities.push({
-            id: `act-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-            event: 'Marked as Unread',
+            id: `act-${Date.now()}-unread`,
+            event: `Marked as unread`,
             actingUserOrSystem: actor,
-            previousStatus: oldStatus,
+            previousStatus: n.status,
             newStatus: 'Unread',
             dateTime: timeStr,
           });
@@ -276,45 +262,52 @@ class TellerBudNotificationService {
     this.notify();
   }
 
-  markAsResolved(id: string, actor = 'Sililo Lubinda (Super Admin)'): void {
+  markAllAsRead(actor = 'Sililo Lubinda'): void {
+    const timeStr = formatCurrentTimeString();
+    this.notifications = this.notifications.map((n) => {
+      if (n.status === 'Unread') {
+        const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
+        return {
+          ...n,
+          status: 'Read',
+          readAt: n.readAt || timeStr,
+          readBy: actor,
+          activities: [
+            ...currentActivities,
+            {
+              id: `act-${Date.now()}-read-${n.id}`,
+              event: 'Marked as read',
+              actingUserOrSystem: actor,
+              previousStatus: 'Unread',
+              newStatus: 'Read',
+              dateTime: timeStr,
+            },
+          ],
+        };
+      }
+      return n;
+    });
+    this.notify();
+  }
+
+  markAsResolved(id: string, actor = 'Sililo Lubinda'): void {
     const timeStr = formatCurrentTimeString();
     this.notifications = this.notifications.map((n) => {
       if (n.id === id) {
-        const oldStatus = n.status;
         const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
         const newActivities = [...currentActivities];
-
-        const wasUnread = oldStatus === 'Unread';
-        const readTime = n.readAt || timeStr;
-
-        // If notification is still unread, automatically mark it as read first
-        if (wasUnread) {
-          newActivities.push({
-            id: `act-${Date.now()}-read`,
-            event: 'Marked as Read',
-            actingUserOrSystem: actor,
-            previousStatus: 'Unread',
-            newStatus: 'Read',
-            dateTime: timeStr,
-          });
-        }
-
-        if (oldStatus !== 'Resolved') {
-          newActivities.push({
-            id: `act-${Date.now()}-resolved`,
-            event: 'Marked as Resolved',
-            actingUserOrSystem: actor,
-            previousStatus: wasUnread ? 'Read' : oldStatus,
-            newStatus: 'Resolved',
-            dateTime: timeStr,
-          });
-        }
+        newActivities.push({
+          id: `act-${Date.now()}-res`,
+          event: n.category.includes('Withdrawal') ? 'Withdrawal processed' : 'Marked as resolved',
+          actingUserOrSystem: actor,
+          previousStatus: n.status,
+          newStatus: 'Resolved',
+          dateTime: timeStr,
+        });
 
         return {
           ...n,
           status: 'Resolved',
-          readAt: readTime,
-          readBy: n.readBy || actor,
           resolvedAt: timeStr,
           resolvedBy: actor,
           actionRequired: false,
@@ -326,48 +319,57 @@ class TellerBudNotificationService {
     this.notify();
   }
 
-  recordViewed(id: string, actor = 'Sililo Lubinda (Super Admin)'): void {
+  /**
+   * Automatic resolution & status synchronization whenever a Customer or Business Withdrawal is updated
+   */
+  handleWithdrawalStatusChanged(
+    reference: string,
+    newStatus: 'Approved' | 'Rejected' | 'Cancelled' | 'Completed' | 'Paid' | 'Processing' | string,
+    actor = 'Sililo Lubinda'
+  ): void {
     const timeStr = formatCurrentTimeString();
-    let changed = false;
-    this.notifications = this.notifications.map((n) => {
-      if (n.id === id) {
-        const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
-        const alreadyOpened = currentActivities.some(
-          (a) => a.event === 'Notification Details Opened' || a.event === 'Notification Viewed'
-        );
-        if (!alreadyOpened) {
-          changed = true;
-          return {
-            ...n,
-            activities: [
-              ...currentActivities,
-              {
-                id: `act-opened-${Date.now()}`,
-                event: 'Notification Details Opened',
-                actingUserOrSystem: actor,
-                previousStatus: n.status,
-                newStatus: n.status,
-                dateTime: timeStr,
-              },
-            ],
-          };
-        }
-      }
-      return n;
-    });
-    if (changed) {
-      this.notify();
-    }
-  }
+    const cleanRef = reference.trim().toLowerCase();
 
-  markAllAsRead(): void {
-    const timeStr = formatCurrentTimeString();
     this.notifications = this.notifications.map((n) => {
-      if (n.status === 'Unread') {
+      if (n.relatedRecord.toLowerCase() === cleanRef) {
+        const currentActivities = n.activities && n.activities.length > 0 ? n.activities : initializeActivities(n);
+        const newActivities = [...currentActivities];
+
+        let eventTitle = `Withdrawal ${newStatus.toLowerCase()}`;
+        if (newStatus === 'Paid' || newStatus === 'Completed') {
+          eventTitle = 'Withdrawal completed';
+        } else if (newStatus === 'Approved') {
+          eventTitle = 'Withdrawal approved';
+        } else if (newStatus === 'Rejected') {
+          eventTitle = 'Withdrawal rejected';
+        } else if (newStatus === 'Cancelled') {
+          eventTitle = 'Withdrawal cancelled';
+        }
+
+        newActivities.push({
+          id: `act-${Date.now()}-status`,
+          event: eventTitle,
+          actingUserOrSystem: actor,
+          previousStatus: n.status,
+          newStatus: newStatus as any,
+          dateTime: timeStr,
+        });
+
+        const isTerminal = ['Approved', 'Rejected', 'Cancelled', 'Completed', 'Paid'].includes(newStatus);
+
         return {
           ...n,
-          status: 'Read',
-          readAt: n.readAt || timeStr,
+          status: isTerminal ? 'Resolved' : n.status,
+          resolvedAt: isTerminal ? timeStr : n.resolvedAt,
+          resolvedBy: isTerminal ? actor : n.resolvedBy,
+          actionRequired: !isTerminal,
+          withdrawalDetails: n.withdrawalDetails
+            ? {
+                ...n.withdrawalDetails,
+                status: (newStatus === 'Paid' ? 'Completed' : newStatus) as any,
+              }
+            : undefined,
+          activities: newActivities,
         };
       }
       return n;
@@ -375,32 +377,116 @@ class TellerBudNotificationService {
     this.notify();
   }
 
-  resetToDefault(): void {
-    this.notifications = [...INITIAL_TELLERBUD_NOTIFICATIONS];
+  /**
+   * Create a Customer Withdrawal Notification
+   */
+  createCustomerWithdrawalNotification(params: {
+    reference: string;
+    customerName: string;
+    customerId: string;
+    amount: number;
+    vendor: string;
+    mobileMoneyNumber: string;
+  }): TellerBudNotification {
+    const timeStr = formatCurrentTimeString();
+    const newId = `TB-NTF-${String(this.notifications.length + 1).padStart(3, '0')}`;
+    const amountFormatted = `ZMW ${params.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+    const newNotification: TellerBudNotification = {
+      id: newId,
+      title: 'Customer Withdrawal Request',
+      message: `${params.customerName} requested to withdraw ${amountFormatted} to ${params.vendor}. Please review the request.`,
+      category: 'Customer Withdrawal',
+      relatedRecord: params.reference,
+      priority: 'High',
+      status: 'Unread',
+      dateTime: timeStr,
+      createdAt: new Date().toISOString(),
+      withdrawalType: 'Customer Withdrawal',
+      withdrawalDetails: {
+        withdrawalId: params.reference,
+        requestType: 'Customer Withdrawal',
+        customerName: params.customerName,
+        customerId: params.customerId,
+        amount: params.amount,
+        vendor: params.vendor,
+        mobileMoneyNumber: params.mobileMoneyNumber,
+        submittedDateTime: timeStr,
+        status: 'Pending Review',
+      },
+      actionRequired: true,
+      actionLabel: 'Review Withdrawal',
+      actionRoute: `/super-admin/wallets/customer-withdrawals/${params.reference}`,
+      activities: [
+        {
+          id: `act-${newId}-1`,
+          event: 'Notification received',
+          actingUserOrSystem: 'Customer Withdrawal System',
+          dateTime: timeStr,
+        },
+      ],
+    };
+
+    this.notifications.unshift(newNotification);
     this.notify();
+    return newNotification;
   }
 
-  // Adapter for global AdminHeader bell popover
-  getAdminNotifications(): AdminNotification[] {
-    return this.notifications.map((n) => ({
-      id: n.id,
-      title: n.title,
-      category: n.category,
-      timestamp: n.dateTime,
-      read: n.status !== 'Unread',
-      actionUrl: n.actionRoute,
-      message: n.message,
-      priority:
-        n.priority === 'Critical'
-          ? 'Urgent'
-          : n.priority === 'High'
-          ? 'Important'
-          : 'Normal',
-      actionRequired: n.actionRequired,
-      relatedReference: n.relatedRecord,
-      actionType: n.actionLabel,
-      createdAt: n.createdAt,
-    }));
+  /**
+   * Create a Business Owner Withdrawal Notification
+   */
+  createBusinessWithdrawalNotification(params: {
+    reference: string;
+    businessName: string;
+    businessId: string;
+    businessOwnerName?: string;
+    amount: number;
+    vendor: string;
+    mobileMoneyNumber: string;
+  }): TellerBudNotification {
+    const timeStr = formatCurrentTimeString();
+    const newId = `TB-NTF-${String(this.notifications.length + 1).padStart(3, '0')}`;
+    const amountFormatted = `ZMW ${params.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+    const newNotification: TellerBudNotification = {
+      id: newId,
+      title: 'Business Withdrawal Request',
+      message: `${params.businessName} requested to withdraw ${amountFormatted} from its business wallet. Please review the request.`,
+      category: 'Business Withdrawal',
+      relatedRecord: params.reference,
+      priority: 'High',
+      status: 'Unread',
+      dateTime: timeStr,
+      createdAt: new Date().toISOString(),
+      withdrawalType: 'Business Withdrawal',
+      withdrawalDetails: {
+        withdrawalId: params.reference,
+        requestType: 'Business Withdrawal',
+        businessName: params.businessName,
+        businessId: params.businessId,
+        businessOwnerName: params.businessOwnerName || 'Chileshe Mwamba',
+        amount: params.amount,
+        vendor: params.vendor,
+        mobileMoneyNumber: params.mobileMoneyNumber,
+        submittedDateTime: timeStr,
+        status: 'Pending Review',
+      },
+      actionRequired: true,
+      actionLabel: 'Review Withdrawal',
+      actionRoute: `/super-admin/wallets/business-agent`,
+      activities: [
+        {
+          id: `act-${newId}-1`,
+          event: 'Notification received',
+          actingUserOrSystem: 'Business Wallet System',
+          dateTime: timeStr,
+        },
+      ],
+    };
+
+    this.notifications.unshift(newNotification);
+    this.notify();
+    return newNotification;
   }
 }
 

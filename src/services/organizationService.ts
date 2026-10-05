@@ -17,6 +17,9 @@ import {
   DeviceStatus,
   StoreStatus,
   BoothStatus,
+  MaintenanceReason,
+  DeviceMaintenanceRecord,
+  DevicePreviousAllocation,
 } from '../types/organization';
 import {
   INITIAL_STORES,
@@ -27,11 +30,13 @@ import {
   INITIAL_DEVICE_ASSIGNMENTS,
   INITIAL_BALANCE_ADJUSTMENTS,
   INITIAL_AUDIT_LOGS,
+  INITIAL_DEVICE_MAINTENANCE_RECORDS,
   hashPasscode,
 } from '../data/mockOrganizationData';
 import { City, CENTRAL_CITY_MASTER_LIST, formatStoreLocation } from '../data/mockCityData';
 import { MOCK_AGENTS } from '../data/mockAgentData';
 import { sequenceService } from './sequenceService';
+import { boNotificationService } from './notificationService';
 
 const STORAGE_KEYS = {
   STORES: 'tellerbud_org_stores_v1',
@@ -40,6 +45,7 @@ const STORAGE_KEYS = {
   STAFF_ASSIGNMENTS: 'tellerbud_org_staff_assignments_v1',
   DEVICES: 'tellerbud_org_devices_v1',
   DEVICE_ASSIGNMENTS: 'tellerbud_org_device_assignments_v1',
+  DEVICE_MAINTENANCE: 'tellerbud_org_device_maintenance_v1',
   ADJUSTMENTS: 'tellerbud_org_adjustments_v1',
   AUDIT_LOGS: 'tellerbud_org_audit_logs_v1',
 };
@@ -84,6 +90,7 @@ class OrganizationService {
   private staffAssignments: StaffBoothAssignment[] = [];
   private devices: Device[] = [];
   private deviceAssignments: DeviceAssignment[] = [];
+  private deviceMaintenanceRecords: DeviceMaintenanceRecord[] = [];
   private balanceAdjustments: BalanceAdjustment[] = [];
   private auditLogs: OrganizationAuditLog[] = [];
   private listeners: Array<() => void> = [];
@@ -148,6 +155,10 @@ class OrganizationService {
       const sDevAss = localStorage.getItem(STORAGE_KEYS.DEVICE_ASSIGNMENTS);
       this.deviceAssignments = sDevAss ? JSON.parse(sDevAss) : [...INITIAL_DEVICE_ASSIGNMENTS];
 
+      const sMnt = localStorage.getItem(STORAGE_KEYS.DEVICE_MAINTENANCE);
+      const rawMnt: DeviceMaintenanceRecord[] = sMnt ? JSON.parse(sMnt) : [...INITIAL_DEVICE_MAINTENANCE_RECORDS];
+      this.deviceMaintenanceRecords = rawMnt;
+
       const sAdj = localStorage.getItem(STORAGE_KEYS.ADJUSTMENTS);
       const rawAdj: BalanceAdjustment[] = sAdj ? JSON.parse(sAdj) : [];
       if (!sAdj || rawAdj.length < INITIAL_BALANCE_ADJUSTMENTS.length) {
@@ -172,6 +183,7 @@ class OrganizationService {
       localStorage.setItem(STORAGE_KEYS.STAFF_ASSIGNMENTS, JSON.stringify(this.staffAssignments));
       localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(this.devices));
       localStorage.setItem(STORAGE_KEYS.DEVICE_ASSIGNMENTS, JSON.stringify(this.deviceAssignments));
+      localStorage.setItem(STORAGE_KEYS.DEVICE_MAINTENANCE, JSON.stringify(this.deviceMaintenanceRecords));
       localStorage.setItem(STORAGE_KEYS.ADJUSTMENTS, JSON.stringify(this.balanceAdjustments));
       localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(this.auditLogs));
     } catch (e) {
@@ -187,6 +199,7 @@ class OrganizationService {
     this.staffAssignments = [...INITIAL_STAFF_ASSIGNMENTS];
     this.devices = [...INITIAL_DEVICES];
     this.deviceAssignments = [...INITIAL_DEVICE_ASSIGNMENTS];
+    this.deviceMaintenanceRecords = [...INITIAL_DEVICE_MAINTENANCE_RECORDS];
     this.balanceAdjustments = [...INITIAL_BALANCE_ADJUSTMENTS];
     this.auditLogs = [...INITIAL_AUDIT_LOGS];
     this.saveToStorage();
@@ -1703,6 +1716,9 @@ class OrganizationService {
     if (device.status === 'Decommissioned') {
       return { success: false, error: 'Cannot assign a decommissioned device.' };
     }
+    if (device.status === 'Under Maintenance') {
+      return { success: false, error: 'Cannot assign a device currently Under Maintenance. Return device to service first.' };
+    }
 
     const staff = this.users.find((u) => u.id === params.staffUserId && u.businessId === businessId);
     if (!staff) {
@@ -1790,6 +1806,9 @@ class OrganizationService {
     }
     if (device.status === 'Decommissioned') {
       return { success: false, error: 'Cannot move a decommissioned device.' };
+    }
+    if (device.status === 'Under Maintenance') {
+      return { success: false, error: 'Cannot move a device currently Under Maintenance.' };
     }
 
     const currentAssignment = this.deviceAssignments.find(
@@ -1893,6 +1912,359 @@ class OrganizationService {
     return { success: true };
   }
 
+  private getBusinessNameById(bizId: string): string {
+    const map: Record<string, string> = {
+      'TB-BIZ-000001': 'Lusaka Central Express Agency',
+      'TB-BIZ-000002': 'Kabwata Market Agency',
+      'TB-BIZ-000003': 'Copperbelt Financial Services',
+      'TB-BIZ-000004': 'Copperbelt Liquidity Hub',
+      'TB-BIZ-000005': 'Livingstone Victoria Falls Agency',
+      'TB-BIZ-000006': 'Chipata Eastern Gateway',
+      'TB-BIZ-000007': 'Ndola Broadway Financial Branch',
+      'TB-BIZ-000008': 'Solwezi Mining District Agency',
+      'BIZ-LUS-001': 'Lusaka Central Express Agency',
+    };
+    return map[bizId] || bizId;
+  }
+
+  // ==========================================
+  // DEVICE MAINTENANCE WORKFLOW
+  // ==========================================
+
+  public markDeviceUnderMaintenance(
+    actor: AuthenticatedUser,
+    data: {
+      deviceId: string;
+      reason: MaintenanceReason | string;
+      notes?: string;
+      expectedReturnDate?: string | null;
+    }
+  ): { success: boolean; error?: string; maintenanceRecord?: DeviceMaintenanceRecord } {
+    if (actor.role !== 'super_admin' && actor.role !== 'business_admin') {
+      return { success: false, error: 'Forbidden: Only authorized administrators can place devices under maintenance.' };
+    }
+
+    const device = this.devices.find((d) => d.id === data.deviceId || d.deviceId === data.deviceId);
+    if (!device) {
+      return { success: false, error: 'Device not found.' };
+    }
+    if (device.status === 'Decommissioned') {
+      return { success: false, error: 'Cannot place a decommissioned device under maintenance.' };
+    }
+    if (device.status === 'Under Maintenance') {
+      return { success: false, error: 'Device is already under maintenance.' };
+    }
+    if (!data.reason || !data.reason.trim()) {
+      return { success: false, error: 'Maintenance reason is required.' };
+    }
+    if (data.reason === 'Other' && (!data.notes || data.notes.trim().length < 5)) {
+      return { success: false, error: 'Notes are mandatory (at least 5 characters) when reason is "Other".' };
+    }
+
+    const previousStatus = device.status;
+    const previousBizId = device.allocatedBusinessId || null;
+    const activeAss = this.deviceAssignments.find((da) => da.deviceId === device.id && da.isActive);
+
+    let storeName: string | undefined;
+    let boothName: string | undefined;
+    let staffName: string | undefined;
+
+    if (activeAss) {
+      if (activeAss.storeId) {
+        const s = this.stores.find((st) => st.id === activeAss.storeId);
+        storeName = s?.storeName;
+      }
+      if (activeAss.boothId) {
+        const b = this.booths.find((bt) => bt.id === activeAss.boothId);
+        boothName = b?.boothName;
+      }
+      if (activeAss.staffUserId) {
+        const u = this.users.find((usr) => usr.id === activeAss.staffUserId);
+        staffName = u ? `${u.firstName} ${u.lastName}` : activeAss.staffUserId;
+      }
+    }
+
+    const prevAllocation: DevicePreviousAllocation = {
+      businessId: previousBizId,
+      businessName: previousBizId ? this.getBusinessNameById(previousBizId) : undefined,
+      storeId: activeAss?.storeId || null,
+      storeName,
+      boothId: activeAss?.boothId || null,
+      boothName,
+      staffUserId: activeAss?.staffUserId || null,
+      staffName,
+    };
+
+    const now = new Date().toISOString();
+    if (activeAss) {
+      activeAss.isActive = false;
+      activeAss.effectiveTo = now;
+      activeAss.updatedAt = now;
+      activeAss.updatedBy = actor.uid;
+    }
+
+    const mntId = `MNT-DEV-${String(this.deviceMaintenanceRecords.length + 1).padStart(6, '0')}`;
+    const newRecord: DeviceMaintenanceRecord = {
+      id: mntId,
+      deviceId: device.deviceId || device.id,
+      deviceName: device.deviceName,
+      serialNumber: device.serialNumber,
+      previousStatus,
+      maintenanceStatus: 'In Progress',
+      reason: data.reason.trim(),
+      notes: data.notes?.trim() || undefined,
+      startDate: now,
+      expectedReturnDate: data.expectedReturnDate || null,
+      previousAllocation: prevAllocation,
+      performedBy: actor.fullName || 'TellerBud Admin',
+      performedByUserId: actor.uid || 'USR-ADM-001',
+      createdAt: now,
+    };
+
+    this.deviceMaintenanceRecords.unshift(newRecord);
+
+    device.status = 'Under Maintenance';
+    device.currentMaintenanceRecordId = mntId;
+    device.maintenanceReason = data.reason.trim();
+    device.maintenanceNotes = data.notes?.trim() || undefined;
+    device.maintenanceStartDate = now;
+    device.expectedReturnDate = data.expectedReturnDate || null;
+    device.previousAllocationBeforeMaintenance = prevAllocation;
+    device.updatedAt = now;
+    device.updatedBy = actor.uid;
+
+    this.logAuditEvent({
+      businessId: device.allocatedBusinessId || 'PLATFORM',
+      eventType: 'Device Marked Under Maintenance',
+      entityType: 'Device',
+      entityId: device.id,
+      affectedName: `${device.deviceName} (${device.deviceId || device.id})`,
+      previousValue: `Status: ${previousStatus}`,
+      newValue: 'Status: Under Maintenance',
+      reason: `Maintenance Reason: ${data.reason}${data.notes ? ` - Notes: ${data.notes}` : ''}`,
+      actor,
+    });
+
+    if (previousBizId) {
+      const bizName = this.getBusinessNameById(previousBizId);
+      boNotificationService.addNotification({
+        id: `notif-mnt-${Date.now()}`,
+        title: `Device Placed Under Maintenance: ${device.deviceName}`,
+        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}, S/N: ${device.serialNumber}) was marked Under Maintenance by TellerBud Admin. Reason: ${data.reason}.${data.expectedReturnDate ? ` Expected Return: ${data.expectedReturnDate}.` : ''}`,
+        category: 'System',
+        priority: 'Important',
+        read: false,
+        timeAgo: 'Just now',
+        rawDate: now.slice(0, 10),
+        createdAt: now,
+        actionRequired: false,
+        actionType: 'View System',
+        businessId: previousBizId,
+        businessName: bizName,
+        relatedReference: device.deviceId || device.id,
+        actionUrl: '/business-owner/organization/devices',
+      });
+    }
+
+    this.saveToStorage();
+    return { success: true, maintenanceRecord: newRecord };
+  }
+
+  public returnDeviceToService(
+    actor: AuthenticatedUser,
+    data: {
+      deviceId: string;
+      resolutionNotes: string;
+      returnOption: 'AVAILABLE_DEPOT' | 'RESTORE_PREVIOUS';
+    }
+  ): { success: boolean; error?: string } {
+    if (actor.role !== 'super_admin' && actor.role !== 'business_admin') {
+      return { success: false, error: 'Forbidden: Only authorized administrators can return devices to service.' };
+    }
+
+    const device = this.devices.find((d) => d.id === data.deviceId || d.deviceId === data.deviceId);
+    if (!device) {
+      return { success: false, error: 'Device not found.' };
+    }
+    if (device.status !== 'Under Maintenance') {
+      return { success: false, error: 'Device is not currently under maintenance.' };
+    }
+    if (!data.resolutionNotes || !data.resolutionNotes.trim()) {
+      return { success: false, error: 'Resolution or work completed notes are required.' };
+    }
+
+    const now = new Date().toISOString();
+    const prevAllocation = device.previousAllocationBeforeMaintenance;
+
+    let resultingStatus: DeviceStatus = 'Available';
+    let resultingBizId: string | null = null;
+    let resultingAllocation: DevicePreviousAllocation | undefined;
+
+    if (data.returnOption === 'RESTORE_PREVIOUS') {
+      if (!prevAllocation?.businessId) {
+        return { success: false, error: 'No previous business allocation exists to restore.' };
+      }
+      resultingBizId = prevAllocation.businessId;
+      resultingStatus = 'Assigned';
+      resultingAllocation = { ...prevAllocation };
+
+      if (prevAllocation.storeId && prevAllocation.boothId) {
+        const boothExists = this.booths.some(
+          (b) => b.id === prevAllocation.boothId && b.status === 'Active'
+        );
+        if (boothExists) {
+          const newAssignment: DeviceAssignment = {
+            id: `DA-${Date.now()}`,
+            deviceId: device.id,
+            businessId: resultingBizId,
+            storeId: prevAllocation.storeId,
+            boothId: prevAllocation.boothId,
+            staffUserId: prevAllocation.staffUserId || null,
+            effectiveFrom: now,
+            effectiveTo: null,
+            isActive: true,
+            reason: 'Restored after maintenance completion',
+            assignedBy: actor.fullName || 'TellerBud Admin',
+            updatedAt: now,
+            updatedBy: actor.uid,
+          };
+          this.deviceAssignments.push(newAssignment);
+        }
+      }
+    } else {
+      resultingBizId = null;
+      resultingStatus = 'Available';
+      resultingAllocation = {
+        businessId: null,
+        businessName: 'Central Depot Inventory',
+      };
+    }
+
+    const mntRecord = this.deviceMaintenanceRecords.find(
+      (m) =>
+        m.id === device.currentMaintenanceRecordId ||
+        (m.deviceId === (device.deviceId || device.id) && m.maintenanceStatus === 'In Progress')
+    );
+
+    if (mntRecord) {
+      mntRecord.maintenanceStatus = 'Completed';
+      mntRecord.completionDate = now;
+      mntRecord.resolutionNotes = data.resolutionNotes.trim();
+      mntRecord.resultingAllocation = resultingAllocation;
+      mntRecord.resultingStatus = resultingStatus;
+      mntRecord.updatedAt = now;
+    }
+
+    device.status = resultingStatus;
+    device.allocatedBusinessId = resultingBizId;
+    device.currentMaintenanceRecordId = undefined;
+    device.maintenanceReason = undefined;
+    device.maintenanceNotes = undefined;
+    device.maintenanceStartDate = undefined;
+    device.expectedReturnDate = undefined;
+    device.previousAllocationBeforeMaintenance = undefined;
+    device.updatedAt = now;
+    device.updatedBy = actor.uid;
+
+    this.logAuditEvent({
+      businessId: resultingBizId || prevAllocation?.businessId || 'PLATFORM',
+      eventType: 'Device Returned to Service',
+      entityType: 'Device',
+      entityId: device.id,
+      affectedName: `${device.deviceName} (${device.deviceId || device.id})`,
+      previousValue: 'Status: Under Maintenance',
+      newValue: `Status: ${resultingStatus} (${resultingBizId ? this.getBusinessNameById(resultingBizId) : 'Central Depot Inventory'})`,
+      reason: `Maintenance Completed: ${data.resolutionNotes.trim()}`,
+      actor,
+    });
+
+    const notifiedBizId = resultingBizId || prevAllocation?.businessId;
+    if (notifiedBizId) {
+      const bizName = this.getBusinessNameById(notifiedBizId);
+      boNotificationService.addNotification({
+        id: `notif-mnt-ret-${Date.now()}`,
+        title: `Device Returned to Service: ${device.deviceName}`,
+        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}) has completed maintenance and was returned to service (${resultingStatus === 'Assigned' ? `Restored to ${bizName}` : 'Central Depot Inventory'}). Resolution: ${data.resolutionNotes.trim()}`,
+        category: 'System',
+        priority: 'Normal',
+        read: false,
+        timeAgo: 'Just now',
+        rawDate: now.slice(0, 10),
+        createdAt: now,
+        actionRequired: false,
+        actionType: 'View System',
+        businessId: notifiedBizId,
+        businessName: bizName,
+        relatedReference: device.deviceId || device.id,
+        actionUrl: '/business-owner/organization/devices',
+      });
+    }
+
+    this.saveToStorage();
+    return { success: true };
+  }
+
+  public updateMaintenanceExpectedReturnDate(
+    actor: AuthenticatedUser,
+    deviceId: string,
+    expectedReturnDate: string | null
+  ): { success: boolean; error?: string } {
+    if (actor.role !== 'super_admin' && actor.role !== 'business_admin') {
+      return { success: false, error: 'Forbidden: Insufficient privileges.' };
+    }
+    const device = this.devices.find((d) => d.id === deviceId || d.deviceId === deviceId);
+    if (!device) return { success: false, error: 'Device not found.' };
+
+    device.expectedReturnDate = expectedReturnDate;
+    const mntRecord = this.deviceMaintenanceRecords.find(
+      (m) =>
+        m.id === device.currentMaintenanceRecordId ||
+        (m.deviceId === (device.deviceId || device.id) && m.maintenanceStatus === 'In Progress')
+    );
+    if (mntRecord) {
+      mntRecord.expectedReturnDate = expectedReturnDate;
+    }
+
+    if (device.allocatedBusinessId) {
+      const nowStr = new Date().toISOString();
+      const bizName = this.getBusinessNameById(device.allocatedBusinessId);
+      boNotificationService.addNotification({
+        id: `notif-mnt-exp-${Date.now()}`,
+        title: `Maintenance Schedule Updated: ${device.deviceName}`,
+        message: `Expected return date for hardware unit ${device.deviceName} (${device.deviceId || device.id}) was updated to ${expectedReturnDate || 'TBD'}.`,
+        category: 'System',
+        priority: 'Normal',
+        read: false,
+        timeAgo: 'Just now',
+        rawDate: nowStr.slice(0, 10),
+        createdAt: nowStr,
+        actionRequired: false,
+        actionType: 'View System',
+        businessId: device.allocatedBusinessId,
+        businessName: bizName,
+        relatedReference: device.deviceId || device.id,
+        actionUrl: '/business-owner/organization/devices',
+      });
+    }
+
+    this.saveToStorage();
+    return { success: true };
+  }
+
+  public getDeviceMaintenanceHistory(deviceId: string): DeviceMaintenanceRecord[] {
+    const dev = this.devices.find((d) => d.id === deviceId || d.deviceId === deviceId);
+    const targetId = dev ? dev.deviceId || dev.id : deviceId;
+    return this.deviceMaintenanceRecords
+      .filter((m) => m.deviceId === targetId || (dev && m.deviceId === dev.id))
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  }
+
+  public getAllMaintenanceRecords(): DeviceMaintenanceRecord[] {
+    return [...this.deviceMaintenanceRecords].sort(
+      (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    );
+  }
+
   public decommissionDevice(
     actor: AuthenticatedUser,
     deviceId: string,
@@ -1905,12 +2277,11 @@ class OrganizationService {
       return { success: false, error: 'Decommissioning reason is required.' };
     }
 
-    const device = this.devices.find((d) => d.id === deviceId);
+    const device = this.devices.find((d) => d.id === deviceId || d.deviceId === deviceId);
     if (!device) {
       return { success: false, error: 'Device not found.' };
     }
 
-    // Close any active assignment across all booths/stores/businesses
     const activeAssignments = this.deviceAssignments.filter(
       (da) => da.deviceId === device.id && da.isActive
     );
@@ -1922,11 +2293,28 @@ class OrganizationService {
       da.updatedBy = actor.uid;
     });
 
+    if (device.status === 'Under Maintenance' || device.currentMaintenanceRecordId) {
+      const mntRecord = this.deviceMaintenanceRecords.find(
+        (m) =>
+          m.id === device.currentMaintenanceRecordId ||
+          (m.deviceId === (device.deviceId || device.id) && m.maintenanceStatus === 'In Progress')
+      );
+      if (mntRecord) {
+        mntRecord.maintenanceStatus = 'Completed';
+        mntRecord.completionDate = now;
+        mntRecord.resolutionNotes = `Device decommissioned while under maintenance: ${reason.trim()}`;
+        mntRecord.resultingStatus = 'Decommissioned';
+        mntRecord.updatedAt = now;
+      }
+    }
+
     const previousStatus = device.status;
+    const prevBizId = device.allocatedBusinessId;
     device.status = 'Decommissioned';
     device.decommissionReason = reason.trim();
     device.decommissionedAt = now;
     device.decommissionedBy = actor.fullName || 'TellerBud Admin';
+    device.currentMaintenanceRecordId = undefined;
     device.updatedAt = now;
     device.updatedBy = actor.uid;
 
@@ -1941,6 +2329,27 @@ class OrganizationService {
       reason: reason.trim(),
       actor,
     });
+
+    if (prevBizId) {
+      const bizName = this.getBusinessNameById(prevBizId);
+      boNotificationService.addNotification({
+        id: `notif-dcm-${Date.now()}`,
+        title: `Hardware Decommissioned: ${device.deviceName}`,
+        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}) has been permanently decommissioned. Reason: ${reason.trim()}`,
+        category: 'System',
+        priority: 'Important',
+        read: false,
+        timeAgo: 'Just now',
+        rawDate: now.slice(0, 10),
+        createdAt: now,
+        actionRequired: false,
+        actionType: 'View System',
+        businessId: prevBizId,
+        businessName: bizName,
+        relatedReference: device.deviceId || device.id,
+        actionUrl: '/business-owner/organization/devices',
+      });
+    }
 
     this.saveToStorage();
     return { success: true };
@@ -2022,6 +2431,9 @@ class OrganizationService {
     }
     if (device.status === 'Decommissioned') {
       return { success: false, error: 'Cannot allocate a decommissioned device.' };
+    }
+    if (device.status === 'Under Maintenance') {
+      return { success: false, error: 'Cannot allocate or reallocate a device currently Under Maintenance. Return device to service first.' };
     }
 
     const prevBiz = device.allocatedBusinessId || 'Platform Inventory (Unallocated)';
