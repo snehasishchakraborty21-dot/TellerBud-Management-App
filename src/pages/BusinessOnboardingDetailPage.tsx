@@ -784,9 +784,57 @@ export const BusinessOnboardingDetailPage: React.FC = () => {
                 <div className="font-bold text-slate-900">{application.digitalOnboarding.proposedBoothsCount || 0} Booths</div>
               </div>
 
+              {/* Terms & Conditions Acceptance Record */}
+              <div className="sm:col-span-2 pt-3 border-t border-slate-100 space-y-2">
+                <span className="text-slate-500 font-medium block">
+                  Terms & Conditions Acceptance Record:
+                </span>
+                {application.digitalOnboarding.acceptedOnboardingTerms ? (
+                  <div className="p-4 bg-teal-50/70 border border-teal-200 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
+                        <span className="font-bold text-teal-900 text-xs sm:text-sm">
+                          {application.digitalOnboarding.termsAcceptanceRecord?.termsTitle || 'TellerBud Business Owner Terms & Conditions'}
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-900 text-[10.5px] font-bold">
+                        Version {application.digitalOnboarding.termsVersionAccepted || '1.0'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-teal-950 pt-1">
+                      <div>
+                        <span className="text-teal-700">Effective Date:</span>{' '}
+                        <strong>{application.digitalOnboarding.termsAcceptanceRecord?.effectiveDate || 'To be configured by TellerBud Admin'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-teal-700">Accepted At:</span>{' '}
+                        <strong>
+                          {application.digitalOnboarding.termsAcceptanceRecord?.acceptedAtFormattedLusaka ||
+                            (application.digitalOnboarding.termsAcceptedTimestamp
+                              ? new Date(application.digitalOnboarding.termsAcceptedTimestamp).toLocaleString('en-GB') + ' CAT'
+                              : '24 September 2026 at 16:05:00 CAT')}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-teal-700">Signatory:</span>{' '}
+                        <strong>{application.digitalOnboarding.ownerFullLegalName}</strong> ({application.businessOwnerId || 'TB-BOO-000011'})
+                      </div>
+                      <div>
+                        <span className="text-teal-700">Timezone:</span> <strong>Africa/Lusaka</strong>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                    Terms & Conditions acceptance pending.
+                  </div>
+                )}
+              </div>
+
               {/* Tablet E-Signature */}
               {application.digitalOnboarding.eSignatureData && (
-                <div className="sm:col-span-2 pt-3 border-t border-slate-100 space-y-2">
+                <div className="sm:col-span-2 pt-2 border-t border-slate-100 space-y-2">
                   <span className="text-slate-500 font-medium block">
                     Business Owner Tablet E-Signature:
                   </span>
@@ -797,8 +845,13 @@ export const BusinessOnboardingDetailPage: React.FC = () => {
                       className="max-h-20 object-contain"
                     />
                     <div className="text-right text-[11px] text-slate-500">
-                      <div>Signed: {application.digitalOnboarding.eSignatureTimestamp ? new Date(application.digitalOnboarding.eSignatureTimestamp).toLocaleString() : 'Yes'}</div>
-                      <div className="text-emerald-700 font-semibold">Consent & Terms Accepted</div>
+                      <div>
+                        Signed:{' '}
+                        {application.digitalOnboarding.eSignatureTimestamp
+                          ? new Date(application.digitalOnboarding.eSignatureTimestamp).toLocaleString()
+                          : 'Yes'}
+                      </div>
+                      <div className="text-emerald-700 font-semibold">Consent & Terms v1.0 Bound</div>
                     </div>
                   </div>
                 </div>

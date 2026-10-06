@@ -22,6 +22,7 @@ import { BusinessRecord } from '../types/business';
 import { adminService } from '../services/mockAdminService';
 import { businessService } from '../services/businessService';
 import { getZambiaTodayString } from '../utils/dateUtils';
+import { CustomerRequestsDateInput } from '../components/requests/CustomerRequestsDateInput';
 
 interface BusinessMobileMoneySummary {
   businessId: string;
@@ -523,13 +524,12 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Compact Filter & Action Section (Single Horizontal Line) */}
+      {/* 2. Compact Filter & Action Section (Single Balanced Horizontal Row) */}
       <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
-          {/* Left: Search & Date Ranges */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-            {/* Search Box */}
-            <div className="relative w-full sm:w-[240px] lg:w-[260px] shrink-0">
+        <div className="w-full overflow-x-auto transaction-table-scroll focus:outline-none">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-max flex-nowrap h-9 w-full">
+            {/* 1. Search Box (Flexible width occupying remaining space) */}
+            <div className="relative flex-1 min-w-[280px]">
               <Search
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -561,58 +561,38 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
               )}
             </div>
 
-            {/* Date Range: From Date & To Date */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                  From:
-                </span>
-                <input
-                  id="filter-from-date"
-                  type="date"
-                  value={fromDate}
-                  max={toDate || todayStr}
-                  onChange={(e) => {
-                    setFromDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  title="From Date"
-                  aria-label="From Date"
-                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-                />
-              </div>
+            {/* 2. From Date (compact, dd-mm-yyyy placeholder when empty) */}
+            <CustomerRequestsDateInput
+              label="From"
+              value={fromDate}
+              onChange={(val) => {
+                setFromDate(val);
+                setCurrentPage(1);
+              }}
+              maxDate={toDate || todayStr}
+              id="filter-from-date"
+            />
 
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                  To:
-                </span>
-                <input
-                  id="filter-to-date"
-                  type="date"
-                  value={toDate}
-                  min={fromDate || undefined}
-                  max={todayStr}
-                  onChange={(e) => {
-                    setToDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  title="To Date"
-                  aria-label="To Date"
-                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
+            {/* 3. To Date (compact, dd-mm-yyyy placeholder when empty) */}
+            <CustomerRequestsDateInput
+              label="To"
+              value={toDate}
+              onChange={(val) => {
+                setToDate(val);
+                setCurrentPage(1);
+              }}
+              minDate={fromDate || undefined}
+              maxDate={todayStr}
+              id="filter-to-date"
+            />
 
-          {/* Right: Clear Filters, Refresh & Export Dropdown */}
-          <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
-            {/* Clear Filters */}
+            {/* 4. Clear Filters */}
             <button
               type="button"
               id="btn-clear-filters"
               onClick={handleClearFilters}
               disabled={!hasActiveFilters}
-              className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-colors flex items-center gap-1.5 ${
+              className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 hasActiveFilters
                   ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer'
                   : 'text-gray-400 bg-transparent border-gray-200/60 opacity-50 cursor-not-allowed'
@@ -623,13 +603,13 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
               <span>Clear Filters</span>
             </button>
 
-            {/* Refresh */}
+            {/* 5. Refresh */}
             <button
               type="button"
               id="btn-refresh-momo"
               onClick={() => loadData(true)}
               disabled={isRefreshing}
-              className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
               title="Refresh mobile money transaction summaries"
             >
               <RefreshCw
@@ -639,13 +619,13 @@ export const MobileMoneyTransactionsPage: React.FC = () => {
               <span>Refresh</span>
             </button>
 
-            {/* Export Dropdown */}
-            <div className="relative" ref={exportMenuRef}>
+            {/* 6. Export Dropdown */}
+            <div className="relative shrink-0" ref={exportMenuRef}>
               <button
                 type="button"
                 id="btn-export-momo"
                 onClick={() => setShowExportMenu((prev) => !prev)}
-                className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 title="Export mobile money transactions"
               >
                 <Download size={13} />

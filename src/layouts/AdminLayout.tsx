@@ -743,12 +743,42 @@ export const AdminLayout: React.FC = () => {
     !location.pathname.includes('/people/business-onboarding/') &&
     !location.pathname.includes('/business-onboarding/');
 
+  const isCustomerWalletsListing =
+    (location.pathname === '/super-admin/wallets/customers' ||
+      location.pathname === '/super-admin/wallets/customers/' ||
+      location.pathname === '/super-admin/customer-wallets' ||
+      location.pathname === '/super-admin/customer-wallets/' ||
+      location.pathname === '/wallets/customers' ||
+      location.pathname === '/wallets/customers/' ||
+      location.pathname === '/customer-wallets' ||
+      location.pathname === '/customer-wallets/' ||
+      location.pathname.endsWith('/wallets/customers') ||
+      location.pathname.endsWith('/customer-wallets')) &&
+    !location.pathname.includes('/wallets/customers/') &&
+    !location.pathname.includes('/customer-wallets/');
+
+  const isWalletFundingListing =
+    (location.pathname === '/super-admin/wallets/add-funds' ||
+      location.pathname === '/super-admin/wallets/add-funds/' ||
+      location.pathname === '/super-admin/wallets/funding' ||
+      location.pathname === '/super-admin/wallets/funding/' ||
+      location.pathname === '/super-admin/wallet-funding' ||
+      location.pathname === '/super-admin/wallet-funding/' ||
+      location.pathname === '/wallet-funding' ||
+      location.pathname === '/wallet-funding/' ||
+      location.pathname.endsWith('/wallets/add-funds') ||
+      location.pathname.endsWith('/wallet-funding')) &&
+    !location.pathname.includes('/wallets/add-funds/') &&
+    !location.pathname.includes('/wallet-funding/');
+
   const isFrozenLayout =
     isServiceModesListing ||
     isVendorsListing ||
     isCustomerRequestsListing ||
     isAgentLiquidityListing ||
     isBusinessOnboardingListing ||
+    isCustomerWalletsListing ||
+    isWalletFundingListing ||
     isBOLiveOperationsListing ||
     isBOMobileMoneyListing ||
     isBOAgentLiquidityListing ||

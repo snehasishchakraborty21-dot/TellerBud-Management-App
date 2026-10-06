@@ -70,7 +70,7 @@ export const CustomerWalletPagination: React.FC<CustomerWalletPaginationProps> =
           ) {
             return (
               <button
-                key={page}
+                key={`page-btn-${page}`}
                 type="button"
                 onClick={() => onPageChange(page)}
                 className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-medium transition-colors ${
@@ -85,7 +85,7 @@ export const CustomerWalletPagination: React.FC<CustomerWalletPaginationProps> =
           }
           if (page === currentPage - 2 || page === currentPage + 2) {
             return (
-              <span key={page} className="px-1 text-slate-400">
+              <span key={`ellipsis-${page}`} className="px-1 text-slate-400">
                 •••
               </span>
             );

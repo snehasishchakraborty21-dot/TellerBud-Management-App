@@ -1363,37 +1363,313 @@ const CUSTOMER_ID_MAP: Record<string, { id: string; phone: string }> = {
   'Mary Zimba': { id: 'TB-CUS-001008', phone: '+260 97 112 2334' },
 };
 
+const BUSINESS_FUNDING_SEED: Array<Partial<WalletFundingRecord> & { businessName: string; businessId: string; phone: string; walletId: string }> = [
+  {
+    businessName: 'Lusaka Central Express Agency',
+    businessId: 'TB-BIZ-000001',
+    phone: '+260 97 712 3456',
+    walletId: 'TB-WAL-BIZ-000001',
+    amount: 50000.0,
+    provider: 'MTN Mobile Money',
+    status: 'Completed',
+    initiatedAt: '08 Sep 2026, 11:30 AM',
+    initiatedTimestamp: '2026-09-08T11:30:00Z',
+    lastUpdated: '08 Sep 2026, 11:32 AM',
+    lastUpdatedTimestamp: '2026-09-08T11:32:00Z',
+    providerReference: 'MTN-BIZ-9901421',
+    walletCreditReference: 'TB-LED-BIZ-000001',
+    balanceBefore: 114350.0,
+    fundingCredit: 50000.0,
+    balanceAfter: 164350.0,
+    postedAt: '08 Sep 2026, 11:32 AM',
+  },
+  {
+    businessName: 'Kabwata Market Agency',
+    businessId: 'TB-BIZ-000002',
+    phone: '+260 96 445 6677',
+    walletId: 'TB-WAL-BIZ-000002',
+    amount: 35000.0,
+    provider: 'Airtel Money',
+    status: 'Completed',
+    initiatedAt: '08 Sep 2026, 10:15 AM',
+    initiatedTimestamp: '2026-09-08T10:15:00Z',
+    lastUpdated: '08 Sep 2026, 10:18 AM',
+    lastUpdatedTimestamp: '2026-09-08T10:18:00Z',
+    providerReference: 'AIR-BIZ-8812034',
+    walletCreditReference: 'TB-LED-BIZ-000002',
+    balanceBefore: 54400.0,
+    fundingCredit: 35000.0,
+    balanceAfter: 89400.0,
+    postedAt: '08 Sep 2026, 10:18 AM',
+  },
+  {
+    businessName: 'Copperbelt Financial Services',
+    businessId: 'TB-BIZ-000003',
+    phone: '+260 97 123 9988',
+    walletId: 'TB-WAL-BIZ-000003',
+    amount: 80000.0,
+    provider: 'MTN Mobile Money',
+    status: 'Completed',
+    initiatedAt: '07 Sep 2026, 03:45 PM',
+    initiatedTimestamp: '2026-09-07T15:45:00Z',
+    lastUpdated: '07 Sep 2026, 03:48 PM',
+    lastUpdatedTimestamp: '2026-09-07T15:48:00Z',
+    providerReference: 'MTN-BIZ-7745910',
+    walletCreditReference: 'TB-LED-BIZ-000003',
+    balanceBefore: 62600.0,
+    fundingCredit: 80000.0,
+    balanceAfter: 142600.0,
+    postedAt: '07 Sep 2026, 03:48 PM',
+  },
+  {
+    businessName: 'Lusaka Central Express Agency',
+    businessId: 'TB-BIZ-000001',
+    phone: '+260 97 712 3456',
+    walletId: 'TB-WAL-BIZ-000001',
+    amount: 25000.0,
+    provider: 'Airtel Money',
+    status: 'Pending',
+    initiatedAt: '08 Sep 2026, 11:48 AM',
+    initiatedTimestamp: '2026-09-08T11:48:00Z',
+    lastUpdated: '08 Sep 2026, 11:49 AM',
+    lastUpdatedTimestamp: '2026-09-08T11:49:00Z',
+    providerReference: 'AIR-BIZ-9934102',
+    walletCreditReference: null,
+    balanceBefore: 164350.0,
+    fundingCredit: 0.0,
+    balanceAfter: 164350.0,
+    postedAt: undefined,
+  },
+  {
+    businessName: 'Copperbelt Liquidity Hub',
+    businessId: 'TB-BIZ-000004',
+    phone: '+260 95 332 1100',
+    walletId: 'TB-WAL-BIZ-000004',
+    amount: 60000.0,
+    provider: 'Airtel Money',
+    status: 'Completed',
+    initiatedAt: '06 Sep 2026, 02:20 PM',
+    initiatedTimestamp: '2026-09-06T14:20:00Z',
+    lastUpdated: '06 Sep 2026, 02:24 PM',
+    lastUpdatedTimestamp: '2026-09-06T14:24:00Z',
+    providerReference: 'AIR-BIZ-6612984',
+    walletCreditReference: 'TB-LED-BIZ-000004',
+    balanceBefore: 45000.0,
+    fundingCredit: 60000.0,
+    balanceAfter: 105000.0,
+    postedAt: '06 Sep 2026, 02:24 PM',
+  },
+  {
+    businessName: 'Copperbelt Financial Services',
+    businessId: 'TB-BIZ-000003',
+    phone: '+260 97 123 9988',
+    walletId: 'TB-WAL-BIZ-000003',
+    amount: 40000.0,
+    provider: 'Airtel Money',
+    status: 'Reversed',
+    initiatedAt: '05 Sep 2026, 09:10 AM',
+    initiatedTimestamp: '2026-09-05T09:10:00Z',
+    lastUpdated: '05 Sep 2026, 09:35 AM',
+    lastUpdatedTimestamp: '2026-09-05T09:35:00Z',
+    providerReference: 'AIR-BIZ-5590123',
+    walletCreditReference: 'TB-LED-BIZ-000005',
+    reversalCreditReference: 'TB-LED-BIZ-000005-REV',
+    reversalDebitReference: 'TB-LED-BIZ-000005-REV',
+    reversalDebitAmount: 40000.0,
+    balanceBefore: 62600.0,
+    fundingCredit: 40000.0,
+    balanceAfter: 62600.0,
+  },
+  {
+    businessName: 'Kabwata Market Agency',
+    businessId: 'TB-BIZ-000002',
+    phone: '+260 96 445 6677',
+    walletId: 'TB-WAL-BIZ-000002',
+    amount: 20000.0,
+    provider: 'MTN Mobile Money',
+    status: 'Failed',
+    initiatedAt: '04 Sep 2026, 04:30 PM',
+    initiatedTimestamp: '2026-09-04T16:30:00Z',
+    lastUpdated: '04 Sep 2026, 04:35 PM',
+    lastUpdatedTimestamp: '2026-09-04T16:35:00Z',
+    providerReference: 'MTN-BIZ-4412091',
+    walletCreditReference: null,
+    balanceBefore: 54400.0,
+    fundingCredit: 0.0,
+    balanceAfter: 54400.0,
+  },
+  {
+    businessName: 'Livingstone Agency Point',
+    businessId: 'TB-BIZ-000005',
+    phone: '+260 97 665 4321',
+    walletId: 'TB-WAL-BIZ-000005',
+    amount: 28500.0,
+    provider: 'MTN Mobile Money',
+    status: 'Completed',
+    initiatedAt: '03 Sep 2026, 01:15 PM',
+    initiatedTimestamp: '2026-09-03T13:15:00Z',
+    lastUpdated: '03 Sep 2026, 01:18 PM',
+    lastUpdatedTimestamp: '2026-09-03T13:18:00Z',
+    providerReference: 'MTN-BIZ-3329012',
+    walletCreditReference: 'TB-LED-BIZ-000006',
+    balanceBefore: 12000.0,
+    fundingCredit: 28500.0,
+    balanceAfter: 40500.0,
+    postedAt: '03 Sep 2026, 01:18 PM',
+  },
+];
+
 /**
  * All wallet funding records enriched with standardized TB-FND-000000 references,
- * TB-CUS-00000000 Customer IDs, and complete unmasked customer mobile numbers.
+ * proper Customer / Business Owner IDs, and complete unmasked mobile numbers.
  */
-export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = BASE_WALLET_FUNDING_RECORDS.map(
-  (record, index) => {
+export const MOCK_WALLET_FUNDING_RECORDS: WalletFundingRecord[] = [
+  // Enriched Customer Funding Records
+  ...BASE_WALLET_FUNDING_RECORDS.map((record, index) => {
     const fndRef = `TB-FND-${String(index + 1).padStart(6, '0')}`;
-    const cusInfo = CUSTOMER_ID_MAP[record.customerName] || {
-      id: `TB-CUS-${String((index % 16) + 1).padStart(6, '0')}`,
-      phone: getCustomerRegisteredPhone(record.customerId, record.customerName),
+    const cusInfo = CUSTOMER_ID_MAP[record.customerName || ''] || {
+      id: record.customerId || `TB-CUS-${String((index % 16) + 1).padStart(6, '0')}`,
+      phone: getCustomerRegisteredPhone(record.customerId || '', record.customerName),
     };
 
     const ledRef = record.walletCreditReference
       ? `TB-LED-${String(index + 1).padStart(6, '0')}`
       : null;
-    const revRef = record.reversalCreditReference || record.status === 'Reversed'
-      ? `TB-LED-${String(index + 1).padStart(6, '0')}-REV`
-      : null;
+    const revRef =
+      record.reversalCreditReference || record.status === 'Reversed'
+        ? `TB-LED-${String(index + 1).padStart(6, '0')}-REV`
+        : null;
 
     return {
       ...record,
       id: fndRef,
       fundingReference: fndRef,
+      ownerType: 'Customer' as const,
+      ownerName: record.customerName || 'Customer',
+      ownerId: cusInfo.id,
+      ownerPhone: cusInfo.phone,
       customerId: cusInfo.id,
+      customerName: record.customerName,
       customerMobileNumber: cusInfo.phone,
       maskedMobileNumber: cusInfo.phone,
       walletCreditReference: ledRef,
       reversalCreditReference: revRef,
     };
-  }
-);
+  }),
+
+  // Enriched Business Funding Records
+  ...BUSINESS_FUNDING_SEED.map((bRecord, bIndex) => {
+    const fndIndex = BASE_WALLET_FUNDING_RECORDS.length + bIndex + 1;
+    const fndRef = `TB-FND-${String(fndIndex).padStart(6, '0')}`;
+    const isCompleted = bRecord.status === 'Completed';
+    const isReversed = bRecord.status === 'Reversed';
+    const isPending = bRecord.status === 'Pending';
+    const isFailed = bRecord.status === 'Failed';
+
+    return {
+      id: fndRef,
+      fundingReference: fndRef,
+      walletId: bRecord.walletId,
+      ownerType: 'Business' as const,
+      ownerName: bRecord.businessName,
+      ownerId: bRecord.businessId,
+      ownerPhone: bRecord.phone,
+      businessId: bRecord.businessId,
+      businessName: bRecord.businessName,
+      businessPhone: bRecord.phone,
+      maskedMobileNumber: bRecord.phone,
+      customerMobileNumber: bRecord.phone,
+      provider: bRecord.provider || 'MTN Mobile Money',
+      amount: bRecord.amount || 25000.0,
+      providerReference: bRecord.providerReference || `MNO-BIZ-${fndIndex}`,
+      status: bRecord.status || 'Completed',
+      walletCreditReference: bRecord.walletCreditReference || null,
+      reversalCreditReference: bRecord.reversalCreditReference || null,
+      initiatedAt: bRecord.initiatedAt || '08 Sep 2026, 11:30 AM',
+      initiatedTimestamp: bRecord.initiatedTimestamp || new Date().toISOString(),
+      lastUpdated: bRecord.lastUpdated || '08 Sep 2026, 11:32 AM',
+      lastUpdatedTimestamp: bRecord.lastUpdatedTimestamp || new Date().toISOString(),
+      balanceBefore: bRecord.balanceBefore,
+      fundingCredit: bRecord.fundingCredit,
+      balanceAfter: bRecord.balanceAfter,
+      postedAt: bRecord.postedAt,
+      reconciliationStatus: isCompleted ? 'Reconciled' : isReversed ? 'Compensated' : isFailed ? 'Zero Impact' : 'Pending',
+      providerStatus: isCompleted ? 'SUCCESSFUL' : isReversed ? 'REVERSED' : isPending ? 'Processing by Provider' : 'FAILED',
+      verificationMethod: 'Direct Provider API',
+      callbackReceived: isCompleted || isReversed ? 'Yes (Signed Webhook)' : isPending ? 'Awaiting Provider Response' : 'Rejected / Error Payload',
+      backendVerificationStatus: isCompleted ? 'Confirmed' : isReversed ? 'Compensated' : isPending ? 'Pending' : 'Failed',
+      verificationAttempts: 1,
+      lastProviderResponseTime: bRecord.lastUpdated || bRecord.initiatedAt,
+      createdBy: 'Business',
+      source: 'TellerBud Business Portal',
+      country: 'Zambia',
+      currency: 'ZMW',
+      providerIntegration: bRecord.provider === 'Airtel Money' ? 'Airtel Money External Settlement Rail' : 'MTN Mobile Money External Rail',
+      lastUpdatedBy: 'System / Business Settlement Engine',
+      idempotencyCheck: `Passed (Unique Key: IDEMP-${fndRef})`,
+      duplicateCallbackCount: 0,
+      reconciliationResult: isCompleted ? 'Match - Ledger Credited Exactly Once' : isReversed ? 'Compensating Reversal Ledger Balanced' : 'Zero Ledger Balance Impact',
+      timeline: [
+        {
+          step: '1',
+          title: 'Funding Request Initiated',
+          description: `Business initiated global wallet top-up of ${formatZMW(bRecord.amount || 25000)} via ${bRecord.provider || 'MTN Mobile Money'}.`,
+          timestamp: bRecord.initiatedAt || '08 Sep 2026, 11:30 AM',
+          status: 'completed' as const,
+        },
+        {
+          step: '2',
+          title: 'Provider Request Sent',
+          description: `Direct TLS API call to ${bRecord.provider || 'MTN Mobile Money'} collection endpoint succeeded (HTTP 202 Accepted).`,
+          timestamp: bRecord.initiatedAt || '08 Sep 2026, 11:30 AM',
+          status: 'completed' as const,
+        },
+        {
+          step: '3',
+          title: 'Business Authorization',
+          description: `Business authorized payment prompt on registered business mobile line (${bRecord.phone}).`,
+          timestamp: bRecord.initiatedAt || '08 Sep 2026, 11:31 AM',
+          status: isFailed ? ('failed' as const) : ('completed' as const),
+        },
+        {
+          step: '4',
+          title: 'Provider Confirmation',
+          description: isFailed
+            ? `Gateway reported failure callback (Status: FAILED). Zero funds collected.`
+            : isPending
+            ? `Awaiting provider signed callback.`
+            : `Signed webhook confirmed from ${bRecord.provider} (Status: SUCCESSFUL).`,
+          timestamp: bRecord.lastUpdated || bRecord.initiatedAt || '08 Sep 2026, 11:32 AM',
+          status: isCompleted || isReversed ? ('completed' as const) : isPending ? ('in_progress' as const) : ('failed' as const),
+        },
+        {
+          step: '5',
+          title: 'Backend Verification',
+          description: isFailed
+            ? `Backend verified transaction termination with zero ledger impact.`
+            : isPending
+            ? `Awaiting cryptographic validation and idempotency check.`
+            : `Cryptographic signature, nonce uniqueness, and idempotency key verified.`,
+          timestamp: bRecord.lastUpdated || bRecord.initiatedAt || '08 Sep 2026, 11:32 AM',
+          status: isCompleted || isReversed ? ('completed' as const) : isPending ? ('upcoming' as const) : ('failed' as const),
+        },
+        {
+          step: '6',
+          title: isCompleted || isReversed ? 'Business Global Wallet Credited' : isPending ? 'Wallet Credit Pending' : 'No Wallet Credit Created',
+          description: isCompleted
+            ? `Posted immutable ledger credit ${bRecord.walletCreditReference} (+ ${formatZMW(bRecord.amount || 25000)}). Balance: ${formatZMW(bRecord.balanceAfter || 0)}.`
+            : isReversed
+            ? `Initial credit posted and compensated by reversal.`
+            : isPending
+            ? `Wallet balance untouched. Strictly awaiting backend verification before crediting.`
+            : `No credit created. Business global wallet balance unchanged.`,
+          timestamp: isCompleted || isReversed ? (bRecord.postedAt || bRecord.lastUpdated || '08 Sep 2026, 11:32 AM') : '—',
+          status: isCompleted || isReversed ? ('completed' as const) : isPending ? ('upcoming' as const) : ('failed' as const),
+        },
+      ],
+    };
+  }),
+];
 
 /**
  * Calculates summary metrics derived from the funding dataset
@@ -1436,7 +1712,12 @@ export function filterAndSortWalletFunding(
 ): WalletFundingRecord[] {
   let result = [...records];
 
-  // 1. KPI Filter
+  // 1. Owner Type Filter: 'ALL' | 'Customer' | 'Business'
+  if (filters.ownerType && filters.ownerType !== 'ALL') {
+    result = result.filter((r) => r.ownerType === filters.ownerType);
+  }
+
+  // 2. KPI Filter
   if (filters.kpiFilter && filters.kpiFilter !== 'ALL') {
     switch (filters.kpiFilter) {
       case 'COMPLETED':
@@ -1454,17 +1735,21 @@ export function filterAndSortWalletFunding(
     }
   }
 
-  // 2. Search filter: Reference, customer name, customer ID, mobile number, provider reference
+  // 3. Search filter: Reference, customer name, business name, owner ID, mobile number, wallet ID, provider reference
   if (filters.search && filters.search.trim() !== '') {
     const q = filters.search.toLowerCase().trim();
     const qDigits = q.replace(/\D/g, '');
     result = result.filter((r) => {
-      const phone = r.customerMobileNumber || r.maskedMobileNumber || '';
+      const ownerName = (r.ownerName || r.customerName || r.businessName || '').toLowerCase();
+      const ownerId = (r.ownerId || r.customerId || r.businessId || '').toLowerCase();
+      const walletId = (r.walletId || '').toLowerCase();
+      const phone = r.ownerPhone || r.customerMobileNumber || r.maskedMobileNumber || '';
       const phoneDigits = phone.replace(/\D/g, '');
       return (
         r.fundingReference.toLowerCase().includes(q) ||
-        r.customerName.toLowerCase().includes(q) ||
-        r.customerId.toLowerCase().includes(q) ||
+        ownerName.includes(q) ||
+        ownerId.includes(q) ||
+        walletId.includes(q) ||
         phone.toLowerCase().includes(q) ||
         (qDigits.length >= 3 && phoneDigits.includes(qDigits)) ||
         r.providerReference.toLowerCase().includes(q) ||
@@ -1473,29 +1758,29 @@ export function filterAndSortWalletFunding(
     });
   }
 
-  // 3. Provider filter
+  // 4. Provider filter
   if (filters.provider && filters.provider !== 'ALL') {
     result = result.filter((r) => r.provider === filters.provider);
   }
 
-  // 4. Status filter
+  // 5. Status filter
   if (filters.status && filters.status !== 'ALL') {
     result = result.filter((r) => r.status === filters.status);
   }
 
-  // 5. Date From
+  // 6. Date From
   if (filters.initiatedFrom && filters.initiatedFrom.trim() !== '') {
     const fromTime = new Date(`${filters.initiatedFrom}T00:00:00.000Z`).getTime();
     result = result.filter((r) => new Date(r.initiatedTimestamp).getTime() >= fromTime);
   }
 
-  // 6. Date To
+  // 7. Date To
   if (filters.initiatedTo && filters.initiatedTo.trim() !== '') {
     const toTime = new Date(`${filters.initiatedTo}T23:59:59.999Z`).getTime();
     result = result.filter((r) => new Date(r.initiatedTimestamp).getTime() <= toTime);
   }
 
-  // 7. Sorting
+  // 8. Sorting (Default: Newest initiated date and time in descending order)
   result.sort((a, b) => {
     let cmp = 0;
     switch (sort.field) {
@@ -1508,8 +1793,9 @@ export function filterAndSortWalletFunding(
       case 'amount':
         cmp = a.amount - b.amount;
         break;
+      case 'owner':
       case 'customer':
-        cmp = a.customerName.localeCompare(b.customerName);
+        cmp = (a.ownerName || a.customerName || '').localeCompare(b.ownerName || b.customerName || '');
         break;
       case 'provider':
         cmp = a.provider.localeCompare(b.provider);

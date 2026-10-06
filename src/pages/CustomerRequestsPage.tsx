@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Search,
@@ -13,13 +13,20 @@ import {
   ArrowUp,
   ArrowDown,
   Building2,
+  Download,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { PickupRequest } from '../types/admin';
 import { BusinessRecord } from '../types/business';
 import { adminService } from '../services/mockAdminService';
 import { businessService } from '../services/businessService';
 import { getCustomerRequestsSummary } from '../data/mockCustomerRequestsData';
-import { getZambiaTodayString } from '../utils/dateUtils';
+import { getZambiaTodayString, formatIsoToDdMmYyyy } from '../utils/dateUtils';
+import { CustomerRequestsDateInput } from '../components/requests/CustomerRequestsDateInput';
 
 interface BusinessCustomerRequestsSummary {
   businessId: string;
@@ -52,11 +59,17 @@ export const CustomerRequestsPage: React.FC = () => {
   const [businesses, setBusinesses] = useState<BusinessRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState<boolean>(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Search & Date Filter State (defaults to today if not provided)
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Search & Date Filter State (defaults to EMPTY so fields show dd-mm-yyyy)
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get('q') || '');
-  const [fromDate, setFromDate] = useState<string>(searchParams.get('from') || todayStr);
-  const [toDate, setToDate] = useState<string>(searchParams.get('to') || todayStr);
+  const [fromDate, setFromDate] = useState<string>(searchParams.get('from') || '');
+  const [toDate, setToDate] = useState<string>(searchParams.get('to') || '');
 
   // Sorting State
   const [sortField, setSortField] = useState<SortField>('totalRequests');
@@ -77,6 +90,29 @@ export const CustomerRequestsPage: React.FC = () => {
       ]),
     []
   );
+
+  // Handle outside clicks for export menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    if (isExportMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExportMenuOpen]);
 
   // Load Customer Requests & Registered Businesses
   const loadData = useCallback(async (showRefreshIndicator = false) => {
@@ -118,12 +154,12 @@ export const CustomerRequestsPage: React.FC = () => {
   // Synchronise state when searchParams change externally (e.g. from top header date selector)
   useEffect(() => {
     const qParam = searchParams.get('q') || '';
-    const fromParam = searchParams.get('from');
-    const toParam = searchParams.get('to');
+    const fromParam = searchParams.get('from') || '';
+    const toParam = searchParams.get('to') || '';
 
     if (qParam !== searchQuery) setSearchQuery(qParam);
-    if (fromParam !== null && fromParam !== fromDate) setFromDate(fromParam);
-    if (toParam !== null && toParam !== toDate) setToDate(toParam);
+    if (fromParam !== fromDate) setFromDate(fromParam);
+    if (toParam !== toDate) setToDate(toParam);
   }, [searchParams]);
 
   // Push local filter updates to URL params
@@ -138,7 +174,7 @@ export const CustomerRequestsPage: React.FC = () => {
     [setSearchParams]
   );
 
-  // Filter requests by date range for KPI calculations (always includes ALL registered businesses)
+  // Filter requests by date range for KPI calculations
   const dateFilteredRequests = useMemo(() => {
     if (!fromDate && !toDate) return requests;
     return requests.filter((r) => {
@@ -153,7 +189,7 @@ export const CustomerRequestsPage: React.FC = () => {
     });
   }, [requests, fromDate, toDate, todayStr]);
 
-  // Global KPI summary: always represents ALL registered businesses across the date-filtered dataset (unaffected by business search)
+  // Global KPI summary: always represents ALL registered businesses across the date-filtered dataset
   const globalKpis = useMemo(() => {
     return getCustomerRequestsSummary(dateFilteredRequests);
   }, [dateFilteredRequests]);
@@ -308,10 +344,11 @@ export const CustomerRequestsPage: React.FC = () => {
 
   const handleClearFilters = () => {
     setSearchQuery('');
-    setFromDate(todayStr);
-    setToDate(todayStr);
+    setFromDate('');
+    setToDate('');
+    setDateError(null);
     setCurrentPage(1);
-    updateUrlParams('', todayStr, todayStr);
+    updateUrlParams('', '', '');
   };
 
   const handleSearchChange = (q: string) => {
@@ -321,37 +358,174 @@ export const CustomerRequestsPage: React.FC = () => {
   };
 
   const handleFromDateChange = (from: string) => {
-    setFromDate(from);
-    let nextTo = toDate;
-    if (toDate && from > toDate) {
-      nextTo = from;
-      setToDate(from);
+    if (toDate && from && from > toDate) {
+      setDateError('From Date cannot be later than To Date.');
+    } else {
+      setDateError(null);
     }
+    setFromDate(from);
     setCurrentPage(1);
-    updateUrlParams(searchQuery, from, nextTo);
+    updateUrlParams(searchQuery, from, toDate);
   };
 
   const handleToDateChange = (to: string) => {
-    setToDate(to);
-    let nextFrom = fromDate;
-    if (fromDate && to < fromDate) {
-      nextFrom = to;
-      setFromDate(to);
+    if (fromDate && to && to < fromDate) {
+      setDateError('To Date cannot be earlier than From Date.');
+    } else {
+      setDateError(null);
     }
+    setToDate(to);
     setCurrentPage(1);
-    updateUrlParams(searchQuery, nextFrom, to);
+    updateUrlParams(searchQuery, fromDate, to);
   };
 
-  const hasActiveFilters =
+  // Clear Filters becomes active only after the user manually enters a search term or selects a date
+  const hasActiveFilters = Boolean(
     searchQuery.trim() !== '' ||
-    fromDate !== todayStr ||
-    toDate !== todayStr;
+    fromDate !== '' ||
+    toDate !== ''
+  );
+
+  // Export handling
+  const handleExport = async (format: 'csv' | 'xlsx') => {
+    setIsExporting(true);
+    setIsExportMenuOpen(false);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      const fromDdMm = fromDate ? formatIsoToDdMmYyyy(fromDate) : '';
+      const toDdMm = toDate ? formatIsoToDdMmYyyy(toDate) : '';
+      let dateSuffix = 'all';
+      if (fromDdMm && toDdMm) {
+        dateSuffix = fromDdMm === toDdMm ? fromDdMm : `${fromDdMm}-to-${toDdMm}`;
+      } else if (fromDdMm) {
+        dateSuffix = `from-${fromDdMm}`;
+      } else if (toDdMm) {
+        dateSuffix = `to-${toDdMm}`;
+      }
+
+      const filename = `customer-requests-${dateSuffix}.${format}`;
+
+      const exportRows = filteredAndSortedBusinesses.map((b) => ({
+        'Business Name': b.businessName,
+        'Business ID': b.businessId,
+        'City': b.city || '—',
+        'Total Customer Requests': b.totalRequests,
+        'Active': b.active,
+        'Completed': b.completed,
+        'Cancelled': b.cancelled,
+        'No Agent Available': b.noAgentAvailable,
+        'From Date': fromDdMm || '—',
+        'To Date': toDdMm || '—',
+      }));
+
+      if (exportRows.length === 0) {
+        exportRows.push({
+          'Business Name': 'No matching records',
+          'Business ID': '—',
+          'City': '—',
+          'Total Customer Requests': 0,
+          'Active': 0,
+          'Completed': 0,
+          'Cancelled': 0,
+          'No Agent Available': 0,
+          'From Date': fromDdMm || '—',
+          'To Date': toDdMm || '—',
+        });
+      }
+
+      if (format === 'xlsx') {
+        const ws = XLSX.utils.json_to_sheet(exportRows);
+        ws['!cols'] = [
+          { wch: 30 }, // Business Name
+          { wch: 18 }, // Business ID
+          { wch: 16 }, // City
+          { wch: 22 }, // Total Customer Requests
+          { wch: 12 }, // Active
+          { wch: 14 }, // Completed
+          { wch: 12 }, // Cancelled
+          { wch: 18 }, // No Agent Available
+          { wch: 14 }, // From Date
+          { wch: 14 }, // To Date
+        ];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Customer Requests');
+        XLSX.writeFile(wb, filename);
+      } else {
+        const headers = Object.keys(exportRows[0]);
+        const csvRows = [
+          headers.join(','),
+          ...exportRows.map((row) =>
+            headers
+              .map((header) => {
+                const val = (row as Record<string, string | number>)[header];
+                const escaped = String(val ?? '').replace(/"/g, '""');
+                return `"${escaped}"`;
+              })
+              .join(',')
+          ),
+        ];
+
+        const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvRows.join('\n'));
+        const link = document.createElement('a');
+        link.setAttribute('href', csvContent);
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      setToastMessage({
+        message: 'Customer Requests report exported successfully.',
+        type: 'success',
+      });
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (err) {
+      console.error('Failed to export Customer Requests:', err);
+      setToastMessage({
+        message: 'The report could not be exported. Please try again.',
+        type: 'error',
+      });
+      setTimeout(() => setToastMessage(null), 4000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div
       id="customer-requests-page-container"
-      className="w-full flex-1 flex flex-col min-h-0 h-full gap-2.5 sm:gap-3 px-3 sm:px-6 pt-1.5 pb-3 sm:pb-4 overflow-hidden"
+      className="w-full flex-1 flex flex-col min-h-0 h-full gap-2.5 sm:gap-3 px-3 sm:px-6 pt-1.5 pb-3 sm:pb-4 overflow-hidden relative"
     >
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-16 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-lg border animate-in fade-in slide-in-from-top-3 duration-200 ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              : 'bg-red-50 text-red-900 border-red-200'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle size={16} className="text-red-600 shrink-0" />
+          )}
+          <span className="text-xs font-semibold">{toastMessage.message}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="p-0.5 text-gray-400 hover:text-gray-700 rounded-md transition-colors cursor-pointer"
+            aria-label="Close notification"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
       {/* 1 & 2. TOP FROZEN SECTION: KPI Cards + Compact Filter Bar */}
       <div
         id="frozen-customer-requests-kpi-filter-section"
@@ -440,85 +614,142 @@ export const CustomerRequestsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Compact Filter Section (Single Horizontal Line) */}
+        {/* 2. Compact Filter Section (Single Horizontal Line in Exact Order: Search, From, To, Clear, Refresh, Export) */}
         <div className="bg-white border border-gray-100 rounded-xl p-2.5 sm:p-3 shadow-sm">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
-            {/* Search Box (Preserved on page filter bar) */}
-            <div className="relative flex-1 min-w-[260px]">
-              <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search business name or Business ID…"
-                className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => handleSearchChange('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                  aria-label="Clear search"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Date Range: From Date & To Date */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                  From:
-                </span>
-                <input
-                  type="date"
-                  value={fromDate}
-                  max={toDate || todayStr}
-                  onChange={(e) => handleFromDateChange(e.target.value)}
-                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+          <div className="w-full overflow-x-auto transaction-table-scroll focus:outline-none">
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-max flex-nowrap h-9">
+              {/* 1. Search Box (Flexible width ~42–48% of the row) */}
+              <div className="relative flex-1 min-w-[220px]">
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Search business name or Business ID…"
+                  className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 h-9"
+                  aria-label="Search business name or Business ID"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => handleSearchChange('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
+                    aria-label="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
 
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
-                  To:
-                </span>
-                <input
-                  type="date"
-                  value={toDate}
-                  min={fromDate || undefined}
-                  max={todayStr}
-                  onChange={(e) => handleToDateChange(e.target.value)}
-                  className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
-                />
-              </div>
-            </div>
+              {/* 2. From Date (150–165 px) with dd-mm-yyyy placeholder when empty */}
+              <CustomerRequestsDateInput
+                label="From"
+                value={fromDate}
+                onChange={handleFromDateChange}
+                maxDate={toDate || todayStr}
+                errorMessage={dateError && fromDate > toDate ? dateError : null}
+                id="requests-filter-from-date"
+              />
 
-            {/* Action Buttons: Clear & Refresh on the Right */}
-            <div className="flex items-center gap-2 shrink-0">
+              {/* 3. To Date (150–165 px) with dd-mm-yyyy placeholder when empty */}
+              <CustomerRequestsDateInput
+                label="To"
+                value={toDate}
+                onChange={handleToDateChange}
+                minDate={fromDate || undefined}
+                maxDate={todayStr}
+                errorMessage={dateError && toDate < fromDate ? dateError : null}
+                id="requests-filter-to-date"
+              />
+
+              {/* 4. Clear Filters (105–115 px) - Active only after search term or date is selected */}
               <button
+                id="btn-clear-customer-requests-filters"
+                type="button"
                 onClick={handleClearFilters}
                 disabled={!hasActiveFilters}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
+                className="w-[105px] sm:w-[110px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9 whitespace-nowrap shrink-0"
+                title={hasActiveFilters ? 'Reset applied filters' : 'No filters active'}
               >
                 <X size={13} />
-                Clear Filters
+                <span>Clear Filters</span>
               </button>
 
+              {/* 5. Refresh (95–105 px) */}
               <button
+                id="btn-refresh-customer-requests"
+                type="button"
                 onClick={() => loadData(true)}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9"
+                className="w-[95px] sm:w-[100px] inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9 whitespace-nowrap shrink-0"
+                title="Refresh customer requests"
               >
                 <RefreshCw
                   size={13}
                   className={isRefreshing ? 'animate-spin' : ''}
                 />
-                Refresh
+                <span>Refresh</span>
               </button>
+
+              {/* 6. Export (100–110 px) - Placed immediately after Refresh */}
+              <div className="relative shrink-0" ref={exportMenuRef}>
+                <button
+                  id="btn-export-customer-requests"
+                  type="button"
+                  onClick={() => setIsExportMenuOpen((prev) => !prev)}
+                  disabled={isExporting}
+                  className="w-[100px] sm:w-[105px] inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer disabled:opacity-60 h-9 whitespace-nowrap"
+                  aria-expanded={isExportMenuOpen}
+                  aria-haspopup="true"
+                  title="Export Customer Requests report"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>Exporting</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={13} />
+                      <span>Export</span>
+                      <ChevronDown size={11} className="opacity-80" />
+                    </>
+                  )}
+                </button>
+
+                {/* Export Dropdown Menu */}
+                {isExportMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Export format options"
+                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-44 bg-white rounded-xl shadow-xl border border-gray-200 py-1 text-slate-800 animate-in fade-in zoom-in-95 duration-100"
+                  >
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                      Export Format
+                    </div>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleExport('csv')}
+                      className="w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:text-[#0D93AA] hover:bg-slate-50 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileText size={14} className="text-gray-500" />
+                      <span>Export CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleExport('xlsx')}
+                      className="w-full px-3 py-2 text-left text-xs font-medium text-gray-700 hover:text-[#0D93AA] hover:bg-slate-50 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileSpreadsheet size={14} className="text-emerald-600" />
+                      <span>Export Excel</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

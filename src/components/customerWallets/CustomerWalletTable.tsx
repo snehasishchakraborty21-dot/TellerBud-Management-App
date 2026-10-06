@@ -68,15 +68,15 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
     if (sortField !== field) {
       return (
         <ArrowUpDown
-          size={12}
+          size={11}
           className="text-slate-400 group-hover:text-slate-600 transition-colors shrink-0"
         />
       );
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp size={12} className="text-[#0D93AA] shrink-0" />
+      <ArrowUp size={11} className="text-[#0D93AA] shrink-0" />
     ) : (
-      <ArrowDown size={12} className="text-[#0D93AA] shrink-0" />
+      <ArrowDown size={11} className="text-[#0D93AA] shrink-0" />
     );
   };
 
@@ -112,26 +112,24 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
   // Loading skeleton state
   if (loading) {
     return (
-      <div className="bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-xs">
-        <div className="p-6 space-y-3">
-          <div className="h-5 bg-slate-100 rounded w-1/4 animate-pulse mb-4" />
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
-            >
-              <div className="space-y-1 w-1/4">
-                <div className="h-3.5 bg-slate-200 rounded w-3/4 animate-pulse" />
-                <div className="h-2.5 bg-slate-100 rounded w-1/2 animate-pulse" />
-              </div>
-              <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
-              <div className="h-6 bg-slate-100 rounded w-16 animate-pulse" />
+      <div className="flex-1 min-h-0 p-6 space-y-3 bg-white">
+        <div className="h-5 bg-slate-100 rounded w-1/4 animate-pulse mb-4" />
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between gap-4 py-3 border-b border-gray-100 last:border-0"
+          >
+            <div className="space-y-1 w-1/4">
+              <div className="h-3.5 bg-slate-200 rounded w-3/4 animate-pulse" />
+              <div className="h-2.5 bg-slate-100 rounded w-1/2 animate-pulse" />
             </div>
-          ))}
-        </div>
+            <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
+            <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
+            <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
+            <div className="h-4 bg-slate-100 rounded w-20 animate-pulse" />
+            <div className="h-6 bg-slate-100 rounded w-16 animate-pulse" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -139,7 +137,7 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
   // Error state
   if (error) {
     return (
-      <div className="bg-white border border-gray-200/80 rounded-xl p-8 shadow-xs flex flex-col items-center justify-center text-center">
+      <div className="flex-1 min-h-0 p-8 flex flex-col items-center justify-center text-center bg-white">
         <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
           <AlertCircle size={22} />
         </div>
@@ -164,7 +162,7 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
   // Empty state
   if (wallets.length === 0) {
     return (
-      <div className="bg-white border border-gray-200/80 rounded-xl p-12 shadow-xs flex flex-col items-center justify-center text-center">
+      <div className="flex-1 min-h-0 p-12 flex flex-col items-center justify-center text-center bg-white">
         <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
           <Wallet size={22} />
         </div>
@@ -186,199 +184,202 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
 
   return (
     <>
-      <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden pb-2.5">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[780px]">
-            {/* Exact columns in required order:
-                1. Customer
-                2. Balance (ZMW)
-                3. Available (ZMW)
-                4. Reserved (ZMW)
-                5. Pending Withdrawal (ZMW)
-                6. Action
-            */}
-            <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs border-b border-gray-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider select-none">
-              <tr>
-                {/* 1. Customer */}
-                <th scope="col" className="py-3 pl-4 pr-3 text-left w-[26%] min-w-[200px]">
-                  <button
-                    type="button"
-                    onClick={() => onSort('customer')}
-                    className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                  >
-                    <span>Customer</span>
-                    {renderSortIcon('customer')}
-                  </button>
-                </th>
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Customer wallets listing"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-auto focus:outline-none focus:ring-1 focus:ring-[#0D93AA]/30"
+      >
+        <table className="w-full text-left border-collapse min-w-[780px] lg:min-w-full">
+          {/* Exact columns in required order:
+              1. Customer
+              2. Balance (ZMW)
+              3. Available (ZMW)
+              4. Reserved (ZMW)
+              5. Pending Withdrawal (ZMW)
+              6. Action
+          */}
+          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs border-b border-gray-200 text-[10.5px] sm:text-[11px] font-semibold text-slate-600 uppercase tracking-wider select-none shadow-[0_1px_0_0_#E5E7EB]">
+            <tr>
+              {/* 1. Customer */}
+              <th scope="col" className="py-3 pl-4 pr-3 text-left w-[26%] min-w-[200px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('customer')}
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
+                >
+                  <span>Customer</span>
+                  {renderSortIcon('customer')}
+                </button>
+              </th>
 
-                {/* 2. Balance (ZMW) */}
-                <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
-                  <button
-                    type="button"
-                    onClick={() => onSort('walletBalance')}
-                    className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                  >
-                    <span>Balance (ZMW)</span>
-                    {renderSortIcon('walletBalance')}
-                  </button>
-                </th>
+              {/* 2. Balance (ZMW) */}
+              <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('walletBalance')}
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
+                >
+                  <span>Balance (ZMW)</span>
+                  {renderSortIcon('walletBalance')}
+                </button>
+              </th>
 
-                {/* 3. Available (ZMW) */}
-                <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
-                  <button
-                    type="button"
-                    onClick={() => onSort('availableBalance')}
-                    className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                  >
-                    <span>Available (ZMW)</span>
-                    {renderSortIcon('availableBalance')}
-                  </button>
-                </th>
+              {/* 3. Available (ZMW) */}
+              <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('availableBalance')}
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
+                >
+                  <span>Available (ZMW)</span>
+                  {renderSortIcon('availableBalance')}
+                </button>
+              </th>
 
-                {/* 4. Reserved (ZMW) */}
-                <th scope="col" className="py-3 px-3 text-left w-[16%] min-w-[125px]">
-                  <button
-                    type="button"
-                    onClick={() => onSort('reservedFunds')}
-                    className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                  >
-                    <span>Reserved (ZMW)</span>
-                    {renderSortIcon('reservedFunds')}
-                  </button>
-                </th>
+              {/* 4. Reserved (ZMW) */}
+              <th scope="col" className="py-3 px-3 text-left w-[16%] min-w-[125px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('reservedFunds')}
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
+                >
+                  <span>Reserved (ZMW)</span>
+                  {renderSortIcon('reservedFunds')}
+                </button>
+              </th>
 
-                {/* 5. Pending Withdrawal (ZMW) */}
-                <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
-                  <button
-                    type="button"
-                    onClick={() => onSort('pendingWithdrawal')}
-                    className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
-                  >
-                    <span>Pending Withdrawal (ZMW)</span>
-                    {renderSortIcon('pendingWithdrawal')}
-                  </button>
-                </th>
+              {/* 5. Pending Withdrawal (ZMW) */}
+              <th scope="col" className="py-3 px-3 text-left w-[18%] min-w-[140px]">
+                <button
+                  type="button"
+                  onClick={() => onSort('pendingWithdrawal')}
+                  className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
+                >
+                  <span>Pending Withdrawal (ZMW)</span>
+                  {renderSortIcon('pendingWithdrawal')}
+                </button>
+              </th>
 
-                {/* 6. Action */}
-                <th scope="col" className="py-3 pl-3 pr-4 text-left w-[10%] min-w-[90px]">
-                  <span>Action</span>
-                </th>
-              </tr>
-            </thead>
+              {/* 6. Action */}
+              <th scope="col" className="py-3 pl-3 pr-4 text-left w-[10%] min-w-[90px]">
+                <span>Action</span>
+              </th>
+            </tr>
+          </thead>
 
-            <tbody className="divide-y divide-gray-100 text-xs">
-              {wallets.map((wallet) => {
-                const isSuspended = wallet.walletState === 'Suspended';
-                const hasPendingWithdrawal =
-                  wallet.pendingWithdrawalAmount !== null && wallet.pendingWithdrawalAmount > 0;
+          <tbody className="divide-y divide-gray-100 text-xs">
+            {wallets.map((wallet, index) => {
+              const isSuspended = wallet.walletState === 'Suspended';
+              const hasPendingWithdrawal =
+                wallet.pendingWithdrawalAmount !== null && wallet.pendingWithdrawalAmount > 0;
 
-                return (
-                  <tr
-                    key={wallet.walletId}
-                    className="group hover:bg-slate-50/70 transition-colors"
-                  >
-                    {/* 1. Customer: Full Name on line 1, Wallet ID on line 2 */}
-                    <td className="py-2.5 sm:py-3 pl-4 pr-3 text-left align-middle">
-                      <div className="flex flex-col">
-                        <span
-                          className="font-semibold text-gray-900 leading-tight block truncate"
-                          title={wallet.customerName}
-                        >
-                          {wallet.customerName}
-                        </span>
-                        <span
-                          className="text-[11px] text-slate-500 font-mono leading-normal mt-0.5"
-                          title={`Wallet ID: ${wallet.walletId}`}
-                        >
-                          {wallet.walletId}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* 2. Balance (ZMW): Left-aligned, no ZMW symbol */}
-                    <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
-                      <span className="font-semibold text-gray-900">
-                        {formatAmountValue(wallet.walletBalance)}
+              return (
+                <tr
+                  key={`${wallet.walletId}-${wallet.customerId || index}`}
+                  className="group hover:bg-slate-50/70 transition-colors"
+                >
+                  {/* 1. Customer: Full Name on line 1, Wallet ID on line 2 */}
+                  <td className="py-2.5 sm:py-3 pl-4 pr-3 text-left align-middle">
+                    <div className="flex flex-col">
+                      <span
+                        className="font-semibold text-gray-900 leading-tight block truncate max-w-[220px]"
+                        title={wallet.customerName}
+                      >
+                        {wallet.customerName}
                       </span>
-                    </td>
+                      <span
+                        className="text-[11px] text-slate-500 font-mono leading-normal mt-0.5"
+                        title={`Wallet ID: ${wallet.walletId}`}
+                      >
+                        {wallet.walletId}
+                      </span>
+                    </div>
+                  </td>
 
-                    {/* 3. Available (ZMW): Left-aligned, green for > 0, 0.00 grey for 0 */}
-                    <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
-                      {wallet.availableBalance > 0 ? (
-                        <span className="font-semibold text-emerald-700">
-                          {formatAmountValue(wallet.availableBalance)}
-                        </span>
-                      ) : (
-                        <span className="font-medium text-slate-400">0.00</span>
-                      )}
-                    </td>
+                  {/* 2. Balance (ZMW): Left-aligned, no ZMW symbol */}
+                  <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
+                    <span className="font-semibold text-gray-900 font-mono text-[12.5px]">
+                      {formatAmountValue(wallet.walletBalance)}
+                    </span>
+                  </td>
 
-                    {/* 4. Reserved (ZMW): Left-aligned, amber for > 0, 0.00 grey for 0 */}
-                    <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
-                      {wallet.reservedFunds > 0 ? (
-                        <span className="font-semibold text-amber-700">
-                          {formatAmountValue(wallet.reservedFunds)}
-                        </span>
-                      ) : (
-                        <span className="font-medium text-slate-400">0.00</span>
-                      )}
-                    </td>
+                  {/* 3. Available (ZMW): Left-aligned, green for > 0, 0.00 grey for 0 */}
+                  <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
+                    {wallet.availableBalance > 0 ? (
+                      <span className="font-semibold text-emerald-700 font-mono text-[12.5px]">
+                        {formatAmountValue(wallet.availableBalance)}
+                      </span>
+                    ) : (
+                      <span className="font-medium text-slate-400 font-mono text-[12.5px]">0.00</span>
+                    )}
+                  </td>
 
-                    {/* 5. Pending Withdrawal (ZMW): Left-aligned, purple/warning when > 0, '—' for none */}
-                    <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
-                      {hasPendingWithdrawal ? (
-                        <span className="font-semibold text-purple-700">
-                          {formatAmountValue(wallet.pendingWithdrawalAmount)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 font-medium">—</span>
-                      )}
-                    </td>
+                  {/* 4. Reserved (ZMW): Left-aligned, amber for > 0, 0.00 grey for 0 */}
+                  <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
+                    {wallet.reservedFunds > 0 ? (
+                      <span className="font-semibold text-amber-700 font-mono text-[12.5px]">
+                        {formatAmountValue(wallet.reservedFunds)}
+                      </span>
+                    ) : (
+                      <span className="font-medium text-slate-400 font-mono text-[12.5px]">0.00</span>
+                    )}
+                  </td>
 
-                    {/* 6. Action: Compact left-aligned icon buttons */}
-                    <td className="py-2.5 sm:py-3 pl-3 pr-4 text-left align-middle whitespace-nowrap">
-                      <div className="flex items-center justify-start gap-1.5">
-                        {/* View Icon */}
+                  {/* 5. Pending Withdrawal (ZMW): Left-aligned, purple/warning when > 0, '—' for none */}
+                  <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
+                    {hasPendingWithdrawal ? (
+                      <span className="font-semibold text-purple-700 font-mono text-[12.5px]">
+                        {formatAmountValue(wallet.pendingWithdrawalAmount)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-medium">—</span>
+                    )}
+                  </td>
+
+                  {/* 6. Action: Compact left-aligned icon buttons */}
+                  <td className="py-2.5 sm:py-3 pl-3 pr-4 text-left align-middle whitespace-nowrap">
+                    <div className="flex items-center justify-start gap-1.5">
+                      {/* View Icon */}
+                      <button
+                        type="button"
+                        onClick={() => onViewDetails(wallet.walletId)}
+                        className="p-1.5 rounded-lg text-slate-600 hover:text-[#0D93AA] hover:bg-[#0D93AA]/10 active:bg-[#0D93AA]/20 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] cursor-pointer"
+                        title="View Wallet"
+                        aria-label={`View Wallet for ${wallet.customerName}`}
+                      >
+                        <Eye size={15} />
+                      </button>
+
+                      {/* Conditional Suspend / Reactivate Icons */}
+                      {!isSuspended ? (
                         <button
                           type="button"
-                          onClick={() => onViewDetails(wallet.walletId)}
-                          className="p-1.5 rounded-lg text-slate-600 hover:text-[#0D93AA] hover:bg-[#0D93AA]/10 active:bg-[#0D93AA]/20 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#0D93AA] cursor-pointer"
-                          title="View Wallet"
-                          aria-label={`View Wallet for ${wallet.customerName}`}
+                          onClick={() => handleOpenSuspend(wallet)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 active:bg-amber-100 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 cursor-pointer"
+                          title="Suspend Wallet"
+                          aria-label={`Suspend Wallet for ${wallet.customerName}`}
                         >
-                          <Eye size={15} />
+                          <PauseCircle size={15} />
                         </button>
-
-                        {/* Conditional Suspend / Reactivate Icons */}
-                        {!isSuspended ? (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenSuspend(wallet)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 active:bg-amber-100 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 cursor-pointer"
-                            title="Suspend Wallet"
-                            aria-label={`Suspend Wallet for ${wallet.customerName}`}
-                          >
-                            <PauseCircle size={15} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenReactivate(wallet)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 active:bg-emerald-100 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 cursor-pointer"
-                            title="Reactivate Wallet"
-                            aria-label={`Reactivate Wallet for ${wallet.customerName}`}
-                          >
-                            <PlayCircle size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReactivate(wallet)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 active:bg-emerald-100 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 cursor-pointer"
+                          title="Reactivate Wallet"
+                          aria-label={`Reactivate Wallet for ${wallet.customerName}`}
+                        >
+                          <PlayCircle size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Suspend Confirmation Modal */}
@@ -452,9 +453,9 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors cursor-pointer"
                 >
-                  Suspend Wallet
+                  Confirm Suspension
                 </button>
               </div>
             </form>
@@ -489,10 +490,10 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed mb-5">
-              Are you sure you want to reactivate the wallet belonging to{' '}
-              <strong className="text-gray-900">{reactivateModalWallet.customerName}</strong>?
-              The customer will regain access to permitted wallet transactions and withdrawal requests.
+            <p className="text-xs text-slate-600 leading-relaxed mb-6">
+              This will restore active wallet privileges for{' '}
+              <strong className="text-gray-900">{reactivateModalWallet.customerName}</strong>. The
+              customer will immediately be able to perform transactions, deposits, and withdrawal requests.
             </p>
 
             <div className="flex items-center justify-end gap-2.5">
@@ -506,7 +507,7 @@ export const CustomerWalletTable: React.FC<CustomerWalletTableProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmReactivate}
-                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-colors cursor-pointer"
               >
                 Reactivate Wallet
               </button>

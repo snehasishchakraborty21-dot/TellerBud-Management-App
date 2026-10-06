@@ -29,14 +29,29 @@ class CustomerWalletService {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          this.wallets = parsed;
+          const uniqueMap = new Map<string, CustomerWalletRecord>();
+          for (const item of parsed) {
+            if (item && item.walletId && !uniqueMap.has(item.walletId)) {
+              uniqueMap.set(item.walletId, item);
+            }
+          }
+          this.wallets = Array.from(uniqueMap.values());
+          this.saveToStorage();
           return;
         }
       }
     } catch (e) {
       console.warn('Failed to load customer wallets from storage:', e);
     }
-    this.wallets = [...MOCK_CUSTOMER_WALLETS];
+    
+    // Fallback to deduplicated mock data
+    const uniqueMap = new Map<string, CustomerWalletRecord>();
+    for (const item of MOCK_CUSTOMER_WALLETS) {
+      if (item && item.walletId && !uniqueMap.has(item.walletId)) {
+        uniqueMap.set(item.walletId, item);
+      }
+    }
+    this.wallets = Array.from(uniqueMap.values());
     this.saveToStorage();
   }
 

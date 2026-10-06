@@ -73,7 +73,7 @@ export const CustomerWalletsPage: React.FC = () => {
   const [pageSize, setPageSize] = useState<number>(10);
 
   // Data & UI states
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -224,10 +224,15 @@ export const CustomerWalletsPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div
+      id="customer-wallets-page-container"
+      className="w-full flex-1 min-h-0 h-full flex flex-col gap-2.5 px-3 sm:px-6 pt-1.5 pb-3 overflow-hidden relative"
+    >
       {/* Toast Notification */}
       {toastMessage && (
         <div
+          role="status"
+          aria-live="polite"
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold animate-in slide-in-from-bottom-3 duration-200 ${
             toastMessage.type === 'warning'
               ? 'bg-amber-50 border-amber-200 text-amber-900'
@@ -243,26 +248,33 @@ export const CustomerWalletsPage: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Compact KPI Cards (Click to filter, strictly no subtitles beneath values) */}
-      <CustomerWalletKpiCards
-        summary={summary}
-        activeKpiFilter={filters.kpiFilter}
-        onSelectKpiFilter={handleSelectKpiFilter}
-      />
+      {/* TOP FROZEN SECTION: KPI Cards + Compact Filter Bar */}
+      <div
+        id="frozen-customer-wallets-top-section"
+        className="shrink-0 space-y-2.5 bg-[#FAFAFA]"
+      >
+        {/* 1. Compact KPI Cards */}
+        <CustomerWalletKpiCards
+          summary={summary}
+          activeKpiFilter={filters.kpiFilter}
+          onSelectKpiFilter={handleSelectKpiFilter}
+        />
 
-      {/* 2. Compact Filter Bar with State, Ranges, Dates, Clear, Refresh, and Export */}
-      <CustomerWalletFilterBar
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-        onRefresh={handleRefresh}
-        hasActiveFilters={hasActiveFilters}
-        isRefreshing={isRefreshing}
-        walletsToExport={filteredWallets}
-      />
+        {/* 2. Compact Filter Bar */}
+        <CustomerWalletFilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          onRefresh={handleRefresh}
+          hasActiveFilters={hasActiveFilters}
+          isRefreshing={isRefreshing}
+          walletsToExport={filteredWallets}
+        />
+      </div>
 
-      {/* 3. Customer Wallets Table */}
-      <div className="flex flex-col">
+      {/* MAIN TABLE SECTION WITH FROZEN THEAD & INTERNAL VERTICAL SCROLL */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full">
+        {/* Scrollable Table Area */}
         <CustomerWalletTable
           wallets={paginatedWallets}
           loading={loading || isRefreshing}
@@ -278,14 +290,16 @@ export const CustomerWalletsPage: React.FC = () => {
           onClearFilters={handleClearFilters}
         />
 
-        {/* 4. Pagination */}
-        <CustomerWalletPagination
-          currentPage={currentPage}
-          totalItems={filteredWallets.length}
-          itemsPerPage={pageSize}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handlePageSizeChange}
-        />
+        {/* Sticky/Frozen Pagination Footer */}
+        <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-1">
+          <CustomerWalletPagination
+            currentPage={currentPage}
+            totalItems={filteredWallets.length}
+            itemsPerPage={pageSize}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handlePageSizeChange}
+          />
+        </div>
       </div>
     </div>
   );

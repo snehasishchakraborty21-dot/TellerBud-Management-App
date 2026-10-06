@@ -135,11 +135,8 @@ export const NotificationDetailsPage: React.FC = () => {
   // Not Found State
   if (!notification) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 sm:space-y-5 pb-12 w-full animate-fadeIn">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mb-2">
-            Notification Details
-          </h1>
           <button
             type="button"
             id="btn-back-to-notifications-notfound"
@@ -178,13 +175,10 @@ export const NotificationDetailsPage: React.FC = () => {
   return (
     <div
       id="notification-details-page-root"
-      className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-5 pb-12 w-full animate-fadeIn"
+      className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 sm:space-y-5 pb-12 w-full animate-fadeIn"
     >
-      {/* 7. Simplified Page Header */}
-      <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-          Notification Details
-        </h1>
+      {/* Back to Notifications Navigation */}
+      <div>
         <button
           type="button"
           id="btn-back-to-notifications"
@@ -196,7 +190,7 @@ export const NotificationDetailsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 8 & 9. Compact Notification Header Card with Plain-Language Summary */}
+      {/* Notification Header Card with Plain-Language Summary */}
       <NotificationDetailsHeaderCard
         notification={notification}
         onExecutePrimaryAction={handleExecutePrimaryAction}

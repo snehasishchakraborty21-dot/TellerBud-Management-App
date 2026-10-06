@@ -8,11 +8,12 @@ import {
   WebsiteSubmissionData,
 } from '../types/businessOnboarding';
 import { INITIAL_MOCK_ONBOARDING_APPLICATIONS } from '../data/mockBusinessOnboardingData';
+import { createTermsAcceptanceRecord, ACTIVE_TERMS_CONFIG } from '../data/termsAndConditionsData';
 import { sequenceService } from './sequenceService';
 import { businessService } from './businessService';
 import { MOCK_BUSINESS_WALLETS } from '../data/mockBusinessWalletData';
 
-const ONBOARDING_STORAGE_KEY = 'tellerbud_business_onboarding_apps_v2';
+const ONBOARDING_STORAGE_KEY = 'tellerbud_business_onboarding_apps_v5';
 
 export interface AvailableExecutive {
   id: string; // TB-EMP-000000
@@ -97,7 +98,12 @@ class BusinessOnboardingService {
   }
 
   public getApplications(): BusinessOnboardingApplication[] {
-    return [...this.applications];
+    return [...this.applications].sort((a, b) => {
+      const dateA = new Date(a.websiteData.submittedAt).getTime();
+      const dateB = new Date(b.websiteData.submittedAt).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      return b.id.localeCompare(a.id);
+    });
   }
 
   public getApplicationById(id: string): BusinessOnboardingApplication | undefined {
@@ -515,8 +521,24 @@ class BusinessOnboardingService {
     const prevStatus = app.status;
     const timestamp = new Date().toISOString();
 
+    const termsRecord =
+      completedDraft.termsAcceptanceRecord ||
+      createTermsAcceptanceRecord({
+        ownerFullName: completedDraft.ownerFullLegalName || app.websiteData.ownerFullName,
+        ownerId: app.businessOwnerId || 'TB-BOO-Pending',
+        businessName: completedDraft.legalBusinessName || app.websiteData.businessName,
+        businessId: app.businessId || 'TB-BIZ-Pending',
+        onboardingReference: app.id,
+        executiveId,
+        executiveName,
+        timestamp: completedDraft.termsAcceptedTimestamp || timestamp,
+      });
+
     app.digitalOnboarding = {
       ...completedDraft,
+      termsVersionAccepted: ACTIVE_TERMS_CONFIG.version,
+      termsAcceptedTimestamp: completedDraft.termsAcceptedTimestamp || timestamp,
+      termsAcceptanceRecord: termsRecord,
       lastSavedAt: timestamp,
       eSignatureTimestamp: timestamp,
       executiveSignatureConfirmed: true,
@@ -532,7 +554,7 @@ class BusinessOnboardingService {
       status: 'Submitted for Activation',
       timestamp,
       changedBy: `${executiveId} (${executiveName})`,
-      reason: 'Completed 7-step physical onboarding on tablet with live photograph, NRC documents, and e-signature.',
+      reason: 'Completed 8-step physical onboarding on tablet with Terms & Conditions acceptance (v1.0) and e-signature.',
     });
 
     app.auditLogs.push({
@@ -543,7 +565,7 @@ class BusinessOnboardingService {
       actorId: executiveId,
       actorName: executiveName,
       timestamp,
-      notes: `Locked physical onboarding package and submitted for TellerBud Admin final activation review.`,
+      notes: `Locked physical onboarding package and submitted for TellerBud Admin final activation review (Terms v1.0 accepted).`,
     });
 
     this.saveApplications();

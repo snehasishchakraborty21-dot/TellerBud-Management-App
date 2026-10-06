@@ -45,8 +45,28 @@ export const WalletFundingDetailPage: React.FC = () => {
   const record = fundingId ? getWalletFundingByReference(fundingId) : undefined;
   const ext = record ? getFundingExtendedDetails(record) : null;
 
+  const isBusiness =
+    record?.ownerType === 'Business' ||
+    Boolean(record?.customerId && record.customerId.startsWith('TB-BIZ-')) ||
+    Boolean(record?.ownerId && record.ownerId.startsWith('TB-BIZ-')) ||
+    Boolean(record?.businessId);
+
+  const ownerName =
+    record?.ownerName ||
+    (isBusiness ? record?.businessName : record?.customerName) ||
+    'Wallet Owner';
+
+  const ownerId =
+    record?.ownerId ||
+    (isBusiness ? record?.businessId : record?.customerId) ||
+    (isBusiness ? 'TB-BIZ-000001' : 'TB-CUS-001052');
+
   const fullCustomerPhone = record && isAuthorizedAdmin
-    ? (record.customerMobileNumber || getCustomerRegisteredPhone(record.customerId, record.customerName))
+    ? (record.ownerPhone ||
+       (isBusiness ? record.businessPhone : record.customerMobileNumber) ||
+       (record.customerId ? getCustomerRegisteredPhone(record.customerId, record.customerName) : '') ||
+       record.maskedMobileNumber ||
+       '—')
     : 'Access Restricted';
 
   const handleCopy = (text: string, label: string) => {
@@ -199,7 +219,7 @@ export const WalletFundingDetailPage: React.FC = () => {
       {
         step: 1,
         title: 'Funding Initiated',
-        description: `Customer initiated wallet collection for ${formatZMW(record.amount)} via ${record.provider}.`,
+        description: `${isBusiness ? 'Business' : 'Customer'} initiated wallet collection for ${formatZMW(record.amount)} via ${record.provider}.`,
         timestamp: record.initiatedAt,
         status: 'completed' as const,
       },
@@ -258,9 +278,9 @@ export const WalletFundingDetailPage: React.FC = () => {
       {
         step: 6,
         title: isCompleted || isReversed
-          ? 'Wallet Credited'
+          ? (isBusiness ? 'Business Global Wallet Credited' : 'Wallet Credited')
           : isPending
-          ? 'Wallet Credited'
+          ? 'Wallet Credit Pending'
           : 'No Wallet Credit Created',
         description: isCompleted
           ? `Immutable ledger credit posted: ${record.walletCreditReference} (+ ${formatZMW(record.amount)}). Balance: ${formatZMW(ext.balanceAfter)}.`
@@ -348,18 +368,22 @@ export const WalletFundingDetailPage: React.FC = () => {
             </span>
           </button>
 
-          {/* View Customer Wallet (Primary top-right action) */}
+          {/* View Customer/Business Wallet (Primary top-right action) */}
           <button
             type="button"
             onClick={() =>
-              navigate(`/super-admin/wallets/customers/${encodeURIComponent(record.walletId)}`)
+              navigate(
+                isBusiness
+                  ? '/super-admin/wallets/business-agent'
+                  : `/super-admin/wallets/customers/${encodeURIComponent(record.walletId)}`
+              )
             }
-            aria-label={`View wallet details for customer ${record.customerName} (${record.walletId})`}
+            aria-label={`View wallet details for ${ownerName} (${record.walletId})`}
             title={`View wallet details for ${record.walletId}`}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0b7e93] focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/40 rounded-lg transition-colors shadow-2xs cursor-pointer"
           >
-            <Wallet size={13} className="shrink-0" />
-            <span>View Customer Wallet</span>
+            {isBusiness ? <CreditCard size={13} className="shrink-0" /> : <Wallet size={13} className="shrink-0" />}
+            <span>{isBusiness ? 'View Business Global Wallet' : 'View Customer Wallet'}</span>
           </button>
 
           {/* View Ledger Entry (if credited) */}
@@ -368,9 +392,11 @@ export const WalletFundingDetailPage: React.FC = () => {
               type="button"
               onClick={() =>
                 navigate(
-                  `/super-admin/wallets/customers/${encodeURIComponent(
-                    record.walletId
-                  )}?tab=ledger`
+                  isBusiness
+                    ? '/super-admin/wallets/ledger'
+                    : `/super-admin/wallets/customers/${encodeURIComponent(
+                        record.walletId
+                      )}?tab=ledger`
                 )
               }
               aria-label={`View ledger entry for reference ${record.walletCreditReference}`}
@@ -398,7 +424,7 @@ export const WalletFundingDetailPage: React.FC = () => {
       {/* 2. Header Banner Card */}
       <div className="bg-white border border-gray-200/80 rounded-xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Left: Reference, Status Badge, Customer Info */}
+          {/* Left: Reference, Status Badge, Owner Info */}
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-slate-50 border border-gray-200/80 flex items-center justify-center shrink-0 p-2 shadow-2xs text-[#0D93AA]">
               <CreditCard size={22} />
@@ -410,15 +436,24 @@ export const WalletFundingDetailPage: React.FC = () => {
                   {record.fundingReference}
                 </h1>
                 {renderStatusBadge(record.status)}
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${
+                    isBusiness
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : 'bg-sky-50 text-sky-700 border border-sky-200'
+                  }`}
+                >
+                  {isBusiness ? 'Business' : 'Customer'}
+                </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-700">
                 <span className="font-semibold text-slate-900">
-                  {record.customerName}
+                  {ownerName}
                 </span>
                 <span className="text-slate-300">/</span>
                 <span className="font-mono text-[#0D93AA] font-semibold">
-                  {record.customerId}
+                  {ownerId}
                 </span>
                 <span className="text-slate-300">/</span>
                 <span className="font-mono text-slate-800 font-medium select-all">
@@ -440,7 +475,7 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Funding Amount (Duplicate View Customer Wallet button removed per instruction) */}
+          {/* Right: Funding Amount */}
           <div className="flex flex-col sm:items-start lg:items-end justify-center gap-1 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100">
             <span className="text-xs font-semibold text-slate-600 block">Funding Amount</span>
             <span className="text-2xl sm:text-3xl font-bold font-mono text-[#102025]">
@@ -450,7 +485,7 @@ export const WalletFundingDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Summary Cards (3 Cards) - Unnecessary supporting labels/decorative subtitles removed */}
+      {/* 3. Summary Cards (3 Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
         {/* Card 1: Funding Amount */}
         <div className="bg-white border border-gray-200/80 rounded-xl p-5 shadow-xs flex flex-col justify-between">
@@ -510,9 +545,11 @@ export const WalletFundingDetailPage: React.FC = () => {
                 type="button"
                 onClick={() =>
                   navigate(
-                    `/super-admin/wallets/customers/${encodeURIComponent(
-                      record.walletId
-                    )}?tab=ledger`
+                    isBusiness
+                      ? '/super-admin/wallets/ledger'
+                      : `/super-admin/wallets/customers/${encodeURIComponent(
+                          record.walletId
+                        )}?tab=ledger`
                   )
                 }
                 aria-label={`View ledger entry ${record.walletCreditReference}`}
@@ -542,7 +579,7 @@ export const WalletFundingDetailPage: React.FC = () => {
         {/* Section 1: Funding Information */}
         <div className="bg-white border border-gray-200/80 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
-            <User size={15} className="text-[#0D93AA]" />
+            {isBusiness ? <Building2 size={15} className="text-[#0D93AA]" /> : <User size={15} className="text-[#0D93AA]" />}
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
               Funding Information
             </h2>
@@ -575,38 +612,52 @@ export const WalletFundingDetailPage: React.FC = () => {
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Customer Name</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">
+                {isBusiness ? 'Business Name' : 'Customer Name'}
+              </dt>
               <dd className="font-semibold text-slate-900 mt-0.5">
-                {record.customerName}
+                {ownerName}
               </dd>
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Customer ID</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">
+                {isBusiness ? 'Business ID' : 'Customer ID'}
+              </dt>
               <dd className="mt-0.5">
                 <Link
-                  to={`/super-admin/people/customers/${encodeURIComponent(
-                    record.customerId
-                  )}`}
-                  aria-label={`View profile for customer ID ${record.customerId}`}
-                  title="View customer profile"
+                  to={
+                    isBusiness
+                      ? '/super-admin/people/businesses'
+                      : `/super-admin/people/customers/${encodeURIComponent(
+                          record.customerId || ownerId
+                        )}`
+                  }
+                  aria-label={`View profile for ${ownerId}`}
+                  title={`View ${isBusiness ? 'business' : 'customer'} profile`}
                   className="font-mono font-semibold text-[#0D93AA] hover:underline inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded"
                 >
-                  <span>{record.customerId}</span>
+                  <span>{ownerId}</span>
                   <ExternalLink size={11} />
                 </Link>
               </dd>
             </div>
 
             <div>
-              <dt className="text-slate-600 font-semibold text-[11px]">Linked Wallet ID</dt>
+              <dt className="text-slate-600 font-semibold text-[11px]">
+                {isBusiness ? 'Business Global Wallet ID' : 'Linked Wallet ID'}
+              </dt>
               <dd className="mt-0.5">
                 <Link
-                  to={`/super-admin/wallets/customers/${encodeURIComponent(
-                    record.walletId
-                  )}`}
+                  to={
+                    isBusiness
+                      ? '/super-admin/wallets/business-agent'
+                      : `/super-admin/wallets/customers/${encodeURIComponent(
+                          record.walletId
+                        )}`
+                  }
                   aria-label={`View wallet details for wallet ID ${record.walletId}`}
-                  title="View customer wallet"
+                  title={`View ${isBusiness ? 'business global' : 'customer'} wallet`}
                   className="font-mono font-semibold text-[#0D93AA] hover:underline inline-flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/30 rounded"
                 >
                   <span>{record.walletId}</span>
@@ -667,18 +718,22 @@ export const WalletFundingDetailPage: React.FC = () => {
             <div className="space-y-4">
               <div className="bg-slate-50/70 border border-gray-200/80 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs pb-2 border-b border-gray-200">
-                  <span className="text-slate-600 font-medium">Linked Customer Wallet</span>
+                  <span className="text-slate-600 font-medium">
+                    {isBusiness ? 'Linked Business Global Wallet' : 'Linked Customer Wallet'}
+                  </span>
                   <button
                     type="button"
                     onClick={() =>
                       navigate(
-                        `/super-admin/wallets/customers/${encodeURIComponent(
-                          record.walletId
-                        )}`
+                        isBusiness
+                          ? '/super-admin/wallets/business-agent'
+                          : `/super-admin/wallets/customers/${encodeURIComponent(
+                              record.walletId
+                            )}`
                       )
                     }
                     aria-label={`Open wallet ${record.walletId}`}
-                    title="Open customer wallet"
+                    title={`Open ${isBusiness ? 'business global' : 'customer'} wallet`}
                     className="font-mono font-bold text-[#0D93AA] hover:underline inline-flex items-center gap-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0D93AA]"
                   >
                     <span>{record.walletId}</span>

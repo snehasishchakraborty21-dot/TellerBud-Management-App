@@ -141,16 +141,16 @@ export const SUPER_ADMIN_NAVIGATION_CONFIG: NavGroup[] = [
     title: 'Wallets & Payments',
     items: [
       {
-        id: 'customer-wallets',
-        label: 'Customer Wallets',
-        path: '/super-admin/wallets/customers',
-        icon: Wallet,
-      },
-      {
         id: 'add-funds',
         label: 'Wallet Funding',
         path: '/super-admin/wallets/add-funds',
         icon: PlusCircle,
+      },
+      {
+        id: 'customer-wallets',
+        label: 'Customer Wallets',
+        path: '/super-admin/wallets/customers',
+        icon: Wallet,
       },
       {
         id: 'customer-withdrawals',

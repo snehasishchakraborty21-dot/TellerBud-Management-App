@@ -124,9 +124,29 @@ export interface DigitalOnboardingDraft {
   proposedBoothsCount: number;
   operationalNotes?: string;
 
-  // Step 7: Consent & E-Signature
+  // Step 7: Business Owner Terms & Conditions Acceptance (Version 1.0)
   confirmedAccuracy: boolean;
   acceptedOnboardingTerms: boolean;
+  termsVersionAccepted?: string; // e.g. '1.0'
+  termsAcceptedTimestamp?: string;
+  termsAcceptanceRecord?: {
+    termsTitle: string;
+    version: string;
+    effectiveDate: string;
+    acceptedAt: string;
+    acceptedAtFormattedLusaka: string;
+    ownerFullName: string;
+    ownerId: string;
+    businessName: string;
+    businessId: string;
+    onboardingReference: string;
+    executiveId: string;
+    executiveName: string;
+    timezone: string;
+    status: 'ACCEPTED';
+  };
+
+  // Step 8: Business Owner E-Signature
   eSignatureData?: string; // Canvas base64 URL
   eSignatureTimestamp?: string;
   executiveSignatureConfirmed?: boolean;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCheck, RefreshCw, Check } from 'lucide-react';
+import { CheckCheck, Check } from 'lucide-react';
 import {
   TellerBudNotification,
   NotificationFiltersState,
@@ -146,7 +146,7 @@ export const NotificationsPage: React.FC = () => {
     });
   }, [notifications, filters]);
 
-  // Reset page when filter changes (unless restoring)
+  // Reset page when filter changes
   const handleFilterChange = (newFilters: NotificationFiltersState) => {
     setFilters(newFilters);
     setCurrentPage(1);
@@ -160,7 +160,6 @@ export const NotificationsPage: React.FC = () => {
 
   // Handlers - Navigate to dedicated full-width Notification Details page
   const handleViewDetails = (item: TellerBudNotification) => {
-    // Automatically mark as read if unread when View Details is clicked
     if (item.status === 'Unread') {
       tellerBudNotificationService.markAsRead(item.id, 'Sililo Lubinda');
     }
@@ -206,82 +205,98 @@ export const NotificationsPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-2 pb-6 space-y-4">
+    <div
+      id="notifications-page-container"
+      className="w-full flex-1 min-h-0 h-full flex flex-col gap-2.5 px-3 sm:px-6 pt-1.5 pb-3 overflow-hidden relative"
+    >
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl shadow-xl text-xs font-medium animate-in slide-in-from-bottom-2 duration-150">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-xl shadow-xl text-xs font-medium animate-in slide-in-from-bottom-2 duration-150"
+        >
           <Check size={14} className="text-[#0D93AA]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Top Action Toolbar: Mark All as Read aligned on the upper-right */}
-      <div className="flex items-center justify-end pt-1">
-        <button
-          type="button"
-          id="btn-mark-all-as-read"
-          onClick={() => setIsMarkAllModalOpen(true)}
-          disabled={metrics.unread === 0}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7F93] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-2xs transition-colors cursor-pointer"
-          title={
-            metrics.unread === 0
-              ? 'No unread notifications to mark'
-              : 'Mark all unread notifications as read'
+      {/* TOP FROZEN SECTION: Action Toolbar + KPI Cards + Filter Bar */}
+      <div
+        id="frozen-notifications-top-section"
+        className="shrink-0 space-y-2.5 bg-[#FAFAFA]"
+      >
+        {/* Top Action Toolbar: Mark All as Read */}
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            id="btn-mark-all-as-read"
+            onClick={() => setIsMarkAllModalOpen(true)}
+            disabled={metrics.unread === 0}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7F93] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg shadow-2xs transition-colors cursor-pointer"
+            title={
+              metrics.unread === 0
+                ? 'No unread notifications to mark'
+                : 'Mark all unread notifications as read'
+            }
+          >
+            <CheckCheck size={14} />
+            <span>Mark All as Read</span>
+          </button>
+        </div>
+
+        {/* 4 KPI Summary Cards */}
+        <NotificationsSummaryCards
+          metrics={metrics}
+          onFilterUnread={() =>
+            handleFilterChange({
+              ...DEFAULT_FILTERS,
+              status: filters.status === 'Unread' ? 'All' : 'Unread',
+            })
           }
-        >
-          <CheckCheck size={15} />
-          <span>Mark All as Read</span>
-        </button>
+          onFilterActionRequired={() => {
+            handleFilterChange({
+              ...DEFAULT_FILTERS,
+              status: 'All',
+              priority: 'All',
+            });
+          }}
+          onFilterCritical={() =>
+            handleFilterChange({
+              ...DEFAULT_FILTERS,
+              priority: filters.priority === 'Critical' ? 'All' : 'Critical',
+            })
+          }
+        />
+
+        {/* Filter Bar */}
+        <NotificationsFilterBar
+          filters={filters}
+          onChange={handleFilterChange}
+          onReset={handleResetFilters}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
       </div>
 
-      {/* Summary Cards */}
-      <NotificationsSummaryCards
-        metrics={metrics}
-        onFilterUnread={() =>
-          handleFilterChange({
-            ...DEFAULT_FILTERS,
-            status: filters.status === 'Unread' ? 'All' : 'Unread',
-          })
-        }
-        onFilterActionRequired={() => {
-          handleFilterChange({
-            ...DEFAULT_FILTERS,
-            status: 'All',
-            priority: 'All',
-          });
-        }}
-        onFilterCritical={() =>
-          handleFilterChange({
-            ...DEFAULT_FILTERS,
-            priority: filters.priority === 'Critical' ? 'All' : 'Critical',
-          })
-        }
-      />
+      {/* MAIN TABLE SECTION WITH FROZEN THEAD & INTERNAL VERTICAL SCROLL */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200/80 rounded-xl shadow-2xs overflow-hidden w-full">
+        {/* Vertically Scrollable Table Area */}
+        <NotificationsTable
+          notifications={paginatedNotifications}
+          onViewDetails={handleViewDetails}
+          onMarkAsRead={handleMarkAsRead}
+          onMarkAsUnread={handleMarkAsUnread}
+        />
 
-      {/* Filter Bar */}
-      <NotificationsFilterBar
-        filters={filters}
-        onChange={handleFilterChange}
-        onReset={handleResetFilters}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-      />
-
-      {/* Table Section */}
-      <NotificationsTable
-        notifications={paginatedNotifications}
-        onViewDetails={handleViewDetails}
-        onMarkAsRead={handleMarkAsRead}
-        onMarkAsUnread={handleMarkAsUnread}
-      />
-
-      {/* Pagination */}
-      <NotificationsPagination
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalItems={filteredNotifications.length}
-        onPageChange={setCurrentPage}
-      />
+        {/* Sticky/Frozen Pagination Footer */}
+        <NotificationsPagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={filteredNotifications.length}
+          onPageChange={setCurrentPage}
+        />
+      </div>
 
       {/* Mark All as Read Confirmation Modal */}
       <NotificationsMarkAllModal

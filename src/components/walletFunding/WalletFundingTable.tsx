@@ -166,32 +166,36 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
 
   if (records.length === 0) {
     return (
-      <div className="bg-white border border-gray-200/80 rounded-xl p-12 text-center shadow-xs">
+      <div className="flex-1 min-h-0 p-12 flex flex-col items-center justify-center text-center bg-white">
         <p className="text-sm font-semibold text-slate-700">
           No wallet funding records found
         </p>
         <p className="text-xs text-slate-400 mt-1">
-          Try adjusting your search query, vendor, status, or date range filters.
+          Try adjusting your search query, owner type, vendor, status, or date range filters.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden pb-2.5">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[960px]">
-          {/* Exact columns in required order:
-              1. Funding Ref / Initiated
-              2. Customer
-              3. Phone #
-              4. Vendor
-              5. Amount (ZMW)
-              6. Status
-              7. Wallet Credit
-              8. Action
-          */}
-          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs border-b border-gray-200 text-[11px] uppercase tracking-wider font-semibold text-slate-600 select-none">
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label="Wallet funding listing"
+      className="flex-1 min-h-0 overflow-y-auto overflow-x-auto focus:outline-none focus:ring-1 focus:ring-[#0D93AA]/30"
+    >
+      <table className="w-full text-left border-collapse min-w-[960px]">
+        {/* Exact columns in required order:
+            1. Funding Ref / Initiated
+            2. Wallet Owner
+            3. Phone #
+            4. Vendor
+            5. Amount (ZMW)
+            6. Status
+            7. Wallet Credit
+            8. Action
+        */}
+        <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-xs border-b border-gray-200 text-[11px] uppercase tracking-wider font-semibold text-slate-600 select-none shadow-[0_1px_0_0_#E5E7EB]">
             <tr>
               {/* 1. Funding Ref / Initiated */}
               <th scope="col" className="py-3 pl-4 pr-3 text-left w-[17%] min-w-[145px]">
@@ -205,20 +209,20 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                 </button>
               </th>
 
-              {/* 2. Customer */}
-              <th scope="col" className="py-3 px-3 text-left w-[17%] min-w-[145px]">
+              {/* 2. Wallet Owner */}
+              <th scope="col" className="py-3 px-3 text-left w-[19%] min-w-[160px]">
                 <button
                   type="button"
-                  onClick={() => onSort('customer')}
+                  onClick={() => onSort('owner')}
                   className="group inline-flex items-center gap-1 text-slate-600 hover:text-[#0D93AA] focus:outline-none cursor-pointer"
                 >
-                  <span>Customer</span>
-                  {renderSortIcon('customer')}
+                  <span>WALLET OWNER</span>
+                  {renderSortIcon('owner')}
                 </button>
               </th>
 
               {/* 3. Phone # */}
-              <th scope="col" className="py-3 px-3 text-left w-[15%] min-w-[130px]">
+              <th scope="col" className="py-3 px-3 text-left w-[14%] min-w-[125px]">
                 <span>Phone #</span>
               </th>
 
@@ -272,11 +276,28 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
 
           <tbody className="divide-y divide-gray-100 text-xs">
             {records.map((record) => {
-              const fullCustomerPhone = record.customerMobileNumber || record.maskedMobileNumber;
+              const isBusiness =
+                record.ownerType === 'Business' ||
+                (record.customerId && record.customerId.startsWith('TB-BIZ-')) ||
+                (record.businessId !== undefined);
+              const ownerName =
+                record.ownerName ||
+                (isBusiness ? record.businessName : record.customerName) ||
+                'Wallet Owner';
+              const ownerId =
+                record.ownerId ||
+                (isBusiness ? record.businessId : record.customerId) ||
+                'TB-CUS-000001';
+              const fullPhone =
+                record.ownerPhone ||
+                record.customerMobileNumber ||
+                record.businessPhone ||
+                record.maskedMobileNumber ||
+                '—';
 
               return (
                 <tr
-                  key={record.id}
+                  key={record.id || record.fundingReference}
                   className="group hover:bg-slate-50/70 transition-colors"
                 >
                   {/* 1. Funding Ref / Initiated: Line 1 Funding ID, Line 2 Date */}
@@ -296,20 +317,31 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                     </div>
                   </td>
 
-                  {/* 2. Customer: 2 lines - Name on line 1, Customer ID on line 2 */}
+                  {/* 2. Wallet Owner: 2 lines - Name + Badge on line 1, Owner ID on line 2 */}
                   <td className="py-2.5 sm:py-3 px-3 text-left align-middle">
                     <div className="flex flex-col">
-                      <span
-                        className="font-semibold text-slate-900 leading-tight block truncate"
-                        title={record.customerName}
-                      >
-                        {record.customerName}
-                      </span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span
+                          className="font-semibold text-slate-900 leading-tight truncate max-w-[170px]"
+                          title={ownerName}
+                        >
+                          {ownerName}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
+                            isBusiness
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : 'bg-sky-50 text-sky-700 border border-sky-200'
+                          }`}
+                        >
+                          {isBusiness ? 'Business' : 'Customer'}
+                        </span>
+                      </div>
                       <span
                         className="text-[11px] text-slate-500 font-mono mt-0.5"
-                        title={`Customer ID: ${record.customerId}`}
+                        title={`${isBusiness ? 'Business' : 'Customer'} ID: ${ownerId}`}
                       >
-                        {record.customerId}
+                        {ownerId}
                       </span>
                     </div>
                   </td>
@@ -318,9 +350,9 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
                   <td className="py-2.5 sm:py-3 px-3 text-left align-middle whitespace-nowrap">
                     <span
                       className="text-xs text-slate-800 font-mono select-all"
-                      title={`Phone: ${fullCustomerPhone}`}
+                      title={`Phone: ${fullPhone}`}
                     >
-                      {fullCustomerPhone}
+                      {fullPhone}
                     </span>
                   </td>
 
@@ -366,6 +398,5 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
           </tbody>
         </table>
       </div>
-    </div>
-  );
-};
+    );
+  };

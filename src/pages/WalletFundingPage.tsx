@@ -22,6 +22,7 @@ export const WalletFundingPage: React.FC = () => {
   // Filter state
   const [filters, setFilters] = useState<WalletFundingFilters>({
     search: '',
+    ownerType: 'ALL',
     provider: 'ALL',
     status: 'ALL',
     initiatedFrom: '',
@@ -29,7 +30,7 @@ export const WalletFundingPage: React.FC = () => {
     kpiFilter: 'ALL',
   });
 
-  // Sorting state
+  // Sorting state (default: newest first by initiated timestamp)
   const [sortField, setSortField] = useState<WalletFundingSortField>('initiated');
   const [sortDirection, setSortDirection] = useState<WalletFundingSortDirection>('desc');
 
@@ -38,10 +39,19 @@ export const WalletFundingPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Compute KPI summary from raw dataset
+  // Derive records matching current search/owner/provider/date filters (ignoring kpiFilter so user can see category breakdowns responding to applied filters)
+  const baseFilteredForKpi = useMemo(() => {
+    return filterAndSortWalletFunding(
+      MOCK_WALLET_FUNDING_RECORDS,
+      { ...filters, kpiFilter: 'ALL' },
+      { field: 'initiated', direction: 'desc' }
+    );
+  }, [filters]);
+
+  // Compute KPI summary from filtered dataset (including both Customer and Business records)
   const summary = useMemo(
-    () => calculateWalletFundingSummary(MOCK_WALLET_FUNDING_RECORDS),
-    []
+    () => calculateWalletFundingSummary(baseFilteredForKpi),
+    [baseFilteredForKpi]
   );
 
   // Filter and sort records
@@ -74,6 +84,7 @@ export const WalletFundingPage: React.FC = () => {
   const handleClearFilters = () => {
     setFilters({
       search: '',
+      ownerType: 'ALL',
       provider: 'ALL',
       status: 'ALL',
       initiatedFrom: '',
@@ -105,6 +116,7 @@ export const WalletFundingPage: React.FC = () => {
 
   const hasActiveFilters =
     filters.search.trim() !== '' ||
+    filters.ownerType !== 'ALL' ||
     filters.provider !== 'ALL' ||
     filters.status !== 'ALL' ||
     filters.initiatedFrom !== '' ||
@@ -112,48 +124,60 @@ export const WalletFundingPage: React.FC = () => {
     filters.kpiFilter !== 'ALL';
 
   return (
-    <div className="space-y-4 sm:space-y-5 pb-16">
-      {/* 5 Clickable KPI Cards with Oceanic Blue active-state */}
-      <WalletFundingKpiCards
-        summary={summary}
-        activeKpiFilter={filters.kpiFilter}
-        onSelectKpiFilter={handleSelectKpiFilter}
-      />
-
-      {/* Compact Filter Container */}
-      <WalletFundingFilterBar
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClearFilters={handleClearFilters}
-        onRefresh={handleRefresh}
-        hasActiveFilters={hasActiveFilters}
-        isRefreshing={isRefreshing}
-        recordsToExport={filteredRecords}
-      />
-
-      {/* Results Table */}
-      <WalletFundingTable
-        records={paginatedRecords}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        onViewDetails={handleViewDetails}
-      />
-
-      {/* Compact Pagination */}
-      {filteredRecords.length > 0 && (
-        <WalletFundingPagination
-          currentPage={currentPage}
-          totalItems={filteredRecords.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={(items) => {
-            setItemsPerPage(items);
-            setCurrentPage(1);
-          }}
+    <div className="h-full flex flex-col min-h-0 p-3.5 sm:p-4 md:p-5 lg:p-6 space-y-2.5 overflow-hidden w-full select-text">
+      {/* TOP FROZEN SECTION: KPI Cards + Compact Filter Bar */}
+      <div
+        id="frozen-wallet-funding-top-section"
+        className="shrink-0 space-y-2.5 bg-[#FAFAFA]"
+      >
+        {/* 1. Compact Clickable KPI Cards */}
+        <WalletFundingKpiCards
+          summary={summary}
+          activeKpiFilter={filters.kpiFilter}
+          onSelectKpiFilter={handleSelectKpiFilter}
         />
-      )}
+
+        {/* 2. Compact Filter Bar */}
+        <WalletFundingFilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          onRefresh={handleRefresh}
+          hasActiveFilters={hasActiveFilters}
+          isRefreshing={isRefreshing}
+          recordsToExport={filteredRecords}
+        />
+      </div>
+
+      {/* MAIN TABLE SECTION WITH FROZEN THEAD & INTERNAL VERTICAL SCROLL */}
+      <div className="flex-1 min-h-0 flex flex-col bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full">
+        {/* Scrollable Table Area */}
+        <WalletFundingTable
+          records={paginatedRecords}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          onViewDetails={handleViewDetails}
+        />
+
+        {/* Compact Pagination */}
+        {filteredRecords.length > 0 && (
+          <div className="shrink-0 px-4 py-2.5 bg-slate-50/80 border-t border-gray-200/90">
+            <WalletFundingPagination
+              currentPage={currentPage}
+              totalItems={filteredRecords.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(items) => {
+                setItemsPerPage(items);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
+
 export default WalletFundingPage;

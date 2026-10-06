@@ -317,6 +317,7 @@ export interface AgentToAgentRequest {
   requestingAgentId: string;
   requestingAgentPhone: string;
   requestingAgentBusiness: string;
+  businessId?: string;
   requestedFrom: 'Another Agent';
   requestType: CashFloatRequestType; // 'Cash' | 'Float'
   amount: number; // in ZMW

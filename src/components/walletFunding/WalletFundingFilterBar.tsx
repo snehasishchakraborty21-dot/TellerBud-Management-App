@@ -3,6 +3,7 @@ import { Search, X, RotateCcw, Download, ChevronDown, FileSpreadsheet, FileText 
 import * as XLSX from 'xlsx';
 import {
   WalletFundingFilters,
+  FundingOwnerType,
   FundingProvider,
   FundingStatus,
   WalletFundingRecord,
@@ -61,17 +62,26 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
   };
 
   const prepareExportData = () => {
-    return recordsToExport.map((r) => ({
-      'Funding Reference': r.fundingReference,
-      'Initiated Date and Time': r.initiatedAt,
-      'Customer Name': r.customerName,
-      'Customer ID': r.customerId,
-      'Phone Number': r.customerMobileNumber || r.maskedMobileNumber,
-      'Vendor': r.provider,
-      'Amount (ZMW)': Number(r.amount.toFixed(2)),
-      'Status': r.status,
-      'Wallet Credit': r.walletCreditReference || (r.status === 'Completed' ? 'Credited' : r.status === 'Reversed' ? 'Reversed' : 'Awaiting Confirmation'),
-    }));
+    return recordsToExport.map((r) => {
+      const isBiz = r.ownerType === 'Business';
+      const ownerName = r.ownerName || (isBiz ? r.businessName : r.customerName) || 'Wallet Owner';
+      const ownerId = r.ownerId || (isBiz ? r.businessId : r.customerId) || '';
+      const phone = r.ownerPhone || r.customerMobileNumber || r.businessPhone || r.maskedMobileNumber || '';
+
+      return {
+        'Funding Reference': r.fundingReference,
+        'Initiated Date and Time': r.initiatedAt,
+        'Wallet Owner': ownerName,
+        'Owner Type': r.ownerType || (isBiz ? 'Business' : 'Customer'),
+        'Owner ID': ownerId,
+        'Wallet ID': r.walletId,
+        'Phone Number': phone,
+        'Vendor': r.provider,
+        'Amount (ZMW)': Number(r.amount.toFixed(2)),
+        'Status': r.status,
+        'Wallet Credit': r.walletCreditReference || (r.status === 'Completed' ? 'Credited' : r.status === 'Reversed' ? 'Reversed' : 'Awaiting Confirmation'),
+      };
+    });
   };
 
   const handleExportCSV = () => {
@@ -111,8 +121,10 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
     ws['!cols'] = [
       { wch: 20 }, // Funding Reference
       { wch: 24 }, // Initiated Date and Time
-      { wch: 24 }, // Customer Name
-      { wch: 18 }, // Customer ID
+      { wch: 28 }, // Wallet Owner
+      { wch: 14 }, // Owner Type
+      { wch: 18 }, // Owner ID
+      { wch: 18 }, // Wallet ID
       { wch: 20 }, // Phone Number
       { wch: 22 }, // Vendor
       { wch: 16 }, // Amount (ZMW)
@@ -128,10 +140,10 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
   return (
     <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 sm:p-3 shadow-xs">
       <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 w-full">
-        {/* Left / Center: Search, Vendor, Status, From Date, To Date */}
+        {/* Left / Center: Search, Owner Type, Vendor, Status, From Date, To Date */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
           {/* 1. Funding Search */}
-          <div className="relative w-full sm:w-[220px] lg:w-[240px] shrink-0">
+          <div className="relative w-full sm:w-[260px] lg:w-[290px] shrink-0">
             <Search
               size={14}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -141,9 +153,9 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
               id="funding-search-input"
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value })}
-              placeholder="Search funding reference, customer or mobile…"
+              placeholder="Search funding reference, customer, business, wallet ID or phone..."
               className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] h-9 transition-colors"
-              aria-label="Search funding reference, customer or mobile"
+              aria-label="Search funding reference, customer, business, wallet ID or phone"
             />
             {filters.search && (
               <button
@@ -157,7 +169,29 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             )}
           </div>
 
-          {/* 2. Vendor Select (Updated from Provider) */}
+          {/* 2. Owner Type Filter */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+              Owner:
+            </span>
+            <select
+              id="funding-owner-type-select"
+              value={filters.ownerType || 'ALL'}
+              onChange={(e) =>
+                onFilterChange({
+                  ownerType: e.target.value as 'ALL' | FundingOwnerType,
+                })
+              }
+              aria-label="Filter by Wallet Owner type"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="ALL">All Wallet Owners</option>
+              <option value="Customer">Customers</option>
+              <option value="Business">Businesses</option>
+            </select>
+          </div>
+
+          {/* 3. Vendor Select */}
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Vendor:
@@ -179,7 +213,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             </select>
           </div>
 
-          {/* 3. Status Select */}
+          {/* 4. Status Select */}
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Status:
@@ -206,7 +240,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             </select>
           </div>
 
-          {/* 4. From Date */}
+          {/* 5. From Date */}
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               From:
@@ -223,7 +257,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             />
           </div>
 
-          {/* 5. To Date */}
+          {/* 6. To Date */}
           <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               To:
@@ -244,7 +278,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
 
         {/* Right: Clear Filters, Refresh, and Export */}
         <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
-          {/* 6. Clear Filters */}
+          {/* Clear Filters */}
           <button
             type="button"
             id="btn-clear-funding-filters"
@@ -261,7 +295,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             <span>Clear Filters</span>
           </button>
 
-          {/* 7. Refresh */}
+          {/* Refresh */}
           <button
             type="button"
             id="btn-refresh-funding"
@@ -277,7 +311,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             <span>Refresh</span>
           </button>
 
-          {/* 8. Export Dropdown */}
+          {/* Export Dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button
               type="button"

@@ -19,6 +19,10 @@ import {
   AlertCircle,
   Eye,
   PenTool,
+  Scale,
+  Calendar,
+  Check,
+  FileCheck2,
 } from 'lucide-react';
 import {
   BusinessOnboardingApplication,
@@ -32,6 +36,11 @@ import {
   normalizeNrcDigits,
   isValidZambianNrc,
 } from '../utils/formatters';
+import {
+  ACTIVE_TERMS_CONFIG,
+  createTermsAcceptanceRecord,
+  formatLusakaDateTime,
+} from '../data/termsAndConditionsData';
 
 const LEGAL_STRUCTURES: BusinessLegalType[] = [
   'Sole Proprietorship',
@@ -71,7 +80,8 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
       pacraRegistrationNumber: '',
       businessRegistrationDate: '2023-05-10',
       businessType: 'Private Limited Company (PLC)',
-      primaryBusinessAddress: application?.websiteData.cityLocations?.[application?.websiteData.operatingCities[0] || ''] || '',
+      primaryBusinessAddress:
+        application?.websiteData.cityLocations?.[application?.websiteData.operatingCities[0] || ''] || '',
       operatingCities: application?.websiteData.operatingCities || ['Lusaka'],
       cityLocations: application?.websiteData.cityLocations || { Lusaka: '' },
       numberOfAgents: application?.websiteData.numberOfAgents || 5,
@@ -123,6 +133,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         setError((prev) => (prev === 'Please enter the complete 9-digit NRC number.' ? null : prev));
       }
     }
+    if (application?.digitalOnboarding?.eSignatureData) {
+      setHasSignature(true);
+    }
   }, [application]);
 
   const showToast = (msg: string) => {
@@ -140,7 +153,6 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
       ownerNrcNumber: formatted,
     }));
 
-    // If 9 digits are now complete and valid, remove error immediately
     if (isValidZambianNrc(formatted)) {
       setNrcError(null);
       if (error === 'Please enter the complete 9-digit NRC number.') {
@@ -149,13 +161,12 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
     }
   };
 
-  // Backspace keydown handler: natural digit deletion across slashes without getting stuck
+  // Backspace keydown handler: natural digit deletion across slashes
   const handleNrcKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const input = e.currentTarget;
     const { selectionStart, selectionEnd, value } = input;
 
     if (e.key === 'Backspace' && selectionStart === selectionEnd && selectionStart !== null) {
-      // If cursor is right after a slash, e.g. "123456/|" or "123456/00/|"
       if (value[selectionStart - 1] === '/') {
         e.preventDefault();
         const before = value.slice(0, selectionStart - 1);
@@ -168,7 +179,7 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
     }
   };
 
-  // Paste handler: handles formatted or unformatted strings, removes extra characters
+  // Paste handler
   const handleNrcPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData('text');
@@ -352,7 +363,6 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
 
     // Step-specific validations
     if (currentStep === 1) {
-      // Step 1: Pre-fill validation
       if (!draft.ownerFullLegalName.trim()) {
         setError('Please enter the Business Owner full name.');
         return;
@@ -362,7 +372,6 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         return;
       }
     } else if (currentStep === 2) {
-      // Step 2: Extended Business Info
       if (!draft.pacraRegistrationNumber.trim()) {
         setError('Please enter the official PACRA registration number.');
         return;
@@ -372,7 +381,6 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         return;
       }
     } else if (currentStep === 3) {
-      // Step 3: Owner Info
       if (!draft.ownerFullLegalName.trim()) {
         setError('Please enter the Business Owner full legal name.');
         return;
@@ -388,12 +396,14 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
       const allApps = businessOnboardingService.getApplications();
       const duplicate = allApps.find(
         (a) =>
-          a.id !== application.id &&
+          a.id !== application?.id &&
           a.digitalOnboarding?.ownerNrcNumber &&
           normalizeNrcDigits(a.digitalOnboarding.ownerNrcNumber) === nrcDigits
       );
       if (duplicate) {
-        setError(`This NRC number is already registered under ${duplicate.websiteData.businessName} (${duplicate.websiteData.ownerFullName}).`);
+        setError(
+          `This NRC number is already registered under ${duplicate.websiteData.businessName} (${duplicate.websiteData.ownerFullName}).`
+        );
         setNrcError('This NRC number is already registered to another Business Owner.');
         return;
       }
@@ -403,7 +413,6 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         return;
       }
     } else if (currentStep === 4) {
-      // Step 4: Documents
       if (!draft.nrcFrontImage) {
         setError('Please capture the NRC Front image.');
         return;
@@ -413,15 +422,47 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         return;
       }
     } else if (currentStep === 5) {
-      // Step 5: Live photo
       if (!draft.ownerLivePhoto) {
         setError('Please capture the live photograph of the Business Owner.');
         return;
       }
+    } else if (currentStep === 6) {
+      // Step 6: Operational setup
+      if (draft.proposedStoresCount < 1) {
+        setError('Proposed stores count must be at least 1.');
+        return;
+      }
+    } else if (currentStep === 7) {
+      // Step 7: Terms & Conditions Acceptance
+      if (!draft.acceptedOnboardingTerms) {
+        setError('The Business Owner must read and accept the Terms & Conditions before continuing to signature.');
+        return;
+      }
+
+      // Record verified Terms Acceptance metadata
+      const ts = new Date().toISOString();
+      const termsRecord = createTermsAcceptanceRecord({
+        ownerFullName: draft.ownerFullLegalName || application?.websiteData.ownerFullName || '',
+        ownerId: application?.businessOwnerId || 'TB-BOO-Pending',
+        businessName: draft.legalBusinessName || application?.websiteData.businessName || '',
+        businessId: application?.businessId || 'TB-BIZ-Pending',
+        onboardingReference: application?.id || '',
+        executiveId,
+        executiveName,
+        timestamp: ts,
+      });
+
+      setDraft((prev) => ({
+        ...prev,
+        acceptedOnboardingTerms: true,
+        termsVersionAccepted: ACTIVE_TERMS_CONFIG.version,
+        termsAcceptedTimestamp: ts,
+        termsAcceptanceRecord: termsRecord,
+      }));
     }
 
     handleSaveDraft();
-    setCurrentStep((prev) => Math.min(7, prev + 1));
+    setCurrentStep((prev) => Math.min(8, prev + 1));
   };
 
   const handlePrevStep = () => {
@@ -430,17 +471,19 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
     setCurrentStep((prev) => Math.max(1, prev - 1));
   };
 
-  // Final Submit for Activation
+  // Final Submit for Activation (from Step 8 E-Signature)
   const handleSubmitForActivation = () => {
     if (!application) return;
     setError(null);
 
-    if (!draft.confirmedAccuracy || !draft.acceptedOnboardingTerms) {
-      setError('Please review all details, check confirmation of accuracy and accept the onboarding terms.');
+    if (!draft.acceptedOnboardingTerms) {
+      setError('Terms & Conditions must be accepted prior to submission.');
+      setCurrentStep(7);
       return;
     }
+
     if (!draft.eSignatureData && !hasSignature) {
-      setError('Handwritten signature on tablet is required. Please sign in the signature box.');
+      setError('Handwritten signature on tablet is required. Please sign inside the signature box.');
       return;
     }
 
@@ -462,6 +505,17 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
   };
 
   if (!application) return null;
+
+  const STEPS = [
+    { num: 1, label: 'Prefilled Info' },
+    { num: 2, label: 'Business Details' },
+    { num: 3, label: 'Owner Details' },
+    { num: 4, label: 'NRC & Documents' },
+    { num: 5, label: 'Live Photo' },
+    { num: 6, label: 'Account Setup' },
+    { num: 7, label: 'Terms & Conditions' },
+    { num: 8, label: 'Business Owner E-Sign' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between text-xs pb-12 select-none">
@@ -515,18 +569,10 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
         </div>
       </header>
 
-      {/* 7-Step Horizontal Progress Bar */}
+      {/* 8-Step Horizontal Progress Bar */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-8 py-2.5 overflow-x-auto shrink-0 shadow-2xs">
-        <div className="flex items-center justify-between min-w-[720px] max-w-5xl mx-auto gap-2">
-          {[
-            { num: 1, label: 'Prefilled Info' },
-            { num: 2, label: 'Business Details' },
-            { num: 3, label: 'Owner Details' },
-            { num: 4, label: 'NRC & Documents' },
-            { num: 5, label: 'Live Photo' },
-            { num: 6, label: 'Account Setup' },
-            { num: 7, label: 'Consent & E-Sign' },
-          ].map((s) => {
+        <div className="flex items-center justify-between min-w-[840px] max-w-6xl mx-auto gap-2">
+          {STEPS.map((s) => {
             const isDone = currentStep > s.num;
             const isCurrent = currentStep === s.num;
 
@@ -549,7 +595,11 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
-                    isCurrent ? 'bg-white text-[#0D93AA]' : isDone ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-600'
+                    isCurrent
+                      ? 'bg-white text-[#0D93AA]'
+                      : isDone
+                      ? 'bg-teal-600 text-white'
+                      : 'bg-slate-200 text-slate-600'
                   }`}
                 >
                   {isDone ? <CheckCircle2 size={12} /> : s.num}
@@ -576,7 +626,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">1</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    1
+                  </span>
                   <span>Prefilled Website Application Information</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -654,7 +706,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">2</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    2
+                  </span>
                   <span>Registered Business Information</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -674,7 +728,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">PACRA Registration Number <span className="text-rose-500">*</span></label>
+                  <label className="block font-bold text-slate-700">
+                    PACRA Registration Number <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={draft.pacraRegistrationNumber}
@@ -686,14 +742,18 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">Legal Business Structure <span className="text-rose-500">*</span></label>
+                  <label className="block font-bold text-slate-700">
+                    Legal Business Structure <span className="text-rose-500">*</span>
+                  </label>
                   <select
                     value={draft.businessType}
                     onChange={(e) => setDraft({ ...draft, businessType: e.target.value as BusinessLegalType })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 font-semibold focus:bg-white focus:ring-2 focus:ring-[#0D93AA] cursor-pointer"
                   >
                     {LEGAL_STRUCTURES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -709,7 +769,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 </div>
 
                 <div className="sm:col-span-2 space-y-1.5">
-                  <label className="block font-bold text-slate-700">Primary Business Operating Address <span className="text-rose-500">*</span></label>
+                  <label className="block font-bold text-slate-700">
+                    Primary Business Operating Address <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={draft.primaryBusinessAddress}
@@ -728,7 +790,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">3</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    3
+                  </span>
                   <span>Business Owner Identity Details</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -738,7 +802,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">Full Legal Name (as per NRC) <span className="text-rose-500">*</span></label>
+                  <label className="block font-bold text-slate-700">
+                    Full Legal Name (as per NRC) <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={draft.ownerFullLegalName}
@@ -793,7 +859,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">Position / Role in Business <span className="text-rose-500">*</span></label>
+                  <label className="block font-bold text-slate-700">
+                    Position / Role in Business <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={draft.ownerPosition}
@@ -836,7 +904,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">4</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    4
+                  </span>
                   <span>Tablet Camera Document Capture</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -936,7 +1006,11 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                   </div>
                   <div className="h-40 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center p-2">
                     {draft.supportingBusinessDoc || draft.pacraDocument ? (
-                      <img src={draft.supportingBusinessDoc || draft.pacraDocument} alt="PACRA" className="h-full object-contain" />
+                      <img
+                        src={draft.supportingBusinessDoc || draft.pacraDocument}
+                        alt="PACRA"
+                        className="h-full object-contain"
+                      />
                     ) : (
                       <div className="text-slate-400 text-xs italic">No capture yet</div>
                     )}
@@ -959,7 +1033,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">5</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    5
+                  </span>
                   <span>Live Business Owner Photograph</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -988,7 +1064,11 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-4 max-w-md mx-auto">
                   <div className="w-48 h-48 rounded-2xl bg-white border-2 border-dashed border-slate-300 mx-auto overflow-hidden flex items-center justify-center p-2">
                     {draft.ownerLivePhoto ? (
-                      <img src={draft.ownerLivePhoto} alt="Live Portrait" className="w-full h-full object-cover rounded-xl" />
+                      <img
+                        src={draft.ownerLivePhoto}
+                        alt="Live Portrait"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
                     ) : (
                       <div className="text-slate-400 text-xs italic">Live photo not captured yet</div>
                     )}
@@ -1011,7 +1091,9 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             <div className="space-y-5">
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">6</span>
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    6
+                  </span>
                   <span>Operational Structure & Account Setup</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1057,69 +1139,253 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 7: Review, Consent and E-Signature Pad */}
+          {/* STEP 7: Business Owner Terms & Conditions (Strictly NO Signature Pad here) */}
           {currentStep === 7 && (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">7</span>
-                  <span>Review, Terms & Tablet E-Signature</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Review complete application with Business Owner and obtain handwritten stylus / touch signature.
+            <div className="space-y-6 animate-in fade-in duration-150">
+              {/* Step Header */}
+              <div className="border-b border-slate-100 pb-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                      7
+                    </span>
+                    <span>{ACTIVE_TERMS_CONFIG.title}</span>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200 text-[11px] font-bold">
+                      Version {ACTIVE_TERMS_CONFIG.version}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-medium">
+                      Effective Date: {ACTIVE_TERMS_CONFIG.effectiveDate}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Please review the complete Terms & Conditions with Business Owner <strong>{draft.ownerFullLegalName}</strong>. Manual acceptance is required before proceeding to the signature pad.
                 </p>
               </div>
 
-              {/* Summary Review Card */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2 text-slate-700">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                  <div><strong>Business:</strong> {draft.legalBusinessName}</div>
-                  <div><strong>Owner:</strong> {draft.ownerFullLegalName}</div>
-                  <div><strong>NRC:</strong> {draft.ownerNrcNumber}</div>
-                  <div><strong>PACRA:</strong> {draft.pacraRegistrationNumber}</div>
-                  <div><strong>Email:</strong> {draft.ownerEmail}</div>
-                  <div><strong>Phone:</strong> {draft.ownerPhone}</div>
+              {/* Complete, Unabridged Terms & Conditions Document Viewer */}
+              <div className="border border-slate-200 rounded-2xl bg-slate-50/60 p-5 sm:p-7 max-h-[460px] overflow-y-auto space-y-6 text-slate-800 text-xs sm:text-[13px] leading-relaxed select-text shadow-inner">
+                {/* Header Info */}
+                <div className="border-b border-slate-200 pb-4">
+                  <h1 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide">
+                    {ACTIVE_TERMS_CONFIG.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-600 font-medium mt-1.5">
+                    <div>
+                      <strong>Effective Date:</strong> {ACTIVE_TERMS_CONFIG.effectiveDate}
+                    </div>
+                    <div>
+                      <strong>Version:</strong> {ACTIVE_TERMS_CONFIG.version}
+                    </div>
+                  </div>
+                  <p className="mt-3 text-slate-700 font-medium italic">
+                    {ACTIVE_TERMS_CONFIG.intro}
+                  </p>
+                </div>
+
+                {/* 13 Numbered Sections */}
+                {ACTIVE_TERMS_CONFIG.sections.map((section) => (
+                  <div key={section.id} className="space-y-2.5">
+                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide">
+                      {section.title}
+                    </h2>
+
+                    {section.paragraphs?.map((p, idx) => (
+                      <p key={idx} className="text-slate-700">
+                        {p}
+                      </p>
+                    ))}
+
+                    {section.bulletPoints && section.bulletPoints.length > 0 && (
+                      <ul className="list-disc list-outside pl-5 space-y-1.5 text-slate-700">
+                        {section.bulletPoints.map((bp, idx) => {
+                          // Bold prefix if starts with term like "Setup Fee:", "Monthly Subscription:", etc.
+                          const colonIdx = bp.indexOf(':');
+                          if (colonIdx !== -1 && colonIdx < 30 && !bp.startsWith('Take good care')) {
+                            const prefix = bp.slice(0, colonIdx + 1);
+                            const rest = bp.slice(colonIdx + 1);
+                            return (
+                              <li key={idx}>
+                                <strong className="text-slate-900">{prefix}</strong>
+                                {rest}
+                              </li>
+                            );
+                          }
+                          return <li key={idx}>{bp}</li>;
+                        })}
+                      </ul>
+                    )}
+
+                    {section.subparagraphs?.map((sp, idx) => (
+                      <p key={idx} className="text-slate-700">
+                        {sp}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+
+                {/* Footer of Document */}
+                <div className="border-t border-slate-200 pt-4 mt-6 text-slate-500 text-[11px] flex items-center justify-between">
+                  <span className="font-semibold text-slate-700">{ACTIVE_TERMS_CONFIG.footerTitle}</span>
+                  <span>Version: {ACTIVE_TERMS_CONFIG.footerVersion}</span>
                 </div>
               </div>
 
-              {/* Checkbox Consent */}
-              <div className="space-y-2.5">
-                <label className="flex items-start gap-3 p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={draft.confirmedAccuracy}
-                    onChange={(e) => setDraft({ ...draft, confirmedAccuracy: e.target.checked })}
-                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#0D93AA] focus:ring-[#0D93AA]"
-                  />
-                  <span className="text-xs text-slate-800 font-medium">
-                    I confirm that all business details, NRC credentials, and operating locations provided above are accurate and true.
-                  </span>
-                </label>
+              {/* Acceptance Section */}
+              <div className="space-y-3 pt-2">
+                <div className="bg-teal-50/80 border-2 border-teal-300/80 rounded-2xl p-4 sm:p-5">
+                  <label className="flex items-start gap-3.5 cursor-pointer select-none">
+                    <input
+                      id="checkbox-accept-terms-v1"
+                      type="checkbox"
+                      checked={draft.acceptedOnboardingTerms}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        const ts = new Date().toISOString();
+                        const termsRecord = checked
+                          ? createTermsAcceptanceRecord({
+                              ownerFullName: draft.ownerFullLegalName || application.websiteData.ownerFullName,
+                              ownerId: application.businessOwnerId || 'TB-BOO-Pending',
+                              businessName: draft.legalBusinessName || application.websiteData.businessName,
+                              businessId: application.businessId || 'TB-BIZ-Pending',
+                              onboardingReference: application.id,
+                              executiveId,
+                              executiveName,
+                              timestamp: ts,
+                            })
+                          : undefined;
 
-                <label className="flex items-start gap-3 p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={draft.acceptedOnboardingTerms}
-                    onChange={(e) => setDraft({ ...draft, acceptedOnboardingTerms: e.target.checked })}
-                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#0D93AA] focus:ring-[#0D93AA]"
-                  />
-                  <span className="text-xs text-slate-800 font-medium">
-                    I accept the TellerBud Network Onboarding Terms & Conditions and compliance guidelines.
+                        setDraft((prev) => ({
+                          ...prev,
+                          acceptedOnboardingTerms: checked,
+                          termsVersionAccepted: checked ? ACTIVE_TERMS_CONFIG.version : undefined,
+                          termsAcceptedTimestamp: checked ? ts : undefined,
+                          termsAcceptanceRecord: termsRecord,
+                        }));
+                      }}
+                      className="mt-0.5 w-5 h-5 rounded border-slate-300 text-[#0D93AA] focus:ring-[#0D93AA] cursor-pointer shrink-0"
+                    />
+                    <div className="space-y-1">
+                      <span className="text-xs sm:text-[13px] text-slate-900 font-semibold leading-snug block">
+                        {ACTIVE_TERMS_CONFIG.acceptanceStatement}
+                      </span>
+                      <p className="text-[11px] text-slate-500">
+                        By checking this box, the acceptance record is stamped with Africa/Lusaka timestamp, Business Owner ID, and executive reference.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {draft.acceptedOnboardingTerms && draft.termsAcceptanceRecord && (
+                  <div className="p-3 bg-white border border-teal-200 rounded-xl flex items-center justify-between text-[11px] text-teal-900">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={15} className="text-teal-600 shrink-0" />
+                      <span>
+                        Accepted Version <strong>{draft.termsAcceptanceRecord.version}</strong> on{' '}
+                        <strong>{draft.termsAcceptanceRecord.acceptedAtFormattedLusaka}</strong>
+                      </span>
+                    </div>
+                    <span className="font-mono text-[10.5px] text-teal-700">
+                      Ref: {application.id}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 8: Separate Full-Width Business Owner E-Signature Step */}
+          {currentStep === 8 && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div>
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-[#0D93AA] text-white text-xs flex items-center justify-center">
+                    8
                   </span>
-                </label>
+                  <span>Business Owner E-Signature Capture</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Capture the handwritten stylus or touch signature of Business Owner <strong>{draft.ownerFullLegalName}</strong> on the tablet.
+                </p>
               </div>
 
-              {/* Interactive Tablet Signature Pad */}
-              <div className="space-y-2">
+              {/* Verified Terms Acceptance Summary Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 text-xs">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <FileCheck2 size={16} className="text-teal-600 shrink-0" />
+                    <span className="font-bold text-slate-900">Verified Application & Terms Summary</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 font-bold text-[10.5px]">
+                    Terms Version 1.0 Accepted
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-700">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Business Name:</span>
+                    <strong className="text-slate-900">{draft.legalBusinessName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Business ID:</span>
+                    <strong className="font-mono text-[#0D93AA]">{application.businessId || 'TB-BIZ-Pending'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Business Owner:</span>
+                    <strong className="text-slate-900">{draft.ownerFullLegalName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Business Owner ID:</span>
+                    <strong className="font-mono text-[#0D93AA]">{application.businessOwnerId || 'TB-BOO-Pending'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">NRC Number:</span>
+                    <strong className="font-mono">{draft.ownerNrcNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Executive ID:</span>
+                    <strong className="font-mono text-slate-700">{executiveId}</strong>
+                  </div>
+                </div>
+
+                {draft.termsAcceptanceRecord && (
+                  <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200 flex items-center justify-between">
+                    <span>
+                      Terms Acceptance Timestamp: <strong>{draft.termsAcceptanceRecord.acceptedAtFormattedLusaka}</strong>
+                    </span>
+                    <span className="font-mono">Timezone: Africa/Lusaka</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Accuracy Confirmation Checkbox */}
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={draft.confirmedAccuracy}
+                  onChange={(e) => setDraft({ ...draft, confirmedAccuracy: e.target.checked })}
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#0D93AA] focus:ring-[#0D93AA] cursor-pointer"
+                />
+                <span className="text-xs text-slate-800 font-medium">
+                  I confirm that all business details, NRC credentials, and operating locations provided above are accurate and true.
+                </span>
+              </label>
+
+              {/* Full-Width Interactive Tablet Signature Pad */}
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <PenTool size={14} className="text-[#0D93AA]" />
-                    <span>Business Owner Handwritten Signature (Touch / Stylus) <span className="text-rose-500">*</span></span>
+                  <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <PenTool size={15} className="text-[#0D93AA]" />
+                    <span>
+                      Business Owner Handwritten Signature (Touch / Stylus) <span className="text-rose-500">*</span>
+                    </span>
                   </label>
                   <button
                     type="button"
                     onClick={handleClearSignature}
-                    className="px-3 py-1 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer"
+                    className="px-3 py-1 rounded-lg border border-slate-200 text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer transition-colors"
                   >
                     Clear Signature
                   </button>
@@ -1128,8 +1394,8 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 <div className="border-2 border-slate-300 rounded-2xl bg-white overflow-hidden shadow-inner touch-none">
                   <canvas
                     ref={canvasRef}
-                    width={800}
-                    height={200}
+                    width={900}
+                    height={220}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
@@ -1137,12 +1403,13 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className="w-full h-44 bg-white cursor-crosshair"
+                    className="w-full h-48 bg-white cursor-crosshair"
                   />
                 </div>
-                <p className="text-[11px] text-slate-400 italic text-right">
-                  * Sign directly inside the box using your finger or stylus pen.
-                </p>
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Sign directly inside the signature box using your finger or stylus pen.</span>
+                  {hasSignature && <span className="text-teal-600 font-semibold">Signature captured ✓</span>}
+                </div>
               </div>
             </div>
           )}
@@ -1156,11 +1423,13 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 className="px-5 py-3 rounded-2xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <ArrowLeft size={16} />
-                <span>Previous Step</span>
+                <span>{currentStep === 8 ? 'Back to Terms' : 'Back'}</span>
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
 
-            {currentStep < 7 ? (
+            {currentStep < 7 && (
               <button
                 type="button"
                 onClick={handleNextStep}
@@ -1169,11 +1438,28 @@ export const TabletPhysicalOnboardingPage: React.FC = () => {
                 <span>Continue to Step {currentStep + 1}</span>
                 <ArrowRight size={16} />
               </button>
-            ) : (
+            )}
+
+            {currentStep === 7 && (
               <button
+                id="btn-continue-to-signature"
+                type="button"
+                onClick={handleNextStep}
+                disabled={!draft.acceptedOnboardingTerms}
+                className="px-6 py-3 rounded-2xl bg-[#0D93AA] hover:bg-[#0b8296] text-white font-bold text-xs shadow-md transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <span>Continue to Signature</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+
+            {currentStep === 8 && (
+              <button
+                id="btn-lock-submit-activation"
                 type="button"
                 onClick={handleSubmitForActivation}
-                className="px-8 py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-xl transition-all flex items-center gap-2 cursor-pointer animate-pulse"
+                disabled={!draft.acceptedOnboardingTerms || (!draft.eSignatureData && !hasSignature)}
+                className="px-8 py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-xl transition-all flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <ShieldCheck size={18} />
                 <span>Lock & Submit for Activation</span>

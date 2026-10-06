@@ -155,9 +155,9 @@ export const NotificationDetailsHeaderCard: React.FC<NotificationDetailsHeaderCa
         {/* Top line: Title & Action buttons */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
               {notification.title}
-            </h1>
+            </h2>
 
             {/* Badges & Date line */}
             <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium">

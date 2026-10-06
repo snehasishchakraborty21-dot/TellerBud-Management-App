@@ -122,11 +122,11 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
 
   return (
     <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 sm:p-3 shadow-xs">
-      <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 w-full">
-        {/* Left Side: Filter Selectors (Wallet State, Balance Range, Updated From, Updated To) */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5">
-          {/* 1. Wallet State */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+      <div className="w-full overflow-x-auto transaction-table-scroll focus:outline-none">
+        {/* Evenly distributed single horizontal line on desktop matching the recommended grid structure */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[minmax(140px,1fr)_minmax(180px,1.25fr)_minmax(160px,1fr)_minmax(160px,1fr)_auto_auto_auto] gap-2.5 items-center w-full min-w-max lg:min-w-0">
+          {/* 1. State */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               State:
             </span>
@@ -138,7 +138,7 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
                   walletState: e.target.value as WalletAccountState | 'ALL',
                 })
               }
-              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer w-full"
               aria-label="Filter by Wallet State"
             >
               <option value="ALL">All States</option>
@@ -149,7 +149,7 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
           </div>
 
           {/* 2. Balance Range */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Balance:
             </span>
@@ -161,7 +161,7 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
                   balanceRange: e.target.value as BalanceRangeFilter,
                 })
               }
-              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer w-full"
               aria-label="Filter by Balance Range"
             >
               <option value="ALL">All Balances</option>
@@ -172,8 +172,8 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
             </select>
           </div>
 
-          {/* 3. Updated From */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 3. From Date */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               From:
             </span>
@@ -183,13 +183,13 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
               value={filters.updatedFrom}
               max={filters.updatedTo || todayStr}
               onChange={handleFromDateChange}
-              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer w-full"
               aria-label="Filter by Updated From Date"
             />
           </div>
 
-          {/* 4. Updated To */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 4. To Date */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               To:
             </span>
@@ -200,23 +200,20 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
               min={filters.updatedFrom || undefined}
               max={todayStr}
               onChange={handleToDateChange}
-              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer w-full"
               aria-label="Filter by Updated To Date"
             />
           </div>
-        </div>
 
-        {/* Right Side: Clear Filters, Refresh, and Export */}
-        <div className="flex items-center gap-2 sm:gap-2.5 ml-auto">
           {/* 5. Clear Filters */}
           <button
             type="button"
             id="btn-clear-customer-wallet-filters"
             onClick={onClearFilters}
             disabled={!hasActiveFilters}
-            className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-colors flex items-center gap-1.5 ${
+            className={`h-9 px-3.5 text-xs font-semibold rounded-lg border transition-colors flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
               hasActiveFilters
-                ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer'
+                ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer bg-gray-50'
                 : 'text-gray-400 bg-transparent border-gray-200/60 opacity-50 cursor-not-allowed'
             }`}
             title={hasActiveFilters ? 'Reset filters' : 'No filters active'}
@@ -231,7 +228,7 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
             id="btn-refresh-customer-wallets"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap bg-gray-50"
             title="Refresh customer wallet records"
           >
             <RotateCw
@@ -242,12 +239,12 @@ export const CustomerWalletFilterBar: React.FC<CustomerWalletFilterBarProps> = (
           </button>
 
           {/* 7. Export Dropdown */}
-          <div className="relative" ref={exportMenuRef}>
+          <div className="relative shrink-0" ref={exportMenuRef}>
             <button
               type="button"
               id="btn-export-customer-wallets"
               onClick={() => setShowExportMenu((prev) => !prev)}
-              className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               title="Export customer wallet records"
             >
               <Download size={13} />

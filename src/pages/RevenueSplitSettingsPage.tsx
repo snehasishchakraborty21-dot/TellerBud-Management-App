@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Percent,
-  Calendar,
   Clock,
   CheckCircle2,
   AlertTriangle,
   Info,
   ShieldAlert,
-  ArrowRight,
   History,
   X,
   AlertCircle,
   Layers,
-  Sparkles,
   Sliders,
   Check,
 } from 'lucide-react';
@@ -155,16 +152,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
   const todayStr = getZambiaTodayString();
 
   return (
-    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto p-3 sm:p-4 lg:p-6 gap-4 sm:gap-5 max-w-[1720px] w-full mx-auto">
-      {/* 1. MAIN PAGE HEADING */}
-      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
-            Revenue Split Settings
-          </h1>
-        </div>
-      </div>
-
+    <div className="h-full flex flex-col min-h-0 md:overflow-hidden overflow-y-auto px-3 sm:px-5 lg:px-6 pt-1 pb-4 sm:pb-6 gap-4 sm:gap-5 max-w-[1720px] w-full mx-auto">
       {/* FEEDBACK BANNER */}
       {feedback && (
         <div
@@ -194,7 +182,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
 
       {/* SCROLLABLE MAIN CONTENT AREA */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-4 sm:space-y-5 pr-1">
-        {/* 2. SCHEDULED REVENUE SPLIT BANNER (if future split is scheduled) */}
+        {/* 1. SCHEDULED REVENUE SPLIT BANNER (if future split is scheduled) */}
         {scheduledSplit && (
           <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-4 sm:p-4.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-start gap-3">
@@ -238,70 +226,85 @@ export const RevenueSplitSettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* 3. CURRENT ACTIVE REVENUE SPLIT SECTION */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-3.5">
+        {/* 2. REDESIGNED CURRENT ACTIVE REVENUE SPLIT CARD */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+          {/* Card Header */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Current Revenue Split
-              </span>
-              <div className="text-sm sm:text-base font-bold text-slate-900 mt-0.5 flex items-center gap-3 flex-wrap">
-                <span className="text-[#0D93AA]">TellerBud: {activeSplit.tellerBudShare.toFixed(2)}%</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-emerald-700">Business Owner: {activeSplit.businessOwnerShare.toFixed(2)}%</span>
-              </div>
-            </div>
+            <h2 className="text-base sm:text-[17px] font-semibold text-slate-900 leading-tight">
+              Current Revenue Split
+            </h2>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
                 Active
               </span>
-              <span className="text-xs text-slate-500 font-mono">
-                {activeSplit.version}
+              <span className="text-xs text-slate-500 font-mono font-medium">
+                {activeSplit.version ? `v2.0 (${activeSplit.version})` : 'v2.0 (TB-REV-SPLIT-V2)'}
               </span>
             </div>
           </div>
 
-          {/* VISUAL COMPACT HORIZONTAL DISTRIBUTION BAR */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
-              <span className="flex items-center gap-1.5 text-[#0D93AA]">
-                <span className="w-2.5 h-2.5 rounded-sm bg-[#0D93AA]" />
-                TellerBud Portion ({activeSplit.tellerBudShare.toFixed(2)}%)
+          {/* Revenue Share Summary Blocks (Side by Side) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* TellerBud Share */}
+            <div className="bg-[#0D93AA]/5 border border-[#0D93AA]/20 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
+              <span className="text-xs sm:text-[13px] font-medium text-slate-600">
+                TellerBud Share
               </span>
-              <span className="flex items-center gap-1.5 text-emerald-700">
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600" />
-                Business Owner Portion ({activeSplit.businessOwnerShare.toFixed(2)}%)
+              <span className="text-2xl sm:text-[26px] font-bold font-mono tracking-tight text-[#0D93AA] mt-1">
+                {activeSplit.tellerBudShare.toFixed(2)}%
               </span>
             </div>
 
-            <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200/80 p-0.5">
+            {/* Business Owner Share */}
+            <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between">
+              <span className="text-xs sm:text-[13px] font-medium text-slate-600">
+                Business Owner Share
+              </span>
+              <span className="text-2xl sm:text-[26px] font-bold font-mono tracking-tight text-emerald-600 mt-1">
+                {activeSplit.businessOwnerShare.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Segmented Revenue Allocation Bar */}
+          <div className="space-y-2">
+            <div className="w-full h-6 sm:h-7 bg-slate-100 rounded-lg sm:rounded-xl overflow-hidden flex border border-slate-200/80 shadow-2xs">
               <div
                 style={{ width: `${activeSplit.tellerBudShare}%` }}
-                className="h-full bg-[#0D93AA] rounded-l-full transition-all duration-300 relative group"
+                className="h-full bg-[#0D93AA] flex items-center justify-center transition-all duration-300 text-white font-semibold text-[11px] sm:text-xs whitespace-nowrap px-1.5"
                 title={`TellerBud: ${activeSplit.tellerBudShare.toFixed(2)}%`}
-              />
+              >
+                {activeSplit.tellerBudShare >= 15 ? `TellerBud ${activeSplit.tellerBudShare.toFixed(0)}%` : `${activeSplit.tellerBudShare.toFixed(0)}%`}
+              </div>
               <div
                 style={{ width: `${activeSplit.businessOwnerShare}%` }}
-                className="h-full bg-emerald-600 rounded-r-full transition-all duration-300 relative group"
+                className="h-full bg-emerald-600 flex items-center justify-center transition-all duration-300 text-white font-semibold text-[11px] sm:text-xs whitespace-nowrap px-1.5"
                 title={`Business Owner: ${activeSplit.businessOwnerShare.toFixed(2)}%`}
-              />
+              >
+                {activeSplit.businessOwnerShare >= 15 ? `Business Owner ${activeSplit.businessOwnerShare.toFixed(0)}%` : `${activeSplit.businessOwnerShare.toFixed(0)}%`}
+              </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-              <span>Effective From: <strong className="font-semibold text-slate-700">{activeSplit.effectiveFromDisplay}</strong></span>
-              <span>Total: <strong className="font-semibold text-slate-800">100.00%</strong></span>
+            {/* Compact Information Footer */}
+            <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 pt-1 border-t border-slate-100">
+              <span>
+                Effective From: <strong className="font-semibold text-slate-700">{activeSplit.effectiveFromDisplay || '01 September 2026, 00:00 CAT'}</strong>
+              </span>
+              <span>
+                Total Allocation: <strong className="font-semibold text-slate-800">100.00%</strong>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 4. EDITABLE SPLIT CONFIGURATION FORM */}
+        {/* 3. EDITABLE SPLIT CONFIGURATION FORM */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
               <Sliders size={16} className="text-[#0D93AA]" />
-              <h2 className="text-sm font-bold text-slate-900">Modify Revenue Split</h2>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">Modify Revenue Split</h2>
             </div>
             {!hasPermission && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-600 rounded">
@@ -356,7 +359,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 5. APPLICABLE SERVICES SECTION */}
+          {/* 4. APPLICABLE SERVICES SECTION */}
           <div className="p-3 bg-slate-50/80 border border-slate-200/80 rounded-lg space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Layers size={14} className="text-[#0D93AA]" />
@@ -377,7 +380,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* 6. EFFECTIVE DATE & TIMING CONTROLS */}
+          {/* 5. EFFECTIVE DATE & TIMING CONTROLS */}
           <div className="space-y-2.5 pt-1">
             <label className="block text-xs font-semibold text-slate-700">
               Effective Timing
@@ -442,7 +445,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
             )}
           </div>
 
-          {/* 7. REASON FOR CHANGE */}
+          {/* 6. REASON FOR CHANGE */}
           <div className="space-y-1.5 pt-1">
             <div className="flex items-center justify-between">
               <label htmlFor="textarea-reason" className="block text-xs font-semibold text-slate-700">
@@ -463,7 +466,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
             />
           </div>
 
-          {/* 8. ACTION BUTTONS */}
+          {/* 7. ACTION BUTTONS */}
           <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
             <button
               type="button"
@@ -488,12 +491,12 @@ export const RevenueSplitSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 9. REVENUE SPLIT HISTORY SECTION */}
+        {/* 4. REVENUE SPLIT HISTORY SECTION */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden flex flex-col space-y-0">
           <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History size={16} className="text-slate-600" />
-              <h2 className="text-sm font-bold text-slate-900">Revenue Split History</h2>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">Revenue Split History</h2>
             </div>
             <span className="text-xs text-slate-500 font-medium">
               {history.length} versions recorded
@@ -569,7 +572,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsConfirmModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"
               >
                 <X size={16} />
               </button>
@@ -648,7 +651,7 @@ export const RevenueSplitSettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCancelScheduledModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded cursor-pointer"
               >
                 <X size={16} />
               </button>

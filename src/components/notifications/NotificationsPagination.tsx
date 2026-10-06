@@ -23,7 +23,7 @@ export const NotificationsPagination: React.FC<NotificationsPaginationProps> = (
   return (
     <div
       id="notifications-pagination"
-      className="bg-white rounded-xl border border-gray-200/80 px-4 py-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 select-none"
+      className="bg-white border-t border-gray-100 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600 select-none shrink-0"
     >
       {/* Showing count */}
       <div className="font-medium text-gray-700">
@@ -36,21 +36,21 @@ export const NotificationsPagination: React.FC<NotificationsPaginationProps> = (
       </div>
 
       {/* Rows per page, Page info, Previous & Next on one aligned row */}
-      <div className="flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center gap-3 sm:gap-5">
         <div className="flex items-center gap-1.5 text-gray-500">
           <span>Rows per page:</span>
-          <span className="font-semibold text-gray-800 bg-gray-100 px-2 py-0.5 rounded border border-gray-200/80">
+          <span className="font-semibold text-gray-800 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
             {pageSize}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-gray-500">
-            Page <strong className="font-semibold text-gray-800">{currentPage}</strong> of{' '}
-            <strong className="font-semibold text-gray-800">{totalPages}</strong>
+        <div className="flex items-center gap-2.5">
+          <span className="text-gray-600 font-medium">
+            Page <strong className="font-semibold text-gray-900">{currentPage}</strong> of{' '}
+            <strong className="font-semibold text-gray-900">{totalPages}</strong>
           </span>
 
-          <div className="inline-flex items-center gap-1.5">
+          <div className="inline-flex items-center gap-1">
             <button
               type="button"
               id="btn-pagination-prev"
@@ -58,7 +58,7 @@ export const NotificationsPagination: React.FC<NotificationsPaginationProps> = (
               disabled={currentPage <= 1}
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed border border-gray-200 rounded-lg shadow-2xs transition-colors cursor-pointer"
             >
-              <ChevronLeft size={14} />
+              <ChevronLeft size={13} />
               <span>Previous</span>
             </button>
 
@@ -70,7 +70,7 @@ export const NotificationsPagination: React.FC<NotificationsPaginationProps> = (
               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-white disabled:cursor-not-allowed border border-gray-200 rounded-lg shadow-2xs transition-colors cursor-pointer"
             >
               <span>Next</span>
-              <ChevronRight size={14} />
+              <ChevronRight size={13} />
             </button>
           </div>
         </div>

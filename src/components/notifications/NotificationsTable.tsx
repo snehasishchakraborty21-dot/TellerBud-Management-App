@@ -8,7 +8,6 @@ import {
   Eye,
   CheckCircle2,
   Mail,
-  ExternalLink,
   AlertCircle,
   Clock,
 } from 'lucide-react';
@@ -30,31 +29,31 @@ export const NotificationsTable: React.FC<NotificationsTableProps> = ({
     switch (priority) {
       case 'Critical':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-            Critical
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0" />
+            <span>Critical</span>
           </span>
         );
       case 'High':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-            High
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" />
+            <span>High</span>
           </span>
         );
       case 'Medium':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-600" />
-            Medium
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-600 shrink-0" />
+            <span>Medium</span>
           </span>
         );
       case 'Low':
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-            Low
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+            <span>Low</span>
           </span>
         );
     }
@@ -65,22 +64,22 @@ export const NotificationsTable: React.FC<NotificationsTableProps> = ({
       case 'Unread':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#0D93AA]/10 text-[#0D93AA] border border-[#0D93AA]/25">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] animate-pulse" />
-            Unread
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0D93AA] animate-pulse shrink-0" />
+            <span>Unread</span>
           </span>
         );
       case 'Resolved':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 size={11} className="text-emerald-600" />
-            Resolved
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 size={11} className="text-emerald-600 shrink-0" />
+            <span>Resolved</span>
           </span>
         );
       case 'Read':
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-            Read
+            <span>Read</span>
           </span>
         );
     }
@@ -135,167 +134,177 @@ export const NotificationsTable: React.FC<NotificationsTableProps> = ({
 
   if (notifications.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200/80 p-12 text-center shadow-2xs">
-        <div className="w-12 h-12 mx-auto rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 mb-3 border border-gray-100">
-          <AlertCircle size={22} />
+      <div className="flex-1 min-h-0 flex items-center justify-center p-8 bg-white">
+        <div className="text-center space-y-2 max-w-sm">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+            <AlertCircle size={22} />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-900">No notifications found</h3>
+          <p className="text-xs text-gray-500">
+            No records match the current filter criteria. Try adjusting your search or clearing filters.
+          </p>
         </div>
-        <h3 className="text-base font-semibold text-gray-900">No notifications found</h3>
-        <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-          No records match the current filter criteria. Try adjusting your search or clearing
-          filters.
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200/80 shadow-2xs overflow-hidden">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[760px] lg:min-w-full">
-          <thead>
-            <tr className="bg-[#F8FAFC] border-b border-gray-200/90 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              <th scope="col" className="py-3 px-4 w-[28%]">
-                Notification
-              </th>
-              <th scope="col" className="py-3 px-3 w-[14%]">
-                Category
-              </th>
-              <th scope="col" className="py-3 px-3 w-[14%]">
-                Related Record
-              </th>
-              <th scope="col" className="py-3 px-3 w-[10%]">
-                Priority
-              </th>
-              <th scope="col" className="py-3 px-3 w-[10%]">
-                Status
-              </th>
-              <th scope="col" className="py-3 px-3 w-[12%]">
-                Date and Time
-              </th>
-              <th scope="col" className="py-3 px-4 w-[12%] text-right">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-[13px]">
-            {notifications.map((item) => {
-              const isUnread = item.status === 'Unread';
-              const isResolved = item.status === 'Resolved';
+    <div
+      tabIndex={0}
+      role="region"
+      aria-label="Notifications listing"
+      className="flex-1 min-h-0 overflow-y-auto overflow-x-auto focus:outline-none focus:ring-1 focus:ring-[#0D93AA]/30"
+    >
+      <table className="w-full text-left border-collapse min-w-[960px] lg:min-w-full">
+        <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 select-none shadow-[0_1px_0_0_#E5E7EB]">
+          <tr>
+            {/* 1. Notification */}
+            <th scope="col" className="py-3 px-4 text-left min-w-[260px] w-[30%]">
+              Notification
+            </th>
+            {/* 2. Category */}
+            <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[130px] w-[13%]">
+              Category
+            </th>
+            {/* 3. Related Record */}
+            <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[130px] w-[13%]">
+              Related Record
+            </th>
+            {/* 4. Priority */}
+            <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[95px] w-[10%]">
+              Priority
+            </th>
+            {/* 5. Status */}
+            <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[95px] w-[10%]">
+              Status
+            </th>
+            {/* 6. Date and Time */}
+            <th scope="col" className="py-3 px-3 text-left whitespace-nowrap min-w-[130px] w-[12%]">
+              Date and Time
+            </th>
+            {/* 7. Action */}
+            <th scope="col" className="py-3 px-4 text-left whitespace-nowrap min-w-[180px] w-[12%]">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 text-[12.5px] sm:text-[13px]">
+          {notifications.map((item) => {
+            const isUnread = item.status === 'Unread';
 
-              return (
-                <tr
-                  key={item.id}
-                  id={`row-notification-${item.id}`}
-                  className={`transition-colors group ${
-                    isUnread
-                      ? 'bg-[#F0F9FA]/80 hover:bg-[#E6F4F7]'
-                      : 'bg-white hover:bg-gray-50/80'
-                  }`}
-                >
-                  {/* Notification Title & Message */}
-                  <td className="py-3.5 px-4 align-top">
-                    <div className="flex items-start gap-2.5">
-                      {isUnread ? (
-                        <span
-                          className="mt-1.5 w-2 h-2 rounded-full bg-[#0D93AA] shrink-0"
-                          title="Unread notification"
-                        />
-                      ) : (
-                        <span className="mt-1.5 w-2 h-2 rounded-full bg-transparent shrink-0" />
-                      )}
-                      <div className="min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => onViewDetails(item)}
-                          className="text-left font-semibold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-snug cursor-pointer block hover:underline"
-                        >
-                          {item.title}
-                        </button>
-                        <p
-                          className="text-[12px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed"
-                          title={item.message}
-                        >
-                          {item.message}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Category */}
-                  <td className="py-3.5 px-3 align-top whitespace-nowrap">
-                    {getCategoryBadge(item.category)}
-                  </td>
-
-                  {/* Related Record */}
-                  <td className="py-3.5 px-3 align-top whitespace-nowrap">
-                    <span className="font-mono text-xs font-semibold text-gray-800 bg-gray-100/90 border border-gray-200/80 px-2 py-0.5 rounded-md inline-block">
-                      {item.relatedRecord}
-                    </span>
-                  </td>
-
-                  {/* Priority */}
-                  <td className="py-3.5 px-3 align-top whitespace-nowrap">
-                    {getPriorityBadge(item.priority)}
-                  </td>
-
-                  {/* Status */}
-                  <td className="py-3.5 px-3 align-top whitespace-nowrap">
-                    {getStatusBadge(item.status)}
-                  </td>
-
-                  {/* Date and Time */}
-                  <td className="py-3.5 px-3 align-top whitespace-nowrap text-xs text-gray-500 font-medium">
-                    <div className="flex items-center gap-1.5 text-gray-600">
-                      <Clock size={12} className="text-gray-400 shrink-0" />
-                      <span>{item.dateTime}</span>
-                    </div>
-                  </td>
-
-                  {/* Row Actions */}
-                  <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
-                    <div className="inline-flex items-center justify-end gap-1.5">
+            return (
+              <tr
+                key={item.id}
+                id={`row-notification-${item.id}`}
+                className={`transition-colors group ${
+                  isUnread
+                    ? 'bg-[#F0F9FA]/80 hover:bg-[#E6F4F7]'
+                    : 'bg-white hover:bg-gray-50/80'
+                }`}
+              >
+                {/* 1. Notification Title & Message */}
+                <td className="py-3 px-4 align-top text-left">
+                  <div className="flex items-start gap-2.5">
+                    {isUnread ? (
+                      <span
+                        className="mt-1.5 w-2 h-2 rounded-full bg-[#0D93AA] shrink-0"
+                        title="Unread notification"
+                      />
+                    ) : (
+                      <span className="mt-1.5 w-2 h-2 rounded-full bg-transparent shrink-0" />
+                    )}
+                    <div className="min-w-0 text-left">
                       <button
                         type="button"
-                        id={`btn-view-details-${item.id}`}
                         onClick={() => onViewDetails(item)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors cursor-pointer"
-                        title="View Notification Details"
+                        className="text-left font-semibold text-gray-900 group-hover:text-[#0D93AA] transition-colors leading-snug cursor-pointer block hover:underline"
                       >
-                        <Eye size={12} />
-                        <span>View Details</span>
+                        {item.title}
                       </button>
-
-                      {isUnread ? (
-                        <button
-                          type="button"
-                          id={`btn-mark-as-read-${item.id}`}
-                          onClick={() => onMarkAsRead(item.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
-                          title="Mark as Read"
-                        >
-                          <CheckCircle2 size={12} className="text-[#0D93AA]" />
-                          <span>Mark as Read</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          id={`btn-mark-as-unread-${item.id}`}
-                          onClick={() => onMarkAsUnread(item.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
-                          title="Mark as Unread"
-                        >
-                          <Mail size={12} className="text-gray-500" />
-                          <span>Mark as Unread</span>
-                        </button>
-                      )}
+                      <p
+                        className="text-[12px] text-gray-500 mt-0.5 line-clamp-2 leading-relaxed text-left"
+                        title={item.message}
+                      >
+                        {item.message}
+                      </p>
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </td>
+
+                {/* 2. Category */}
+                <td className="py-3 px-3 align-top whitespace-nowrap text-left">
+                  {getCategoryBadge(item.category)}
+                </td>
+
+                {/* 3. Related Record */}
+                <td className="py-3 px-3 align-top whitespace-nowrap text-left">
+                  <span className="font-mono text-xs font-semibold text-gray-800 bg-gray-100/90 border border-gray-200/80 px-2 py-0.5 rounded-md inline-block">
+                    {item.relatedRecord}
+                  </span>
+                </td>
+
+                {/* 4. Priority */}
+                <td className="py-3 px-3 align-top whitespace-nowrap text-left">
+                  {getPriorityBadge(item.priority)}
+                </td>
+
+                {/* 5. Status */}
+                <td className="py-3 px-3 align-top whitespace-nowrap text-left">
+                  {getStatusBadge(item.status)}
+                </td>
+
+                {/* 6. Date and Time */}
+                <td className="py-3 px-3 align-top whitespace-nowrap text-xs text-gray-500 font-medium text-left">
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <Clock size={12} className="text-gray-400 shrink-0" />
+                    <span>{item.dateTime}</span>
+                  </div>
+                </td>
+
+                {/* 7. Action (Left-aligned, View Details and Mark as Read side-by-side) */}
+                <td className="py-3 px-4 align-top whitespace-nowrap text-left">
+                  <div className="flex items-center justify-start gap-1.5 text-left">
+                    <button
+                      type="button"
+                      id={`btn-view-details-${item.id}`}
+                      onClick={() => onViewDetails(item)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0D93AA] bg-[#0D93AA]/10 hover:bg-[#0D93AA]/20 rounded-md transition-colors cursor-pointer"
+                      title="View Notification Details"
+                    >
+                      <Eye size={12} />
+                      <span>View Details</span>
+                    </button>
+
+                    {isUnread ? (
+                      <button
+                        type="button"
+                        id={`btn-mark-as-read-${item.id}`}
+                        onClick={() => onMarkAsRead(item.id)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
+                        title="Mark as Read"
+                      >
+                        <CheckCircle2 size={12} className="text-[#0D93AA]" />
+                        <span>Mark as Read</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        id={`btn-mark-as-unread-${item.id}`}
+                        onClick={() => onMarkAsUnread(item.id)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
+                        title="Mark as Unread"
+                      >
+                        <Mail size={12} className="text-gray-500" />
+                        <span>Mark as Unread</span>
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };
