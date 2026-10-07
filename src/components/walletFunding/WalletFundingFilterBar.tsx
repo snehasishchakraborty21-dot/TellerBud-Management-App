@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, RotateCcw, Download, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react';
+import { X, RotateCcw, Download, ChevronDown, FileSpreadsheet, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
   WalletFundingFilters,
@@ -139,38 +139,11 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
 
   return (
     <div className="bg-white border border-gray-200/80 rounded-xl p-2.5 sm:p-3 shadow-xs">
-      <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 w-full">
-        {/* Left / Center: Search, Owner Type, Vendor, Status, From Date, To Date */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-          {/* 1. Funding Search */}
-          <div className="relative w-full sm:w-[260px] lg:w-[290px] shrink-0">
-            <Search
-              size={14}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-            />
-            <input
-              type="text"
-              id="funding-search-input"
-              value={filters.search}
-              onChange={(e) => onFilterChange({ search: e.target.value })}
-              placeholder="Search funding reference, customer, business, wallet ID or phone..."
-              className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0D93AA]/20 focus:border-[#0D93AA] h-9 transition-colors"
-              aria-label="Search funding reference, customer, business, wallet ID or phone"
-            />
-            {filters.search && (
-              <button
-                type="button"
-                onClick={() => onFilterChange({ search: '' })}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                title="Clear search input"
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
-
-          {/* 2. Owner Type Filter */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+      <div className="w-full overflow-x-auto transaction-table-scroll focus:outline-none">
+        {/* Evenly distributed single horizontal line on desktop with minmax widths and exact required order */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(180px,1.2fr)_minmax(180px,1.2fr)_minmax(150px,1fr)_minmax(155px,1fr)_minmax(155px,1fr)_auto_auto_auto] gap-2.5 items-center w-full min-w-max lg:min-w-0">
+          {/* 1. Owner */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full min-w-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Owner:
             </span>
@@ -183,7 +156,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
                 })
               }
               aria-label="Filter by Wallet Owner type"
-              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer w-full min-w-0 pr-1"
             >
               <option value="ALL">All Wallet Owners</option>
               <option value="Customer">Customers</option>
@@ -191,8 +164,8 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             </select>
           </div>
 
-          {/* 3. Vendor Select */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 2. Vendor */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full min-w-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Vendor:
             </span>
@@ -205,7 +178,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
                 })
               }
               aria-label="Filter by Vendor"
-              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer w-full min-w-0 pr-1"
             >
               <option value="ALL">All Vendors</option>
               <option value="MTN Mobile Money">MTN Mobile Money</option>
@@ -213,8 +186,8 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             </select>
           </div>
 
-          {/* 4. Status Select */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 3. Status */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full min-w-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               Status:
             </span>
@@ -227,7 +200,7 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
                 })
               }
               aria-label="Filter by status"
-              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-gray-800 font-medium focus:outline-none cursor-pointer w-full min-w-0 pr-1"
             >
               <option value="ALL">All Statuses</option>
               <option value="Initiated">Initiated</option>
@@ -240,8 +213,8 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             </select>
           </div>
 
-          {/* 5. From Date */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 4. From Date */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full min-w-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               From:
             </span>
@@ -250,15 +223,16 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
               type="date"
               value={filters.initiatedFrom}
               max={filters.initiatedTo || todayStr}
+              placeholder="dd-mm-yyyy"
               onChange={handleFromDateChange}
-              title="Initiated From Date"
+              title="Initiated From Date (dd-mm-yyyy)"
               aria-label="Initiated From Date"
-              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer w-full min-w-0"
             />
           </div>
 
-          {/* 6. To Date */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 shrink-0">
+          {/* 5. To Date */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-[#0D93AA]/20 focus-within:border-[#0D93AA] focus-within:bg-white transition-all h-9 w-full min-w-0">
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0">
               To:
             </span>
@@ -268,25 +242,23 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
               value={filters.initiatedTo}
               min={filters.initiatedFrom || undefined}
               max={todayStr}
+              placeholder="dd-mm-yyyy"
               onChange={handleToDateChange}
-              title="Initiated To Date"
+              title="Initiated To Date (dd-mm-yyyy)"
               aria-label="Initiated To Date"
-              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs text-gray-800 focus:outline-none cursor-pointer w-full min-w-0"
             />
           </div>
-        </div>
 
-        {/* Right: Clear Filters, Refresh, and Export */}
-        <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
-          {/* Clear Filters */}
+          {/* 6. Clear Filters */}
           <button
             type="button"
             id="btn-clear-funding-filters"
             onClick={onClearFilters}
             disabled={!hasActiveFilters}
-            className={`h-9 px-3 text-xs font-semibold rounded-lg border transition-colors flex items-center gap-1.5 ${
+            className={`h-9 px-3.5 text-xs font-semibold rounded-lg border transition-colors flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap ${
               hasActiveFilters
-                ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer'
+                ? 'text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200 cursor-pointer bg-gray-50'
                 : 'text-gray-400 bg-transparent border-gray-200/60 opacity-50 cursor-not-allowed'
             }`}
             title={hasActiveFilters ? 'Reset all applied filters' : 'No filters active'}
@@ -295,13 +267,13 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             <span>Clear Filters</span>
           </button>
 
-          {/* Refresh */}
+          {/* 7. Refresh */}
           <button
             type="button"
             id="btn-refresh-funding"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer disabled:opacity-50"
             title="Refresh wallet funding records"
           >
             <RotateCcw
@@ -311,13 +283,13 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
             <span>Refresh</span>
           </button>
 
-          {/* Export Dropdown */}
-          <div className="relative" ref={exportMenuRef}>
+          {/* 8. Export Dropdown */}
+          <div className="relative shrink-0" ref={exportMenuRef}>
             <button
               type="button"
               id="btn-export-funding"
               onClick={() => setShowExportMenu((prev) => !prev)}
-              className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
               title="Export wallet funding records"
             >
               <Download size={13} />
@@ -354,3 +326,5 @@ export const WalletFundingFilterBar: React.FC<WalletFundingFilterBarProps> = ({
     </div>
   );
 };
+
+export default WalletFundingFilterBar;

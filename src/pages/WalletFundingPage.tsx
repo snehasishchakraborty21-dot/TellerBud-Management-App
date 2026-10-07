@@ -115,7 +115,6 @@ export const WalletFundingPage: React.FC = () => {
   };
 
   const hasActiveFilters =
-    filters.search.trim() !== '' ||
     filters.ownerType !== 'ALL' ||
     filters.provider !== 'ALL' ||
     filters.status !== 'ALL' ||

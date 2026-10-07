@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  CheckCircle2,
   Globe,
   Radio,
   Clock,
@@ -8,7 +7,6 @@ import {
   Zap,
 } from 'lucide-react';
 import { ApiConnection } from '../../types/reconciliation';
-import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 
 interface ApiConnectionsTabProps {
   connections: ApiConnection[];
@@ -25,20 +23,13 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
           >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                {conn.provider === 'MTN Mobile Money' ? (
-                  <MtnLogo className="w-10 h-10 rounded-lg shrink-0" />
-                ) : (
-                  <AirtelLogo className="w-10 h-10 rounded-lg shrink-0" />
-                )}
-                <div>
-                  <h3 className="text-base font-bold text-[#102025]">
-                    {conn.provider}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <Radio size={12} className="text-emerald-500 animate-pulse" />
-                    <span>{conn.protocol}</span>
-                  </div>
+              <div>
+                <h3 className="text-base font-bold text-[#102025]">
+                  {conn.provider}
+                </h3>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-0.5">
+                  <Radio size={12} className="text-emerald-500 animate-pulse" />
+                  <span>External Processing</span>
                 </div>
               </div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -75,21 +66,20 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
               </div>
             </div>
 
-            {/* Endpoints & Status */}
+            {/* Channels & Status */}
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 bg-slate-50/50">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                     <Zap size={13} className="text-[#0D93AA]" />
-                    <span>Collections API (Deposit)</span>
+                    <span>Collection Processing (Deposit)</span>
                   </div>
                   <div className="font-mono text-[11px] text-slate-500">
                     {conn.collectionsEndpoint}
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <CheckCircle2 size={11} />
-                  Operational
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  External
                 </span>
               </div>
 
@@ -97,15 +87,14 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                     <Globe size={13} className="text-[#0D93AA]" />
-                    <span>Payout API (Disbursement)</span>
+                    <span>Payout Processing (Disbursement)</span>
                   </div>
                   <div className="font-mono text-[11px] text-slate-500">
                     {conn.payoutEndpoint}
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <CheckCircle2 size={11} />
-                  Operational
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  External
                 </span>
               </div>
 
@@ -113,15 +102,14 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 font-semibold text-slate-800">
                     <Shield size={13} className="text-[#0D93AA]" />
-                    <span>Callback Webhook Receiver</span>
+                    <span>Confirmation Channel</span>
                   </div>
                   <div className="font-mono text-[11px] text-slate-500">
                     {conn.callbackEndpoint}
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  <CheckCircle2 size={11} />
-                  Operational
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  External Confirmation
                 </span>
               </div>
             </div>
@@ -133,7 +121,7 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
                 <span>Last Request: {conn.lastSuccessfulRequest}</span>
               </div>
               <div>
-                <span>Last Callback: {conn.lastSuccessfulCallback}</span>
+                <span>Last Confirmation: {conn.lastSuccessfulCallback}</span>
               </div>
             </div>
           </div>
@@ -142,3 +130,5 @@ export const ApiConnectionsTab: React.FC<ApiConnectionsTabProps> = ({ connection
     </div>
   );
 };
+
+export default ApiConnectionsTab;

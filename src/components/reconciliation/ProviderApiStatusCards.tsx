@@ -1,6 +1,5 @@
 import React from 'react';
-import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
-import { CheckCircle2, Radio, Activity } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 export const ProviderApiStatusCards: React.FC = () => {
   return (
@@ -8,14 +7,10 @@ export const ProviderApiStatusCards: React.FC = () => {
       {/* MTN Mobile Money */}
       <div className="bg-white border border-gray-200/90 rounded-xl p-4 shadow-xs">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <MtnLogo className="w-9 h-9 rounded-lg shrink-0" />
-            <div>
-              <h3 className="text-sm font-bold text-[#102025]">MTN Mobile Money</h3>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-0.5">
-                <Radio size={11} className="text-emerald-500 animate-pulse" />
-                <span>Direct B2B Gateway</span>
-              </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#102025]">MTN Mobile Money</h3>
+            <div className="text-xs text-slate-500 font-medium mt-0.5">
+              <span>External Processing</span>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -26,31 +21,28 @@ export const ProviderApiStatusCards: React.FC = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3.5 text-xs">
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Collections API</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Collection Processing</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Payout API</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Payout Processing</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Callback Endpoint</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Confirmation Channel</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External Confirmation
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Last Callback</span>
+            <span className="text-slate-500 font-medium block text-[11px]">Last Confirmation</span>
             <span className="mt-1 block font-semibold text-slate-800">
               Today, 11:48 AM
             </span>
@@ -67,7 +59,7 @@ export const ProviderApiStatusCards: React.FC = () => {
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
             <span className="text-slate-500 font-medium block text-[11px]">Integration Mode</span>
             <span className="mt-1 block font-semibold text-slate-800">
-              Direct REST API
+              External
             </span>
           </div>
         </div>
@@ -76,14 +68,10 @@ export const ProviderApiStatusCards: React.FC = () => {
       {/* Airtel Money */}
       <div className="bg-white border border-gray-200/90 rounded-xl p-4 shadow-xs">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <AirtelLogo className="w-9 h-9 rounded-lg shrink-0" />
-            <div>
-              <h3 className="text-sm font-bold text-[#102025]">Airtel Money</h3>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-0.5">
-                <Radio size={11} className="text-emerald-500 animate-pulse" />
-                <span>Direct Merchant Gateway</span>
-              </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#102025]">Airtel Money</h3>
+            <div className="text-xs text-slate-500 font-medium mt-0.5">
+              <span>External Processing</span>
             </div>
           </div>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -94,31 +82,28 @@ export const ProviderApiStatusCards: React.FC = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3.5 text-xs">
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Collections API</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Collection Processing</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Payout API</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Payout Processing</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Callback Endpoint</span>
-            <div className="flex items-center gap-1.5 mt-1 font-semibold text-emerald-700">
-              <CheckCircle2 size={13} />
-              <span>Operational</span>
-            </div>
+            <span className="text-slate-500 font-medium block text-[11px]">Confirmation Channel</span>
+            <span className="mt-1 block font-semibold text-slate-800">
+              External Confirmation
+            </span>
           </div>
 
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-            <span className="text-slate-500 font-medium block text-[11px]">Last Callback</span>
+            <span className="text-slate-500 font-medium block text-[11px]">Last Confirmation</span>
             <span className="mt-1 block font-semibold text-slate-800">
               Today, 11:42 AM
             </span>
@@ -135,7 +120,7 @@ export const ProviderApiStatusCards: React.FC = () => {
           <div className="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
             <span className="text-slate-500 font-medium block text-[11px]">Integration Mode</span>
             <span className="mt-1 block font-semibold text-slate-800">
-              Merchant REST API
+              External
             </span>
           </div>
         </div>
@@ -143,3 +128,5 @@ export const ProviderApiStatusCards: React.FC = () => {
     </div>
   );
 };
+
+export default ProviderApiStatusCards;

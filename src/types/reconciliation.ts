@@ -91,9 +91,9 @@ export interface CallbackEvent {
 export interface ApiConnection {
   id: string;
   provider: 'MTN Mobile Money' | 'Airtel Money';
-  collectionsApiStatus: 'Operational' | 'Degraded' | 'Offline';
-  payoutApiStatus: 'Operational' | 'Degraded' | 'Offline';
-  callbackEndpointStatus: 'Operational' | 'Degraded' | 'Offline';
+  collectionsApiStatus: 'Operational' | 'Degraded' | 'Offline' | 'External' | string;
+  payoutApiStatus: 'Operational' | 'Degraded' | 'Offline' | 'External' | string;
+  callbackEndpointStatus: 'Operational' | 'Degraded' | 'Offline' | 'External Confirmation' | string;
   collectionsEndpoint: string;
   payoutEndpoint: string;
   callbackEndpoint: string;

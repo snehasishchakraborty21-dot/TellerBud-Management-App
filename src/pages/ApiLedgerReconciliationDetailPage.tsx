@@ -23,7 +23,6 @@ import {
   resolveReconciliationDetails,
   ReconciliationAuditEvent,
 } from '../data/mockReconciliationData';
-import { MtnLogo, AirtelLogo } from '../components/wallet/ProviderLogos';
 import { formatZMW } from '../data/mockBusinessWalletData';
 import { ProviderResponseStatus, LedgerResultStatus, ReconciliationStatus } from '../types/reconciliation';
 
@@ -104,7 +103,7 @@ export const ApiLedgerReconciliationDetailPage: React.FC = () => {
         actor: 'Super Admin (Console)',
         action: 'Provider Status Refreshed',
         result: 'Provider Still Processing',
-        details: `Direct API query to ${resolved.provider} gateway returned status: ${resolved.providerResponse}.`,
+        details: `External provider query to ${resolved.provider} returned status: ${resolved.providerResponse}.`,
       };
 
       setAuditList((prev) => [newAudit, ...prev]);
@@ -368,16 +367,9 @@ export const ApiLedgerReconciliationDetailPage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                {resolved.provider === 'MTN Mobile Money' ? (
-                  <MtnLogo className="w-6 h-6 rounded shrink-0 shadow-2xs" />
-                ) : (
-                  <AirtelLogo className="w-6 h-6 rounded shrink-0 shadow-2xs" />
-                )}
-                <span className="text-sm font-semibold text-slate-800">
-                  {resolved.provider}
-                </span>
-              </div>
+              <span className="text-sm font-semibold text-slate-800">
+                {resolved.provider}
+              </span>
               <span className="text-slate-300">•</span>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">Provider Response:</span>
@@ -629,31 +621,24 @@ export const ApiLedgerReconciliationDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ROW 2 — TWO EQUAL COLUMNS: PROVIDER AND API RESPONSE & LEDGER RESULT */}
+      {/* ROW 2 — TWO EQUAL COLUMNS: PROVIDER AND EXTERNAL RESPONSE & LEDGER RESULT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        {/* LEFT: PROVIDER AND API RESPONSE */}
+        {/* LEFT: PROVIDER AND EXTERNAL RESPONSE */}
         <div className="bg-white border border-gray-200/90 rounded-xl p-5 sm:p-6 shadow-xs">
           <div className="border-b border-gray-100 pb-3 mb-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Provider and API Response
+              Provider and External Response
             </h3>
           </div>
 
           <div className="space-y-3.5 text-xs">
             <div className="flex items-center justify-between py-1 border-b border-gray-50">
               <span className="text-slate-500">Provider Name</span>
-              <div className="flex items-center gap-2">
-                {resolved.provider === 'MTN Mobile Money' ? (
-                  <MtnLogo className="w-5 h-5 rounded shrink-0 shadow-2xs" />
-                ) : (
-                  <AirtelLogo className="w-5 h-5 rounded shrink-0 shadow-2xs" />
-                )}
-                <span className="font-semibold text-slate-900">{resolved.provider}</span>
-              </div>
+              <span className="font-semibold text-slate-900">{resolved.provider}</span>
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-gray-50">
-              <span className="text-slate-500">API Operation</span>
+              <span className="text-slate-500">Operation Type</span>
               <span className="font-semibold text-slate-800">
                 {resolved.apiOperation}
               </span>
@@ -672,14 +657,14 @@ export const ApiLedgerReconciliationDetailPage: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-gray-50">
-              <span className="text-slate-500">Callback Status</span>
+              <span className="text-slate-500">Confirmation Status</span>
               <span className="font-medium text-slate-800">
                 {resolved.callbackStatus}
               </span>
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-gray-50">
-              <span className="text-slate-500">Callback Received Time</span>
+              <span className="text-slate-500">Confirmation Received Time</span>
               <span className="font-medium text-slate-700">
                 {resolved.callbackReceivedAt || '—'}
               </span>
@@ -834,7 +819,7 @@ export const ApiLedgerReconciliationDetailPage: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between py-1 border-b border-gray-50">
-              <span className="text-slate-500">Duplicate Callback Status</span>
+              <span className="text-slate-500">Duplicate Confirmation Status</span>
               <span className="font-medium text-slate-800">
                 {resolved.duplicateCallbackStatus}
               </span>

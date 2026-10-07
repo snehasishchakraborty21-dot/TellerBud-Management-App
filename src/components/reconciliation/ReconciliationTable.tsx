@@ -15,7 +15,6 @@ import {
   ReconciliationRecord,
   ProviderResponseStatus,
 } from '../../types/reconciliation';
-import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 import { formatZMW } from '../../data/mockBusinessWalletData';
 import { formatZmwListingAmount } from '../../utils/formatters';
 
@@ -172,20 +171,9 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
 
                   {/* 4. Provider */}
                   <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {item.provider === 'MTN Mobile Money' ? (
-                        <MtnLogo className="w-5 h-5 rounded shrink-0" />
-                      ) : item.provider === 'Airtel Money' ? (
-                        <AirtelLogo className="w-5 h-5 rounded shrink-0" />
-                      ) : (
-                        <div className="w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                          <BookOpen size={11} />
-                        </div>
-                      )}
-                      <span className="font-medium text-slate-700 text-xs">
-                        {item.provider}
-                      </span>
-                    </div>
+                    <span className="font-medium text-slate-700 text-xs">
+                      {item.provider}
+                    </span>
                   </td>
 
                   {/* 5. Amount (ZMW) */}

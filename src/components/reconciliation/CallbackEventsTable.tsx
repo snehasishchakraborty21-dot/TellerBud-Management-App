@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, AlertCircle, Copy, Check, Filter } from 'lucide-react';
 import { CallbackEvent } from '../../types/reconciliation';
-import { MtnLogo, AirtelLogo } from '../wallet/ProviderLogos';
 
 interface CallbackEventsTableProps {
   events: CallbackEvent[];
@@ -34,7 +33,7 @@ export const CallbackEventsTable: React.FC<CallbackEventsTableProps> = ({ events
       <div className="p-3 sm:px-4 bg-slate-50/70 border-b border-gray-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2">
           <Filter size={14} className="text-slate-400" />
-          <span className="font-semibold text-slate-700">Filter Callbacks:</span>
+          <span className="font-semibold text-slate-700">Filter Confirmations:</span>
           <select
             value={filterProvider}
             onChange={(e) => setFilterProvider(e.target.value)}
@@ -61,7 +60,7 @@ export const CallbackEventsTable: React.FC<CallbackEventsTableProps> = ({ events
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/50 border-b border-gray-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-3 px-4 whitespace-nowrap">Callback Event</th>
+              <th className="py-3 px-4 whitespace-nowrap">Confirmation Event</th>
               <th className="py-3 px-4 whitespace-nowrap">Provider</th>
               <th className="py-3 px-4 whitespace-nowrap">Transaction Ref</th>
               <th className="py-3 px-4 whitespace-nowrap">Event Type</th>
@@ -75,7 +74,7 @@ export const CallbackEventsTable: React.FC<CallbackEventsTableProps> = ({ events
             {filteredEvents.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-10 text-center text-slate-400">
-                  No callback events match selected filters.
+                  No confirmation events match selected filters.
                 </td>
               </tr>
             ) : (
@@ -104,14 +103,7 @@ export const CallbackEventsTable: React.FC<CallbackEventsTableProps> = ({ events
 
                   {/* Provider */}
                   <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {ev.provider === 'MTN Mobile Money' ? (
-                        <MtnLogo className="w-5 h-5 rounded shrink-0" />
-                      ) : (
-                        <AirtelLogo className="w-5 h-5 rounded shrink-0" />
-                      )}
-                      <span className="font-medium text-slate-700">{ev.provider}</span>
-                    </div>
+                    <span className="font-medium text-slate-700">{ev.provider}</span>
                   </td>
 
                   {/* Transaction Ref */}

@@ -22,82 +22,74 @@ export const ReconciliationSummaryCards: React.FC<ReconciliationSummaryCardsProp
   reconciledToday = 26,
   reconciliationExceptions = 2,
 }) => {
+  const cards = [
+    {
+      label: 'Providers',
+      value: providerApis,
+      valueColor: 'text-[#102025]',
+      icon: Server,
+      iconBg: 'bg-[#0D93AA]/10 text-[#0D93AA]',
+    },
+    {
+      label: 'Active Providers',
+      value: operationalApis,
+      valueColor: 'text-emerald-700',
+      icon: CheckCircle2,
+      iconBg: 'bg-emerald-50 text-emerald-700',
+    },
+    {
+      label: 'Pending Confirmations',
+      value: pendingResponses,
+      valueColor: 'text-amber-700',
+      icon: Clock,
+      iconBg: 'bg-amber-50 text-amber-700',
+    },
+    {
+      label: 'Reconciled Today',
+      value: reconciledToday,
+      valueColor: 'text-[#102025]',
+      icon: CheckCheck,
+      iconBg: 'bg-teal-50 text-teal-700',
+    },
+    {
+      label: 'Reconciliation Exceptions',
+      value: reconciliationExceptions,
+      valueColor: 'text-rose-700',
+      icon: AlertTriangle,
+      iconBg: 'bg-rose-50 text-rose-700',
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-      {/* 1. Provider APIs */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Provider APIs</span>
-          <div className="w-7 h-7 rounded-lg bg-[#0D93AA]/10 text-[#0D93AA] flex items-center justify-center shrink-0">
-            <Server size={15} />
-          </div>
-        </div>
-        <div className="mt-2">
-          <div className="text-xl font-bold font-mono text-[#102025]">
-            {providerApis}
-          </div>
-        </div>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 w-full">
+      {cards.map((card, idx) => {
+        const IconComponent = card.icon;
+        return (
+          <div
+            key={idx}
+            className="bg-white border border-gray-200/90 rounded-xl px-3.5 py-3 sm:px-4 shadow-xs flex items-center justify-between min-h-[58px] max-h-[68px] h-full"
+          >
+            <div className="flex items-center gap-2 min-w-0 pr-1.5">
+              <div
+                className={`w-6 h-6 rounded-md ${card.iconBg} flex items-center justify-center shrink-0`}
+              >
+                <IconComponent size={13} />
+              </div>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-700 tracking-tight whitespace-nowrap">
+                {card.label}
+              </span>
+            </div>
 
-      {/* 2. Operational APIs */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Operational APIs</span>
-          <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-            <CheckCircle2 size={15} />
+            <span
+              className={`text-base sm:text-lg font-bold font-mono ${card.valueColor} shrink-0 pl-1`}
+            >
+              {card.value}
+            </span>
           </div>
-        </div>
-        <div className="mt-2">
-          <div className="text-xl font-bold font-mono text-emerald-600">
-            {operationalApis}
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Pending Provider Responses */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Pending Provider Responses</span>
-          <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
-            <Clock size={15} />
-          </div>
-        </div>
-        <div className="mt-2">
-          <div className="text-xl font-bold font-mono text-amber-600">
-            {pendingResponses}
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Reconciled Today */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Reconciled Today</span>
-          <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
-            <CheckCheck size={15} />
-          </div>
-        </div>
-        <div className="mt-2">
-          <div className="text-xl font-bold font-mono text-[#102025]">
-            {reconciledToday}
-          </div>
-        </div>
-      </div>
-
-      {/* 5. Reconciliation Exceptions */}
-      <div className="bg-white border border-gray-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-500">Reconciliation Exceptions</span>
-          <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center shrink-0">
-            <AlertTriangle size={15} />
-          </div>
-        </div>
-        <div className="mt-2">
-          <div className="text-xl font-bold font-mono text-rose-600">
-            {reconciliationExceptions}
-          </div>
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 };
+
+export default ReconciliationSummaryCards;

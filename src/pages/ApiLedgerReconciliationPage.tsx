@@ -219,7 +219,7 @@ export const ApiLedgerReconciliationPage: React.FC = () => {
           }`}
         >
           <Webhook size={14} />
-          <span>Callback Events</span>
+          <span>Provider Confirmations</span>
           <span
             className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
               activeTab === 'callbacks'
@@ -240,7 +240,7 @@ export const ApiLedgerReconciliationPage: React.FC = () => {
           }`}
         >
           <Radio size={14} />
-          <span>API Connections</span>
+          <span>External Connections</span>
           <span
             className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
               activeTab === 'connections'

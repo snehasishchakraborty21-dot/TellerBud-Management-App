@@ -25,7 +25,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Not Posted',
     reconciliation: 'Pending',
     providerTransactionId: 'MTN-COLL-948102',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
     apiOperation: 'Collection',
     callbackStatus: 'Awaiting Provider Callback',
     callbackReceivedAt: '—',
@@ -66,7 +66,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Not Posted',
     reconciliation: 'Pending',
     providerTransactionId: 'MTN-COLL-948011',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
 
   // 3. TB-REC-1035-02
@@ -106,7 +106,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947881',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
 
   // 5. TB-REC-8798-01
@@ -166,7 +166,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Not Posted',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947701',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
 
   // 8. TB-REC-EXC-1001
@@ -247,7 +247,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947612',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-8790-01',
@@ -283,7 +283,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947540',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-1033-01',
@@ -301,7 +301,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947501',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-1029-01',
@@ -390,7 +390,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947320',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-8772-01',
@@ -445,7 +445,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947211',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-8761-01',
@@ -481,7 +481,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-947109',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-BWL-1001-01',
@@ -552,7 +552,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
     ledgerResult: 'Credited',
     reconciliation: 'Matched',
     providerTransactionId: 'MTN-COLL-946980',
-    channel: 'Direct REST API (TLS 1.3)',
+    channel: 'External Processing Channel',
   },
   {
     id: 'TB-REC-1001-01',
@@ -658,7 +658,7 @@ export const MOCK_RECONCILIATION_RECORDS: ReconciliationRecord[] = [
       ledgerResult: ledgerRes,
       reconciliation: reconciliationStatus,
       providerTransactionId: `${isMtn ? 'MTN' : 'AIR'}-HIST-${900000 + num}`,
-      channel: isMtn ? 'Direct REST API (TLS 1.3)' : 'Airtel B2B Collection Gateway',
+      channel: 'External Processing Channel',
     } as ReconciliationRecord;
   }),
 ];
@@ -796,35 +796,35 @@ export const MOCK_API_CONNECTIONS: ApiConnection[] = [
   {
     id: 'CONN-MTN-01',
     provider: 'MTN Mobile Money',
-    collectionsApiStatus: 'Operational',
-    payoutApiStatus: 'Operational',
-    callbackEndpointStatus: 'Operational',
-    collectionsEndpoint: 'https://proxy.tellerbud.internal/momo/v1_0/requesttopay',
-    payoutEndpoint: 'https://proxy.tellerbud.internal/momo/v1_0/disbursement',
-    callbackEndpoint: '/api/v1/callbacks/mtn',
+    collectionsApiStatus: 'External',
+    payoutApiStatus: 'External',
+    callbackEndpointStatus: 'External Confirmation',
+    collectionsEndpoint: 'External Collection Channel',
+    payoutEndpoint: 'External Payout Channel',
+    callbackEndpoint: 'External Confirmation Channel',
     lastSuccessfulRequest: 'Today, 11:49 AM',
     lastSuccessfulCallback: 'Today, 11:48 AM',
     avgResponseTimeMs: 214,
     successRate: 99.4,
     status: 'Connected',
-    protocol: 'REST / TLS 1.3 Strict Mutual Auth',
+    protocol: 'External Processing',
     uptime: '99.98%',
   },
   {
     id: 'CONN-AIR-01',
     provider: 'Airtel Money',
-    collectionsApiStatus: 'Operational',
-    payoutApiStatus: 'Operational',
-    callbackEndpointStatus: 'Operational',
-    collectionsEndpoint: 'https://proxy.tellerbud.internal/airtel/merchant/v1/payments',
-    payoutEndpoint: 'https://proxy.tellerbud.internal/airtel/standard/v1/disbursements',
-    callbackEndpoint: '/api/v1/callbacks/airtel',
+    collectionsApiStatus: 'External',
+    payoutApiStatus: 'External',
+    callbackEndpointStatus: 'External Confirmation',
+    collectionsEndpoint: 'External Collection Channel',
+    payoutEndpoint: 'External Payout Channel',
+    callbackEndpoint: 'External Confirmation Channel',
     lastSuccessfulRequest: 'Today, 11:43 AM',
     lastSuccessfulCallback: 'Today, 11:42 AM',
     avgResponseTimeMs: 242,
     successRate: 98.9,
     status: 'Connected',
-    protocol: 'REST / OAuth2 Direct Gateway',
+    protocol: 'External Processing',
     uptime: '99.92%',
   },
 ];
@@ -1161,7 +1161,7 @@ export function resolveReconciliationDetails(record: ReconciliationRecord): Reco
       actor: 'Super Admin (Console)',
       action: 'Provider Status Refreshed',
       result: 'Provider Still Processing',
-      details: `Direct API query to ${record.provider} gateway returned status: Processing.`,
+      details: `External query to ${record.provider} returned status: Processing.`,
     },
     {
       id: `AUD-REC-${record.id.slice(-4)}-2`,
