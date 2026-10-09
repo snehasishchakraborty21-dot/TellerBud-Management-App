@@ -156,7 +156,7 @@ export const OrganizationAuditTrailPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mt-1">Organization Audit Trail</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Immutable log of all administrative actions, staff assignments, hardware allocations, and float adjustments.
+            Immutable log of all administrative actions, staff assignments, device allocations, and float adjustments.
           </p>
         </div>
 

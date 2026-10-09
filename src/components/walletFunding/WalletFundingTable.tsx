@@ -171,7 +171,7 @@ export const WalletFundingTable: React.FC<WalletFundingTableProps> = ({
           No wallet funding records found
         </p>
         <p className="text-xs text-slate-400 mt-1">
-          Try adjusting your search query, owner type, vendor, status, or date range filters.
+          Try adjusting your owner type, vendor, status, or date range filters.
         </p>
       </div>
     );

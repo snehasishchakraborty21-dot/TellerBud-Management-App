@@ -57,6 +57,10 @@ export const AdminDeviceAllocationPage: React.FC = () => {
   const [businessFilter, setBusinessFilter] = useState<string>('All');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Pagination state (default: 10 rows per page)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+
   // Export menu
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -166,7 +170,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
   };
 
   // KPIs
-  const totalHardware = devices.length;
+  const totalDevices = devices.length;
   const allocatedCount = devices.filter(
     (d) => d.allocatedBusinessId && d.allocatedBusinessId !== 'UNALLOCATED' && d.status !== 'Decommissioned' && d.status !== 'Under Maintenance'
   ).length;
@@ -182,6 +186,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
     setSearchQuery('');
     setStatusFilter('All');
     setBusinessFilter('All');
+    setCurrentPage(1);
   };
 
   const handleRefresh = () => {
@@ -234,6 +239,16 @@ export const AdminDeviceAllocationPage: React.FC = () => {
     });
   }, [devices, statusFilter, businessFilter, searchQuery, registeredBusinesses]);
 
+  // Derived Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredDevices.length / rowsPerPage));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * rowsPerPage;
+  const paginatedDevices = useMemo(() => {
+    return filteredDevices.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredDevices, startIndex, rowsPerPage]);
+  const startItem = filteredDevices.length === 0 ? 0 : startIndex + 1;
+  const endItem = Math.min(startIndex + rowsPerPage, filteredDevices.length);
+
   // Export handlers
   const prepareExportData = () => {
     return filteredDevices.map((d) => {
@@ -241,7 +256,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       const mntHistory = organizationService.getDeviceMaintenanceHistory(d.id);
       const latestMnt = mntHistory[0];
       return {
-        'Hardware Unit': d.deviceName,
+        'Device': d.deviceName,
         'Device ID': d.deviceId || d.id,
         'Device Type': d.deviceType,
         'Serial Number': d.serialNumber,
@@ -249,7 +264,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
         'Business ID': d.allocatedBusinessId && d.allocatedBusinessId !== 'UNALLOCATED' ? d.allocatedBusinessId : '—',
         'Device Status': d.status,
         'Maintenance Status': d.status === 'Under Maintenance' ? 'In Progress' : (latestMnt ? 'Completed' : 'None'),
-        'Maintenance Reason': d.maintenanceReason || latestMnt?.reason || '—',
+        'Maintenance Reason': (d.maintenanceReason === 'Hardware Fault' ? 'Device Fault' : d.maintenanceReason) || (latestMnt?.reason === 'Hardware Fault' ? 'Device Fault' : latestMnt?.reason) || '—',
         'Expected Return Date': d.expectedReturnDate || latestMnt?.expectedReturnDate || '—',
         'Resolution Notes': latestMnt?.resolutionNotes || '—',
       };
@@ -291,7 +306,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
 
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [
-      { wch: 28 }, // Hardware Unit
+      { wch: 28 }, // Device
       { wch: 18 }, // Device ID
       { wch: 20 }, // Device Type
       { wch: 22 }, // Serial Number
@@ -348,7 +363,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
     });
 
     if (!res.success) {
-      setFeedback({ type: 'error', message: res.error || 'Failed to enroll hardware unit.' });
+      setFeedback({ type: 'error', message: res.error || 'Failed to enroll device.' });
       return;
     }
 
@@ -356,7 +371,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
     const enrolledDevId = res.device?.deviceId || res.device?.id;
     setFeedback({
       type: 'success',
-      message: `Hardware unit ${registerForm.deviceName} enrolled successfully with ID ${enrolledDevId}.`,
+      message: `Device ${registerForm.deviceName} enrolled successfully with ID ${enrolledDevId}.`,
     });
     setShowRegisterModal(false);
   };
@@ -587,7 +602,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           <Cpu className="w-3.5 h-3.5" />
           <span>Platform Configuration</span>
           <span className="text-gray-300">/</span>
-          <span className="text-gray-500">Global Hardware Repository</span>
+          <span className="text-gray-500">Global Device Repository</span>
         </div>
 
         {hasAdminPermission && (
@@ -598,7 +613,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all cursor-pointer w-fit"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Enroll Hardware Unit</span>
+            <span>+ Enroll Device</span>
           </button>
         )}
       </div>
@@ -632,13 +647,13 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       {/* 2. Compact KPI Cards in One Single Row */}
       <section aria-label="Device Allocation Metrics">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 w-full">
-          {/* Global Enrolled Hardware */}
+          {/* Global Enrolled Devices */}
           <div className="flex items-center justify-between gap-2 px-3.5 sm:px-4 py-2 rounded-xl border bg-white border-gray-200/80 shadow-2xs h-[52px] sm:h-[54px]">
             <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-gray-600 truncate">
-              Enrolled Hardware
+              Enrolled Devices
             </span>
             <span className="text-[18px] sm:text-[19px] font-bold font-mono tracking-tight leading-none text-[#0D93AA] shrink-0">
-              {totalHardware}
+              {totalDevices}
             </span>
           </div>
 
@@ -672,7 +687,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Decommissioned Hardware */}
+          {/* Decommissioned Devices */}
           <div className="flex items-center justify-between gap-2 px-3.5 sm:px-4 py-2 rounded-xl border bg-white border-gray-200/80 shadow-2xs h-[52px] sm:h-[54px]">
             <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-gray-600 truncate">
               Decommissioned
@@ -690,7 +705,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           <div className="flex flex-wrap lg:flex-nowrap items-center justify-between gap-2.5 w-full">
             {/* Search, Allocation Status, Device Status */}
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-              {/* Search Hardware */}
+              {/* Search Devices */}
               <div className="relative flex-1 min-w-[200px] max-w-md">
                 <Search
                   size={13}
@@ -760,7 +775,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
             <div className="flex items-center gap-2 sm:gap-2.5 ml-auto shrink-0">
               <span className="text-xs text-gray-500 font-medium hidden xl:inline-block">
                 Showing <strong className="text-gray-800">{filteredDevices.length}</strong> of{' '}
-                <strong className="text-gray-800">{devices.length}</strong> units
+                <strong className="text-gray-800">{devices.length}</strong> devices
               </span>
 
               {/* Clear Filters */}
@@ -785,7 +800,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 className="h-9 px-3.5 text-xs font-semibold text-gray-700 hover:text-[#0D93AA] hover:bg-[#0D93AA]/5 rounded-lg border border-gray-200 hover:border-[#0D93AA]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                title="Refresh hardware allocations"
+                title="Refresh device allocations"
               >
                 <RefreshCw
                   size={13}
@@ -801,7 +816,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   id="btn-export-devices"
                   onClick={() => setShowExportMenu((prev) => !prev)}
                   className="h-9 px-3.5 text-xs font-semibold text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  title="Export hardware records"
+                  title="Export device records"
                 >
                   <Download size={13} />
                   <span>Export</span>
@@ -838,14 +853,14 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       </section>
 
       {/* 4. Global Device Table */}
-      <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full mb-1">
-        <div className="overflow-x-auto max-h-[calc(100vh-270px)] overflow-y-auto pb-2.5">
+      <div className="bg-white border border-gray-200/80 rounded-xl shadow-xs overflow-hidden w-full mb-1 flex flex-col">
+        <div className="overflow-x-auto max-h-[calc(100vh-320px)] overflow-y-auto pb-2.5">
           <table className="w-full text-left border-collapse text-xs">
             <thead className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-xs">
               <tr className="border-b border-gray-200 text-[10.5px] sm:text-[11px] font-bold text-gray-600 uppercase tracking-wider select-none text-left">
-                {/* 1. Hardware Unit */}
+                {/* 1. Device */}
                 <th className="py-3 px-3.5 text-left align-middle min-w-[210px] sm:min-w-[230px]">
-                  <span>Hardware Unit</span>
+                  <span>DEVICE</span>
                 </th>
 
                 {/* 2. Type & Serial */}
@@ -874,11 +889,11 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-gray-400 align-middle">
                     <Cpu size={28} className="mx-auto mb-2 text-gray-300" />
-                    <p className="font-semibold text-gray-600 text-sm">No hardware units found</p>
+                    <p className="font-semibold text-gray-600 text-sm">No devices found</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {hasActiveFilters
                         ? 'No devices match your current filter and search query.'
-                        : 'No enrolled hardware units currently in the repository.'}
+                        : 'No enrolled devices currently in the repository.'}
                     </p>
                     {hasActiveFilters && (
                       <button
@@ -892,7 +907,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredDevices.map((d) => {
+                paginatedDevices.map((d) => {
                   const bName = getBusinessName(d.allocatedBusinessId);
                   const devId = d.deviceId || d.id;
 
@@ -901,7 +916,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                       key={`device-row-${d.id}`}
                       className="hover:bg-gray-50/70 transition-colors text-left align-middle"
                     >
-                      {/* 1. Hardware Unit: Device Name (Line 1) & Device ID (Line 2) */}
+                      {/* 1. Device: Device Name (Line 1) & Device ID (Line 2) */}
                       <td className="py-3 px-3.5 text-left align-middle">
                         <div className="flex flex-col items-start justify-center text-left">
                           <div
@@ -1158,6 +1173,96 @@ export const AdminDeviceAllocationPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer - Always Visible */}
+        <div
+          id="device-allocation-pagination"
+          className="shrink-0 px-4 py-3 bg-slate-50/80 border-t border-gray-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs"
+        >
+          {/* Left Side: Summary text & Rows per page selector */}
+          <div className="flex flex-wrap items-center gap-3 text-slate-700">
+            <span>
+              Showing <strong className="font-semibold text-slate-900">{startItem}</strong> to{' '}
+              <strong className="font-semibold text-slate-900">{endItem}</strong> of{' '}
+              <strong className="font-semibold text-slate-900">{filteredDevices.length}</strong> devices
+            </span>
+
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-slate-300">|</span>
+              <label htmlFor="select-rows-per-page" className="text-slate-600 font-medium">
+                Rows per page:
+              </label>
+              <select
+                id="select-rows-per-page"
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="h-7 px-2 py-0.5 text-xs bg-white border border-gray-200 rounded-md text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0D93AA] focus:border-[#0D93AA] cursor-pointer"
+                aria-label="Rows per page"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Right Side: Page info, Previous, Page-number buttons, Next */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-600 font-medium mr-1">
+              Page {safeCurrentPage} of {totalPages}
+            </span>
+
+            <div className="flex items-center gap-1" role="navigation" aria-label="Device pagination">
+              {/* Previous button */}
+              <button
+                type="button"
+                id="btn-pagination-prev"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage <= 1}
+                aria-label="Previous page"
+                title="Previous page"
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-[#0D93AA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+              >
+                Previous
+              </button>
+
+              {/* Page-number buttons */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  id={`btn-pagination-page-${pageNum}`}
+                  onClick={() => setCurrentPage(pageNum)}
+                  aria-label={`Page ${pageNum}`}
+                  aria-current={safeCurrentPage === pageNum ? 'page' : undefined}
+                  className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    safeCurrentPage === pageNum
+                      ? 'bg-[#0D93AA] text-white shadow-2xs'
+                      : 'bg-white border border-gray-200 text-slate-700 hover:bg-slate-50 hover:text-[#0D93AA]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              {/* Next button */}
+              <button
+                type="button"
+                id="btn-pagination-next"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage >= totalPages}
+                aria-label="Next page"
+                title="Next page"
+                className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-[#0D93AA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ========================================== */}
@@ -1178,7 +1283,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">Mark Device Under Maintenance</h3>
                   <p className="text-xs text-gray-500">
-                    Place hardware unit into repair/maintenance workflow.
+                    Place device into repair/maintenance workflow.
                   </p>
                 </div>
               </div>
@@ -1236,7 +1341,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 >
                   {MAINTENANCE_REASONS.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {r === 'Hardware Fault' ? 'Device Fault' : r}
                     </option>
                   ))}
                 </select>
@@ -1340,7 +1445,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">Return Device to Service</h3>
                   <p className="text-xs text-gray-500">
-                    Complete maintenance record and restore hardware availability.
+                    Complete maintenance record and restore device availability.
                   </p>
                 </div>
               </div>
@@ -1371,7 +1476,9 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <div>
                   <span className="text-gray-500 block text-[10.5px]">Maintenance Reason:</span>
                   <span className="font-semibold text-amber-800">
-                    {selectedDeviceForReturn.maintenanceReason || 'Hardware / Power Diagnostics'}
+                    {selectedDeviceForReturn.maintenanceReason === 'Hardware Fault'
+                      ? 'Device Fault'
+                      : selectedDeviceForReturn.maintenanceReason || 'Device / Power Diagnostics'}
                   </span>
                 </div>
                 <div>
@@ -1479,7 +1586,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-[11px] text-gray-600 mt-0.5">
-                        Return hardware unit to unallocated central platform pool ready for future assignment.
+                        Return device to unallocated central platform pool ready for future assignment.
                       </p>
                     </div>
                   </label>
@@ -1524,7 +1631,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Cpu className="text-[#0D93AA]" size={20} />
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base">Hardware Unit & Maintenance Audit</h3>
+                  <h3 className="font-bold text-gray-900 text-base">Device & Maintenance Audit</h3>
                   <span className="font-mono text-xs text-gray-500">
                     {viewingDevice.deviceId || viewingDevice.id}
                   </span>
@@ -1581,7 +1688,11 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 text-[11.5px] text-amber-900">
                     <div>
                       <span className="text-amber-700/80 block text-[10.5px]">Reason:</span>
-                      <strong>{viewingDevice.maintenanceReason || 'Hardware / Diagnostic Work'}</strong>
+                      <strong>
+                        {viewingDevice.maintenanceReason === 'Hardware Fault'
+                          ? 'Device Fault'
+                          : viewingDevice.maintenanceReason || 'Device / Diagnostic Work'}
+                      </strong>
                     </div>
                     <div>
                       <span className="text-amber-700/80 block text-[10.5px]">Expected Return:</span>
@@ -1601,7 +1712,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-1">
                   <div className="flex items-center gap-1.5 text-red-900 font-bold text-xs">
                     <XCircle size={14} className="text-red-600" />
-                    <span>Hardware Permanently Decommissioned</span>
+                    <span>Device Permanently Decommissioned</span>
                   </div>
                   <p className="text-[11.5px] text-red-800">{viewingDevice.decommissionReason}</p>
                   {viewingDevice.decommissionedAt && (
@@ -1659,7 +1770,9 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
                           <div>
                             <span className="text-gray-400 block text-[10px]">Reason:</span>
-                            <span className="font-semibold text-gray-800">{m.reason}</span>
+                            <span className="font-semibold text-gray-800">
+                              {m.reason === 'Hardware Fault' ? 'Device Fault' : m.reason}
+                            </span>
                           </div>
                           <div>
                             <span className="text-gray-400 block text-[10px]">Performed By:</span>
@@ -1724,7 +1837,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       )}
 
       {/* ========================================== */}
-      {/* MODAL: ENROLL NEW HARDWARE UNIT */}
+      {/* MODAL: ENROLL NEW DEVICE */}
       {/* ========================================== */}
       {showRegisterModal && (
         <div
@@ -1735,9 +1848,9 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <h3 className="font-bold text-gray-900 text-base">Enroll Hardware Unit</h3>
+                <h3 className="font-bold text-gray-900 text-base">Enroll Device</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Assign official system identifier and catalog hardware unit.
+                  Assign official system identifier and catalog device.
                 </p>
               </div>
               <button
@@ -1765,7 +1878,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">
-                  Hardware Model Name <span className="text-red-500">*</span>
+                  Device Model Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -1779,7 +1892,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">
-                  Hardware Type <span className="text-red-500">*</span>
+                  Device Type <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={registerForm.deviceType}
@@ -1840,7 +1953,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 text-white bg-[#0D93AA] hover:bg-[#0B7C90] rounded-lg font-semibold shadow-2xs cursor-pointer transition-all"
                 >
-                  Enroll Hardware Unit
+                  Enroll Device
                 </button>
               </div>
             </form>
@@ -1849,7 +1962,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       )}
 
       {/* ========================================== */}
-      {/* MODAL: ALLOCATE / REALLOCATE HARDWARE */}
+      {/* MODAL: ALLOCATE / REALLOCATE DEVICE */}
       {/* ========================================== */}
       {showAllocateModal && selectedDevice && (
         <div
@@ -1860,7 +1973,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="font-bold text-gray-900 text-base">
-                {selectedDevice.status === 'Assigned' ? 'Reallocate Hardware Unit' : 'Allocate Hardware Unit'}
+                {selectedDevice.status === 'Assigned' ? 'Reallocate Device' : 'Allocate Device'}
               </h3>
               <button
                 type="button"
@@ -1938,7 +2051,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
       )}
 
       {/* ========================================== */}
-      {/* MODAL: DECOMMISSION HARDWARE */}
+      {/* MODAL: DECOMMISSION DEVICE */}
       {/* ========================================== */}
       {showDecommissionModal && selectedDeviceForDecommission && (
         <div
@@ -1952,7 +2065,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <XCircle size={22} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-gray-900 text-base">Decommission Hardware Unit?</h3>
+                <h3 className="font-bold text-gray-900 text-base">Decommission Device?</h3>
                 <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                   Are you sure you want to permanently decommission <strong className="text-gray-900">{selectedDeviceForDecommission.deviceName}</strong>? This device will be removed from active allocation and cannot be assigned to a business again.
                 </p>
@@ -1984,7 +2097,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                 <textarea
                   rows={2}
                   required
-                  placeholder="e.g. Touchscreen failure, battery swelling, hardware returned for warranty repair..."
+                  placeholder="e.g. Touchscreen failure, battery swelling, device returned for warranty repair..."
                   value={decommissionReason}
                   onChange={(e) => setDecommissionReason(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 resize-none"
@@ -2005,7 +2118,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
                   disabled={!decommissionReason.trim() || isDecommissioning}
                   className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg font-semibold shadow-2xs cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  {isDecommissioning ? 'Decommissioning...' : 'Decommission Hardware'}
+                  {isDecommissioning ? 'Decommissioning...' : 'Decommission Device'}
                 </button>
               </div>
             </form>

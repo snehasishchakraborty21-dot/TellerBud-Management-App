@@ -2050,7 +2050,7 @@ class OrganizationService {
       boNotificationService.addNotification({
         id: `notif-mnt-${Date.now()}`,
         title: `Device Placed Under Maintenance: ${device.deviceName}`,
-        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}, S/N: ${device.serialNumber}) was marked Under Maintenance by TellerBud Admin. Reason: ${data.reason}.${data.expectedReturnDate ? ` Expected Return: ${data.expectedReturnDate}.` : ''}`,
+        message: `Device ${device.deviceName} (${device.deviceId || device.id}, S/N: ${device.serialNumber}) was marked Under Maintenance by TellerBud Admin. Reason: ${data.reason}.${data.expectedReturnDate ? ` Expected Return: ${data.expectedReturnDate}.` : ''}`,
         category: 'System',
         priority: 'Important',
         read: false,
@@ -2184,7 +2184,7 @@ class OrganizationService {
       boNotificationService.addNotification({
         id: `notif-mnt-ret-${Date.now()}`,
         title: `Device Returned to Service: ${device.deviceName}`,
-        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}) has completed maintenance and was returned to service (${resultingStatus === 'Assigned' ? `Restored to ${bizName}` : 'Central Depot Inventory'}). Resolution: ${data.resolutionNotes.trim()}`,
+        message: `Device ${device.deviceName} (${device.deviceId || device.id}) has completed maintenance and was returned to service (${resultingStatus === 'Assigned' ? `Restored to ${bizName}` : 'Central Depot Inventory'}). Resolution: ${data.resolutionNotes.trim()}`,
         category: 'System',
         priority: 'Normal',
         read: false,
@@ -2231,7 +2231,7 @@ class OrganizationService {
       boNotificationService.addNotification({
         id: `notif-mnt-exp-${Date.now()}`,
         title: `Maintenance Schedule Updated: ${device.deviceName}`,
-        message: `Expected return date for hardware unit ${device.deviceName} (${device.deviceId || device.id}) was updated to ${expectedReturnDate || 'TBD'}.`,
+        message: `Expected return date for device ${device.deviceName} (${device.deviceId || device.id}) was updated to ${expectedReturnDate || 'TBD'}.`,
         category: 'System',
         priority: 'Normal',
         read: false,
@@ -2334,8 +2334,8 @@ class OrganizationService {
       const bizName = this.getBusinessNameById(prevBizId);
       boNotificationService.addNotification({
         id: `notif-dcm-${Date.now()}`,
-        title: `Hardware Decommissioned: ${device.deviceName}`,
-        message: `Hardware unit ${device.deviceName} (${device.deviceId || device.id}) has been permanently decommissioned. Reason: ${reason.trim()}`,
+        title: `Device Decommissioned: ${device.deviceName}`,
+        message: `Device ${device.deviceName} (${device.deviceId || device.id}) has been permanently decommissioned. Reason: ${reason.trim()}`,
         category: 'System',
         priority: 'Important',
         read: false,
@@ -2407,7 +2407,7 @@ class OrganizationService {
       newValue: `Registered serial ${newDevice.serialNumber}. Allocated to: ${
         newDevice.allocatedBusinessId || 'Platform Inventory'
       }`,
-      reason: 'New hardware terminal cataloged by TellerBud Admin',
+      reason: 'New device terminal cataloged by TellerBud Admin',
       actor,
     });
 
