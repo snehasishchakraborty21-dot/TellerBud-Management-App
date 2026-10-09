@@ -433,7 +433,7 @@ export const INITIAL_STAFF_ASSIGNMENTS: StaffBoothAssignment[] = [
     effectiveFrom: '2025-01-10T08:00:00.000Z',
     effectiveTo: null,
     isActive: true,
-    reason: 'Initial station deployment',
+    reason: 'Initial booth deployment',
     assignedBy: 'USR-BO-001',
   },
   {
@@ -445,7 +445,7 @@ export const INITIAL_STAFF_ASSIGNMENTS: StaffBoothAssignment[] = [
     effectiveFrom: '2025-01-10T08:00:00.000Z',
     effectiveTo: null,
     isActive: true,
-    reason: 'Initial station deployment',
+    reason: 'Initial booth deployment',
     assignedBy: 'USR-BO-001',
   },
   {
@@ -1089,7 +1089,7 @@ export const INITIAL_AUDIT_LOGS: OrganizationAuditLog[] = [
     affectedName: 'Kelvin Phiri (TB-AGT-1024)',
     previousValue: 'Unassigned',
     newValue: 'Cairo Road Flagship Store > Counter 1 - Cash & Float Desk',
-    reason: 'Initial station deployment',
+    reason: 'Initial booth deployment',
     actorUserId: 'USR-BO-001',
     actorName: 'Chileshe Mwamba',
     actorRole: 'Business Owner',

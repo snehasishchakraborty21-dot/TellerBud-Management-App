@@ -1399,7 +1399,7 @@ export const AdminDeviceAllocationPage: React.FC = () => {
               <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-xl flex items-start gap-2.5 text-amber-900">
                 <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-[11.5px] leading-relaxed">
-                  <strong>Notice:</strong> This device will become unavailable for operational use until it is returned to service. Active station mappings will be safely preserved for restoration.
+                  <strong>Notice:</strong> This device will become unavailable for operational use until it is returned to service. Active booth mappings will be safely preserved for restoration.
                 </p>
               </div>
 

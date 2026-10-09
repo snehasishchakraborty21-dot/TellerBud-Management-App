@@ -267,7 +267,7 @@ export const OrganizationAuditTrailPage: React.FC = () => {
                 <th className="py-3 px-4">Entity</th>
                 <th className="py-3 px-4">Action & Mutation Details</th>
                 <th className="py-3 px-4">Reason / Justification</th>
-                <th className="py-3 px-4">Station Context</th>
+                <th className="py-3 px-4">Booth Context</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

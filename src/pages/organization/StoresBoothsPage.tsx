@@ -505,7 +505,7 @@ export const StoresBoothsPage: React.FC = () => {
       userId: assignForm.userId,
       newStoreId: assignForm.storeId || null,
       newBoothId: assignForm.boothId || null,
-      reason: assignForm.reason || 'Station assignment updated via Stores & Booths console',
+      reason: assignForm.reason || 'Booth assignment updated via Stores & Booths console',
     });
 
     if (!res.success) {
@@ -582,7 +582,7 @@ export const StoresBoothsPage: React.FC = () => {
 
       setFeedback({
         type: 'success',
-        message: `${staffName} successfully relocated to ${destBooth?.boothName || 'new station'}.`,
+        message: `${staffName} successfully relocated to ${destBooth?.boothName || 'new booth'}.`,
       });
     }
 
@@ -1103,7 +1103,7 @@ export const StoresBoothsPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: STAFF STATION ASSIGNMENTS */}
+        {/* TAB 3: STAFF BOOTH ASSIGNMENTS */}
         {activeTab === 'assignments' && (
           <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
             <div className="overflow-x-auto">
@@ -1115,7 +1115,7 @@ export const StoresBoothsPage: React.FC = () => {
                     <th className="py-3 px-4">Current Branch Store</th>
                     <th className="py-3 px-4">Service Booth</th>
                     <th className="py-3 px-4">Account Status</th>
-                    {isBusinessOwner && <th className="py-3 px-4 text-right">Station Actions</th>}
+                    {isBusinessOwner && <th className="py-3 px-4 text-right">Booth Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -1180,7 +1180,7 @@ export const StoresBoothsPage: React.FC = () => {
                                 onClick={() => openAssignStaff(u.id, u.storeId, u.boothId)}
                                 className="px-3 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
                               >
-                                {u.boothId ? 'Manage Station' : 'Assign Station'}
+                                {u.boothId ? 'Manage Booth' : 'Assign Booth'}
                               </button>
                             )}
                           </td>
@@ -1593,7 +1593,7 @@ export const StoresBoothsPage: React.FC = () => {
 
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">
-                  Reason for Station Assignment / Relocation
+                  Reason for Booth Assignment / Relocation
                 </label>
                 <textarea
                   rows={2}
@@ -1605,7 +1605,7 @@ export const StoresBoothsPage: React.FC = () => {
               </div>
 
               <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-lg text-emerald-800 text-[11px] leading-relaxed">
-                Assigning staff to this booth will safely close their previous active station deployment in the organization audit trail.
+                Assigning staff to this booth will safely close their previous active booth assignment in the organizational audit trail.
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
@@ -1620,7 +1620,7 @@ export const StoresBoothsPage: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold shadow-xs"
                 >
-                  Confirm Station Deployment
+                  Confirm Booth Deployment
                 </button>
               </div>
             </form>
@@ -1638,7 +1638,7 @@ export const StoresBoothsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-teal-600" />
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">Manage Stationed Staff</h3>
+                  <h3 className="font-bold text-slate-900 text-lg">Manage Booth Staff</h3>
                   <p className="text-xs text-slate-500">{managingBooth.boothName} ({managingBooth.boothNumber})</p>
                 </div>
               </div>
@@ -1758,7 +1758,7 @@ export const StoresBoothsPage: React.FC = () => {
 
               {manageAction === 'unassign' && (
                 <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-lg text-amber-900 text-[11px] leading-relaxed">
-                  <strong>Unassign Notice:</strong> The staff member will be removed from this service booth and marked as unassigned. Their account remains active and available for future station deployments.
+                  <strong>Unassign Notice:</strong> The staff member will be removed from this service booth and marked as unassigned. Their account remains active and available for future booth deployments.
                 </div>
               )}
 
@@ -1769,7 +1769,7 @@ export const StoresBoothsPage: React.FC = () => {
                 <textarea
                   rows={2}
                   required
-                  placeholder="e.g. Station rotation, cover relief, counter closure..."
+                  placeholder="e.g. Booth rotation, cover relief, counter closure..."
                   value={manageReason}
                   onChange={(e) => setManageReason(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
